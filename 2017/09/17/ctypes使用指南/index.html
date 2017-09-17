@@ -1,0 +1,1589 @@
+<!doctype html>
+
+
+
+  
+
+
+<html class="theme-next pisces use-motion" lang="zh-CN,en,default">
+<head>
+  <meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+
+
+
+
+
+
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+    
+  
+  <link href="//cdn.jsdelivr.net/fancybox/2.1.5/jquery.fancybox.min.css" rel="stylesheet" type="text/css" />
+
+
+
+
+  
+  
+  
+  
+
+  
+    
+    
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+    
+    
+    <link href="//fonts.googleapis.com/css?family=Lato:300,300italic,400,400italic,700,700italic&subset=latin,latin-ext" rel="stylesheet" type="text/css">
+  
+
+
+
+
+
+
+  
+
+<link href="//maxcdn.bootstrapcdn.com/font-awesome/4.6.2/css/font-awesome.min.css" rel="stylesheet" type="text/css" />
+
+<link href="/css/main.css?v=5.1.1" rel="stylesheet" type="text/css" />
+
+
+  <meta name="keywords" content="ctypes,Cross language," />
+
+
+
+
+
+
+
+
+  <link rel="shortcut icon" type="image/x-icon" href="/favicon.ico?v=5.1.1" />
+
+
+
+
+
+
+<meta name="description" content="ctypes 简介从Python2.5开始引入。ctypes是Python的外部函数库。它提供了C兼容的数据类型，并且允许调用动态链接库/共享库中的函数。它可以将这些库包装起来给Python使用。 ctypes 入门本入门中的代码使用doctest确保可用。不过一些代码在linux/windows/mac os x中的行为可能略有差异，这在其doctest的注释中有所表示。少数代码示例引用了cty">
+<meta name="keywords" content="ctypes,Cross language">
+<meta property="og:type" content="article">
+<meta property="og:title" content="ctypes使用指南">
+<meta property="og:url" content="http://www.noahsun.top/2017/09/17/ctypes使用指南/index.html">
+<meta property="og:site_name" content="Noah Sun&#39;s Home">
+<meta property="og:description" content="ctypes 简介从Python2.5开始引入。ctypes是Python的外部函数库。它提供了C兼容的数据类型，并且允许调用动态链接库/共享库中的函数。它可以将这些库包装起来给Python使用。 ctypes 入门本入门中的代码使用doctest确保可用。不过一些代码在linux/windows/mac os x中的行为可能略有差异，这在其doctest的注释中有所表示。少数代码示例引用了cty">
+<meta property="og:locale" content="zh-CN">
+<meta property="og:updated_time" content="2017-09-17T14:54:13.000Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="ctypes使用指南">
+<meta name="twitter:description" content="ctypes 简介从Python2.5开始引入。ctypes是Python的外部函数库。它提供了C兼容的数据类型，并且允许调用动态链接库/共享库中的函数。它可以将这些库包装起来给Python使用。 ctypes 入门本入门中的代码使用doctest确保可用。不过一些代码在linux/windows/mac os x中的行为可能略有差异，这在其doctest的注释中有所表示。少数代码示例引用了cty">
+
+
+
+<script type="text/javascript" id="hexo.configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    root: '/',
+    scheme: 'Pisces',
+    sidebar: {"position":"left","display":"post","offset":12,"offset_float":0,"b2t":false,"scrollpercent":false},
+    fancybox: true,
+    motion: true,
+    duoshuo: {
+      userId: '0',
+      author: '博主'
+    },
+    algolia: {
+      applicationID: '',
+      apiKey: '',
+      indexName: '',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    }
+  };
+</script>
+
+
+
+  <link rel="canonical" href="http://www.noahsun.top/2017/09/17/ctypes使用指南/"/>
+
+
+
+
+
+  <title>ctypes使用指南 | Noah Sun's Home</title>
+  
+
+
+
+
+<script>
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+            (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+          m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','https://www.google-analytics.com/analytics.js','ga');
+  ga('create', 'UA-102233237-1', 'auto');
+  ga('send', 'pageview');
+</script>
+
+
+  <script type="text/javascript">
+    var _hmt = _hmt || [];
+    (function() {
+      var hm = document.createElement("script");
+      hm.src = "https://hm.baidu.com/hm.js?07c7e0461feabfd55d89458a5c4ae94b";
+      var s = document.getElementsByTagName("script")[0];
+      s.parentNode.insertBefore(hm, s);
+    })();
+  </script>
+
+
+
+
+
+
+
+
+
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="zh-CN">
+
+  
+  
+    
+  
+
+  <div class="container sidebar-position-left page-post-detail ">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-wrapper">
+  <div class="site-meta ">
+    
+
+    <div class="custom-logo-site-title">
+      <a href="/"  class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title">Noah Sun's Home</span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+      
+        <p class="site-subtitle"></p>
+      
+  </div>
+
+  <div class="site-nav-toggle">
+    <button>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+    </button>
+  </div>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu">
+      
+        
+        <li class="menu-item menu-item-home">
+          <a href="/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-home"></i> <br />
+            
+            首页
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-archive"></i> <br />
+            
+            归档
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-categories">
+          <a href="/categories/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-th"></i> <br />
+            
+            分类
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-tags">
+          <a href="/tags/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-tags"></i> <br />
+            
+            标签
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-about">
+          <a href="/about/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-user"></i> <br />
+            
+            关于
+          </a>
+        </li>
+      
+
+      
+        <li class="menu-item menu-item-search">
+          
+            <a href="javascript:;" class="popup-trigger">
+          
+            
+              <i class="menu-item-icon fa fa-search fa-fw"></i> <br />
+            
+            搜索
+          </a>
+        </li>
+      
+    </ul>
+  
+
+  
+    <div class="site-search">
+      
+  <div class="popup search-popup local-search-popup">
+  <div class="local-search-header clearfix">
+    <span class="search-icon">
+      <i class="fa fa-search"></i>
+    </span>
+    <span class="popup-btn-close">
+      <i class="fa fa-times-circle"></i>
+    </span>
+    <div class="local-search-input-wrapper">
+      <input autocomplete="off"
+             placeholder="搜索..." spellcheck="false"
+             type="text" id="local-search-input">
+    </div>
+  </div>
+  <div id="local-search-result"></div>
+</div>
+
+
+
+    </div>
+  
+</nav>
+
+
+
+ </div>
+    </header>
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
+    <link itemprop="mainEntityOfPage" href="http://www.noahsun.top/2017/09/17/ctypes使用指南/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="Noah Sun">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/images/avatar.jpg">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Noah Sun's Home">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">ctypes使用指南</h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2017-09-17T21:32:56+08:00">
+                2017-09-17
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+            <span class="post-category" >
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/Technology/" itemprop="url" rel="index">
+                    <span itemprop="name">Technology</span>
+                  </a>
+                </span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+              <span class="post-comments-count">
+                <span class="post-meta-divider">|</span>
+                <span class="post-meta-item-icon">
+                  <i class="fa fa-comment-o"></i>
+                </span>
+                <a href="/2017/09/17/ctypes使用指南/#comments" itemprop="discussionUrl">
+                  <span class="post-comments-count fb-comments-count" data-href="http://www.noahsun.top/2017/09/17/ctypes使用指南/" itemprop="commentCount">0</span> comments
+                </a>
+              </span>
+            
+          
+
+          
+          
+             <span id="/2017/09/17/ctypes使用指南/" class="leancloud_visitors" data-flag-title="ctypes使用指南">
+               <span class="post-meta-divider">|</span>
+               <span class="post-meta-item-icon">
+                 <i class="fa fa-eye"></i>
+               </span>
+               
+                 <span class="post-meta-item-text">阅读次数 </span>
+               
+                 <span class="leancloud-visitors-count"></span>
+             </span>
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <h1 id="ctypes-简介"><a href="#ctypes-简介" class="headerlink" title="ctypes 简介"></a>ctypes 简介</h1><p>从Python2.5开始引入。<br>ctypes是Python的外部函数库。它提供了C兼容的数据类型，并且允许调用动态链接库/共享库中的函数。它可以将这些库包装起来给Python使用。</p>
+<h1 id="ctypes-入门"><a href="#ctypes-入门" class="headerlink" title="ctypes 入门"></a>ctypes 入门</h1><p>本入门中的代码使用doctest确保可用。不过一些代码在linux/windows/mac os x中的行为可能略有差异，这在其doctest的注释中有所表示。<br>少数代码示例引用了ctypes的c_int类型。这个类型是32bit系统中c_long类型的别名。所以你在期待c_int而显示c_long时不必疑惑，他们是一样的。</p>
+<h2 id="载入动态链接库"><a href="#载入动态链接库" class="headerlink" title="载入动态链接库"></a>载入动态链接库</h2><p>ctypes导出了 cdll，在windows上还有 windll 和 oledll 对象用于载入动态链接库。<br>载入动态链接库可以直接存取其属性。 cdll 载入导出函数符合cdecl调用规范的库，而 windll 载入导出函数符合 stdcall 调用规范的库， oledll 也使用 stdcall 调用规范，并假设函数返回Windows的HRESULT错误码。错误码用于在出错时自动抛出WindowsError这个Python异常。<br>如下是Windows的例子，主意msvcrt是MS标准C库，包含了大部分标准C函数，并且使用cdecl调用规范:</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div></pre></td><td class="code"><pre><div class="line">&gt;&gt;&gt; from ctypes import *</div><div class="line">&gt;&gt;&gt; print windll.kernel32</div><div class="line">&lt;WinDLL &apos;kernel32&apos;, handle ... at ...&gt;</div><div class="line">&gt;&gt;&gt; print cdll.msvcrt</div><div class="line">&lt;CDLL &apos;msvcrt&apos;, handle ... at ...&gt;</div><div class="line">&gt;&gt;&gt; libc=cdll.msvcrt</div><div class="line">&gt;&gt;&gt;</div></pre></td></tr></table></figure>
+<p>Windows通常使用”.dll”作为动态链接库的扩展名。<br>Linux上需要指定包含扩展名的文件名来载入动态库，所以属性存取方式就失效了。你可以使用 LoadLibrary 方法，或者创建CDLL的实例来载入:</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div></pre></td><td class="code"><pre><div class="line">&gt;&gt;&gt; cdll.LoadLibrary(&quot;libc.so.6&quot;)</div><div class="line">&lt;CDLL &apos;libc.so.6&apos;, handle ... at ...&gt;</div><div class="line">&gt;&gt;&gt; libc==CDLL(&quot;libc.so.6&quot;)</div><div class="line">&gt;&gt;&gt; libc</div><div class="line">&lt;CDLL &apos;libc.so.6&apos;, handle ... at ...&gt;</div><div class="line">&gt;&gt;&gt;</div></pre></td></tr></table></figure>
+<h2 id="从载入的动态链接库中访问函数"><a href="#从载入的动态链接库中访问函数" class="headerlink" title="从载入的动态链接库中访问函数"></a>从载入的动态链接库中访问函数</h2><p>函数是作为dll对象的属性来存取的:</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div></pre></td><td class="code"><pre><div class="line">&gt;&gt;&gt; from ctypes import *</div><div class="line">&gt;&gt;&gt; libc.printf</div><div class="line">&lt;_FuncPtr object at 0x...&gt;</div><div class="line">&gt;&gt;&gt; print windll.kernel32.GetModuleHandleA</div><div class="line">&lt;_FuncPtr object at 0x...&gt;</div><div class="line">&gt;&gt;&gt; print windll.kernel32.MyOwnFunction</div><div class="line">Traceback (most recent call last):</div><div class="line">  File &quot;&lt;stdin&gt;&quot;, line 1, in ?</div><div class="line">  File &quot;ctypes.py&quot;, line 239, in __getattr__</div><div class="line">    func = _StdcallFuncPtr(name,self)</div><div class="line">AttributeError: function &apos;MyOwnFunction&apos; not found</div><div class="line">&gt;&gt;&gt;</div></pre></td></tr></table></figure>
+<p>注意win32系统动态链接库，如kernel32和user32经常同时导出ANSI和UNICODE版本的函数。UNICODE版本的会在名字末尾加”W”，而ANSI版本的加上”A”。Win32版本的 GetModuleHandle 函数，返回给定模块名的句柄，有如下C原型，还有一个宏用于暴露其中一个作为 GetModuleHandle ，依赖于UNICODE定义与否:</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div></pre></td><td class="code"><pre><div class="line">/* ANSI version */</div><div class="line">HMODULE GetModuleHandleA(LPCSTR lpModuleName);</div><div class="line">/* UNICODE version */</div><div class="line">HMODULE GetModuleHandleW(LPCWSTR lpModuleName);</div></pre></td></tr></table></figure>
+<p>windll 并不会自动选择调用某个版本，所以你必须指定要调用的，传递的时候也要指定正确的字符串参数类型。<br>有时动态链接库导出函数并不是有效的Python标识符，例如 “??2@YAPAXI@Z” 。这种情况下，你必须使用getattr 获取函数:</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div></pre></td><td class="code"><pre><div class="line">&gt;&gt;&gt; getattr(cdll.msvcrt,&quot;??2@YAPAXI@Z&quot;)</div><div class="line">&lt;_FuncPtr object at 0x...&gt;</div><div class="line">&gt;&gt;&gt;</div></pre></td></tr></table></figure>
+<p>在Windows上，有些动态链接库导出函数不是用名字，而是用序号(ordinal)。这些函数通过索引存取:</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div></pre></td><td class="code"><pre><div class="line">&gt;&gt;&gt; cdll.kernel32[1]</div><div class="line">&lt;_FuncPtr object at 0x...&gt;</div><div class="line">&gt;&gt;&gt; cdll.kernel32[0]</div><div class="line">Traceback (most recent call last):</div><div class="line">  File &quot;&lt;stdin&gt;&quot;, line 1, in ?</div><div class="line">  File &quot;ctypes.py&quot;, line 310, in __getitem__</div><div class="line">    func = _StdcallFuncPtr(name,self)</div><div class="line">AttributeError: function ordinal 0 not found</div><div class="line">&gt;&gt;&gt;</div></pre></td></tr></table></figure>
+<h2 id="调用函数"><a href="#调用函数" class="headerlink" title="调用函数"></a>调用函数</h2><p>你可以像正常的Python函数一样调用这些函数。这里用 time() 函数示例，返回Unix epoch系统时间，和GetModuleHandleA() 函数，返回win32模块句柄。<br>这个例子调用函数时附带NULL指针(None作为NULL指针):</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div></pre></td><td class="code"><pre><div class="line">&gt;&gt;&gt; print libc.time(None)</div><div class="line">1150640792</div><div class="line">&gt;&gt;&gt; print hex(windll.kernel32.GetModuleHandleA(None))</div><div class="line">0x1d000000</div><div class="line">&gt;&gt;&gt;</div></pre></td></tr></table></figure>
+<p>在调用函数时，如果使用了错误的参数数量和调用规范时，ctypes尝试保护调用。不幸的是该功能仅在Windows上有用。它通过检查函数返回栈来实现，所以尽管发生了错误，但是函数还是调用了:</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div></pre></td><td class="code"><pre><div class="line">&gt;&gt;&gt; windll.kernel32.GetModuleHandleA()</div><div class="line">Traceback (most recent call last):</div><div class="line">  File &quot;&lt;stdin&gt;&quot;, line 1, in ?</div><div class="line">ValueError: Procedure probably called with not enough argument (4 bytes missing)</div><div class="line">&gt;&gt;&gt; windll.kernel.GetModuleHandleA(0,0)</div><div class="line">Traceback (most recent call last):</div><div class="line">  File &quot;&lt;stdin&gt;&quot;, line 1, in ?</div><div class="line">ValueError: Procedure probably called with too many argument (4 bytes in excess)</div></pre></td></tr></table></figure>
+<p>这在你使用了错误的调用规范时同样会发生:</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div></pre></td><td class="code"><pre><div class="line">&gt;&gt;&gt; cdll.kernel32.GetModuleHandleA(None) # doctest: +WINDOWS</div><div class="line">Traceback (most recent call last):</div><div class="line">  File &quot;&lt;stdin&gt;&quot;, line 1, in ?</div><div class="line">ValueError: Procedure probably called with not enough arguments (4 bytes missing)</div><div class="line">&gt;&gt;&gt;</div><div class="line"></div><div class="line">&gt;&gt;&gt; windll.msvcrt.printf(&quot;spam&quot;) # doctest: +WINDOWS</div><div class="line">Traceback (most recent call last):</div><div class="line">  File &quot;&lt;stdin&gt;&quot;, line 1, in ?</div><div class="line">ValueError: Procedure probably called with too many arguments (4 bytes in excess)</div><div class="line">&gt;&gt;&gt;</div></pre></td></tr></table></figure>
+<p>想要找到正确的调用规范，你必须查看C头文件或者函数的文档。<br>在Windows，ctypes使用win32结构异常处理，避免无保护的挂掉:</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div></pre></td><td class="code"><pre><div class="line">&gt;&gt;&gt; windll.kernel32.GetModuleHandleA(32)</div><div class="line">Traceback (most recent call last):</div><div class="line">  File &quot;&lt;stdin&gt;&quot;, line 1, in ?</div><div class="line">WindowsError: exception: access violation reading 0x00000020</div></pre></td></tr></table></figure>
+<p>尽管如此，仍然有很多方法用ctypes挂掉Python，所以你必须很小心的使用。<br>None、整数、长整数、字节串和unicode字符串是可以作为本地Python对象直接传递给函数调用的。None是作为C的NULL指针，字 节串和unicode字符串作为内存块指针传递(char<em> 或 wchar_t</em>)。Python整数和长整数作为平台相关的C类型传递。<br>在调用更多的函数之前，必须了解关于ctypes数据类型的知识。</p>
+<h2 id="基本数据类型"><a href="#基本数据类型" class="headerlink" title="基本数据类型"></a>基本数据类型</h2><p>ctypes定义了一系列基本C数据类型：</p>
+<table>
+<thead>
+<tr>
+<th>ctypes 类型</th>
+<th>C类型</th>
+<th>Python 类型</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>c_char</td>
+<td>char</td>
+<td>1个字符的字符串</td>
+</tr>
+<tr>
+<td>c_wchar</td>
+<td>wchar_t</td>
+<td>1个字符的unicode字符串</td>
+</tr>
+<tr>
+<td>c_byte</td>
+<td>char</td>
+<td>int/long</td>
+</tr>
+<tr>
+<td>c_ubyte</td>
+<td>unsigned char</td>
+<td>int/long</td>
+</tr>
+<tr>
+<td>c_short</td>
+<td>short</td>
+<td>int/long</td>
+</tr>
+<tr>
+<td>c_ushort</td>
+<td>unsigned short</td>
+<td>int/long</td>
+</tr>
+<tr>
+<td>c_int</td>
+<td>int</td>
+<td>int/long</td>
+</tr>
+<tr>
+<td>c_uint</td>
+<td>unsigned int</td>
+<td>int/long</td>
+</tr>
+<tr>
+<td>c_long</td>
+<td>long</td>
+<td>int/long</td>
+</tr>
+<tr>
+<td>c_ulong</td>
+<td>unsigned long</td>
+<td>int/long</td>
+</tr>
+<tr>
+<td>c_longlong</td>
+<td>__int64 或 long long</td>
+<td>int/long</td>
+</tr>
+<tr>
+<td>c_ulonglong</td>
+<td>unsigned __int64 或 unsigned long long</td>
+<td>int/long</td>
+</tr>
+<tr>
+<td>c_float</td>
+<td>float</td>
+<td>float</td>
+</tr>
+<tr>
+<td>c_double</td>
+<td>double</td>
+<td>float</td>
+</tr>
+<tr>
+<td>c_char_p</td>
+<td>char * (NUL 结尾字符串)</td>
+<td>string 或 None</td>
+</tr>
+<tr>
+<td>c_wchar_p</td>
+<td>wchar_t * (NUL 结尾字符串)</td>
+<td>unicode 或 None</td>
+</tr>
+<tr>
+<td>c_void_p</td>
+<td>void *</td>
+<td>int/long 或 None</td>
+</tr>
+</tbody>
+</table>
+<p>所有这些类型都可以通过调用可选传输初始化值方式指定值:</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div></pre></td><td class="code"><pre><div class="line">&gt;&gt;&gt; c_int()</div><div class="line">c_long(0)</div><div class="line">&gt;&gt;&gt; c_char_p(&quot;Hello, world&quot;)</div><div class="line">c_char_p(&apos;Hello, world&apos;)</div><div class="line">&gt;&gt;&gt; c_ushort(-3)</div><div class="line">c_ushort(65533)</div></pre></td></tr></table></figure>
+<p>这些类型都是可变的，其值也是随后可变的:</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div></pre></td><td class="code"><pre><div class="line">&gt;&gt;&gt; i=c_int(42)</div><div class="line">&gt;&gt;&gt; print i</div><div class="line">c_long(42)</div><div class="line">&gt;&gt;&gt; print i.value</div><div class="line">42</div><div class="line">&gt;&gt;&gt; i.value=-99</div><div class="line">&gt;&gt;&gt; print i.value</div><div class="line">-99</div><div class="line">&gt;&gt;&gt;</div></pre></td></tr></table></figure>
+<p>对指针类型 c_char_p/c_wchar_p/c_void_p 的赋值将会改变其指向的内存区域地址，而不是改变内存块的值(当然了，因为Python字符串是只读的):</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div></pre></td><td class="code"><pre><div class="line">&gt;&gt;&gt; s=&quot;Hello, world&quot;</div><div class="line">&gt;&gt;&gt; c_s=c_char_p(s)</div><div class="line">&gt;&gt;&gt; print c_s</div><div class="line">c_char_p(&apos;Hello, world&apos;)</div><div class="line">&gt;&gt;&gt; c_s.value=&quot;Hi, there&quot;</div><div class="line">&gt;&gt;&gt; print c_s</div><div class="line">c_char_p(&apos;Hi, there&apos;)</div><div class="line">&gt;&gt;&gt; print s         #第一个字符串没有改变</div><div class="line">Hello, world</div><div class="line">&gt;&gt;&gt;</div></pre></td></tr></table></figure>
+<p>必须小心的是，不要传递这些的指针给可变内存。如果你需要可变内存块，ctypes提供了create_string_buffer() 函数。当前内存块可以存取或改变，如果你想要将其作为NUL结尾字符串方式，使用值的方法:</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div></pre></td><td class="code"><pre><div class="line">&gt;&gt;&gt; from ctypes import *</div><div class="line">&gt;&gt;&gt; p = create_string_buffer(3)      # create a 3 byte buffer, initialized to NUL bytes</div><div class="line">&gt;&gt;&gt; print sizeof(p), repr(p.raw)</div><div class="line">3 &apos;\x00\x00\x00&apos;</div><div class="line">&gt;&gt;&gt; p = create_string_buffer(&quot;Hello&quot;)      # create a buffer containing a NUL terminated string</div><div class="line">&gt;&gt;&gt; print sizeof(p), repr(p.raw)</div><div class="line">6 &apos;Hello\x00&apos;</div><div class="line">&gt;&gt;&gt; print repr(p.value)</div><div class="line">&apos;Hello&apos;</div><div class="line">&gt;&gt;&gt; p = create_string_buffer(&quot;Hello&quot;, 10)  # create a 10 byte buffer</div><div class="line">&gt;&gt;&gt; print sizeof(p), repr(p.raw)</div><div class="line">10 &apos;Hello\x00\x00\x00\x00\x00&apos;</div><div class="line">&gt;&gt;&gt; p.value = &quot;Hi&quot;</div><div class="line">&gt;&gt;&gt; print sizeof(p), repr(p.raw)</div><div class="line">10 &apos;Hi\x00lo\x00\x00\x00\x00\x00&apos;</div><div class="line">&gt;&gt;&gt;</div></pre></td></tr></table></figure>
+<p>create_string_buffer() 函数已经替换了 c_buffer() 函数(仍然作为别名存在)，有如 c_string() 函数以前，只是出现在以前的版本中。想要创建包含unicode字符(对应C类型wchar_t)的可变内存块，使用create_unicode_buffer() 函数。</p>
+<h2 id="调用函数，继续"><a href="#调用函数，继续" class="headerlink" title="调用函数，继续"></a>调用函数，继续</h2><p>需要注意的是，printf打印到真实的标准输出，而不是 sys.stdout ，所以这些例子仅在控制台模式有效，而不是IDLE或PythonWin:</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div></pre></td><td class="code"><pre><div class="line">&gt;&gt;&gt; printf=libc.printf</div><div class="line">&gt;&gt;&gt; printf(&quot;Hello, %s\n&quot;,&quot;World!&quot;)</div><div class="line">Hello, World!</div><div class="line">14</div><div class="line">&gt;&gt;&gt; printf(&quot;Hello, %S&quot;, u&quot;World!&quot;)</div><div class="line">Hello, World!</div><div class="line">13</div><div class="line">&gt;&gt;&gt; printf(&quot;%d bottles of beer\n&quot;, 42)</div><div class="line">42 bottles of beer</div><div class="line">19</div><div class="line">&gt;&gt;&gt; printf(&quot;%f bottles of beer\n&quot;, 42.5)</div><div class="line">Traceback (most recent call last):</div><div class="line">  File &quot;&lt;stdin&gt;&quot;, line 1, in ?</div><div class="line">ArgumentError: argument 2: exceptions.TypeError: Don&apos;t know how to convert parameter 2</div><div class="line">&gt;&gt;&gt;</div></pre></td></tr></table></figure>
+<p>如前面所说，除了整数、字符串和unicode字符串以外的Python类型必须使用ctypes类型做包装，所以他们可以转换为必须的C数据类型:</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div></pre></td><td class="code"><pre><div class="line">&gt;&gt;&gt; printf(&quot;An int %d, a double %f\n&quot;,1234,c_double(3.14))</div><div class="line">An int 1234, a double 3.1400001049</div><div class="line">&gt;&gt;&gt;</div></pre></td></tr></table></figure>
+<h2 id="使用自定义数据类型调用函数"><a href="#使用自定义数据类型调用函数" class="headerlink" title="使用自定义数据类型调用函数"></a>使用自定义数据类型调用函数</h2><p>你可以使用自定义ctypes参数转换，允许你自己的类作为函数参数。ctypes寻找对象的 _as<em>parameter</em> 属性，并将其作为函数参数。当然，必须是整数、字符串或unicode</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div></pre></td><td class="code"><pre><div class="line">&gt;&gt;&gt; class Bottles(object):</div><div class="line">...     def __init__(self, number):</div><div class="line">...         self._as_parameter_ = number</div><div class="line">...</div><div class="line">&gt;&gt;&gt; bottles = Bottles(42)</div><div class="line">&gt;&gt;&gt; printf(&quot;%d bottles of beer\n&quot;, bottles)</div><div class="line">42 bottles of beer</div><div class="line">19</div><div class="line">&gt;&gt;&gt;</div></pre></td></tr></table></figure>
+<p>如果你不想存储实例的数据到 _as<em>parameter</em> 实例变量，你可以定义一个属性确保数据有效。</p>
+<h2 id="指定必须的参数类型-函数原型"><a href="#指定必须的参数类型-函数原型" class="headerlink" title="指定必须的参数类型(函数原型)"></a>指定必须的参数类型(函数原型)</h2><p>可以通过指定函数的 argtypes 属性来指定函数的参数类型。<br>argtypes必须是一个C数据类型序列(printf函数在这里不是个好例子，因为它需要依赖于格式化字符串的可变数量和多种类型的参数，反过来说倒是很适合于练手):</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div></pre></td><td class="code"><pre><div class="line">&gt;&gt;&gt; printf.argtypes=[c_char_p,c_char_p,c_int,c_double]</div><div class="line">&gt;&gt;&gt; printf(&quot;String &apos;%s&apos;, Int %d, Double %f\n&quot;,&quot;Hi&quot;,10,2.2)</div><div class="line">String &apos;Hi&apos;, Int 10, Double 2.200000</div><div class="line">&gt;&gt;&gt;</div></pre></td></tr></table></figure>
+<p>指定不兼容的参数类型，和尝试转换参数到到无效类型会出错:</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div></pre></td><td class="code"><pre><div class="line">&gt;&gt;&gt; printf(&quot;%d %d %d&quot;, 1, 2, 3)</div><div class="line">Traceback (most recent call last):</div><div class="line">  File &quot;&lt;stdin&gt;&quot;, line 1, in ?</div><div class="line">ArgumentError: argument 2: exceptions.TypeError: wrong type</div><div class="line">&gt;&gt;&gt; printf(&quot;%s %d %f&quot;, &quot;X&quot;, 2, 3)</div><div class="line">X 2 3.00000012</div><div class="line">&gt;&gt;&gt;</div></pre></td></tr></table></figure>
+<p>如果你自定义的类要传递给函数调用，必须实现 from_param 类方法，才能在argtypes序列中使用。from_param 类方法接收Python对象传递到函数调用，需要做类型检查或者其他确保对象可以被接受的工作，然后返回对象本身， _as<em>parameter</em> 属性，或者你想要传递给C函数的参数。再次说明，返回结果必须是整数、字符串、unicode、ctypes实例，或者任何有 _as<em>parameter</em> 属性的东西。</p>
+<h2 id="返回类型"><a href="#返回类型" class="headerlink" title="返回类型"></a>返回类型</h2><p>缺省情况假设函数返回C的int类型。其他返回类型可以通过设置函数的 restype 属性来实现。<br>这里是一个更高级的例子，它使用strchr函数，需要一个字符串指针和一个字符，返回字符串的指针:</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div></pre></td><td class="code"><pre><div class="line">&gt;&gt;&gt; strchr = libc.strchr</div><div class="line">&gt;&gt;&gt; strchr(&quot;abcdef&quot;, ord(&quot;d&quot;)) # doctest: +SKIP</div><div class="line">8059983</div><div class="line">&gt;&gt;&gt; strchr.restype = c_char_p # c_char_p is a pointer to a string</div><div class="line">&gt;&gt;&gt; strchr(&quot;abcdef&quot;, ord(&quot;d&quot;))</div><div class="line">&apos;def&apos;</div><div class="line">&gt;&gt;&gt; print strchr(&quot;abcdef&quot;, ord(&quot;x&quot;))</div><div class="line">None</div><div class="line">&gt;&gt;&gt;</div></pre></td></tr></table></figure>
+<p>如果你想要上面的 ord(“x”) 调用，你可以设置argtypes属性，而第二个参数的Python字符串会转换成C字符:</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div></pre></td><td class="code"><pre><div class="line">&gt;&gt;&gt; strchr.restype = c_char_p</div><div class="line">&gt;&gt;&gt; strchr.argtypes = [c_char_p, c_char]</div><div class="line">&gt;&gt;&gt; strchr(&quot;abcdef&quot;, &quot;d&quot;)</div><div class="line">&apos;def&apos;</div><div class="line">&gt;&gt;&gt; strchr(&quot;abcdef&quot;, &quot;def&quot;)</div><div class="line">Traceback (most recent call last):</div><div class="line">  File &quot;&lt;stdin&gt;&quot;, line 1, in ?</div><div class="line">ArgumentError: argument 2: exceptions.TypeError: one character string expected</div><div class="line">&gt;&gt;&gt; print strchr(&quot;abcdef&quot;, &quot;x&quot;)</div><div class="line">None</div><div class="line">&gt;&gt;&gt; strchr(&quot;abcdef&quot;, &quot;d&quot;)</div><div class="line">&apos;def&apos;</div><div class="line">&gt;&gt;&gt;</div></pre></td></tr></table></figure>
+<p>你还可以使用Python的可调用对象(函数或者类的例子)作为restype属性，如果外语函数返回整数。这时在C函数调用结束后会使用其返回的 整数调用这个Python可调用对象，而返回值作为函数调用的返回值。相当于对C函数返回值做了包装。这对于检查错误码而抛出异常的情况非常有用:</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div></pre></td><td class="code"><pre><div class="line">&gt;&gt;&gt; GetModuleHandle = windll.kernel32.GetModuleHandleA # doctest: +WINDOWS</div><div class="line">&gt;&gt;&gt; def ValidHandle(value):</div><div class="line">...     if value == 0:</div><div class="line">...         raise WinError()</div><div class="line">...     return value</div><div class="line">...</div><div class="line">&gt;&gt;&gt;</div><div class="line">&gt;&gt;&gt; GetModuleHandle.restype = ValidHandle # doctest: +WINDOWS</div><div class="line">&gt;&gt;&gt; GetModuleHandle(None) # doctest: +WINDOWS</div><div class="line">486539264</div><div class="line">&gt;&gt;&gt; GetModuleHandle(&quot;something silly&quot;) # doctest: +WINDOWS</div><div class="line">Traceback (most recent call last):</div><div class="line">  File &quot;&lt;stdin&gt;&quot;, line 1, in ?</div><div class="line">  File &quot;&lt;stdin&gt;&quot;, line 3, in ValidHandle</div><div class="line">WindowsError: [Errno 126] The specified module could not be found.</div><div class="line">&gt;&gt;&gt;</div></pre></td></tr></table></figure>
+<p>这里的 WinError 是一个函数，会调用Windows的 FormatMessage() API来获取错误码的字符串描述，并且返回异常。 WinError 接受可选的错误码参数，如果没有指定则调用 GetLastError() 获取。<br>需要注意的是强大的错误检查机制是通过 errcheck 属性实现的。具体查看手册了解细节。</p>
+<h2 id="传递指针-或者传递参数引用"><a href="#传递指针-或者传递参数引用" class="headerlink" title="传递指针(或者传递参数引用)"></a>传递指针(或者传递参数引用)</h2><p>有时C函数需要一个指针指向的数据作为参数，还有可能是想向里面写的位置，或者数据太大不适合传递。这也叫做传递参数引用。</p>
+<p>ctypes导出 byref() 函数用于传递参数引用。同样也可以用于指针函数，尽管指针对象可以做很多工作，但是如果你并不需要在Python中使用指针对象的话，使用 byref() 会更快:</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div></pre></td><td class="code"><pre><div class="line">&gt;&gt;&gt; i = c_int()</div><div class="line">&gt;&gt;&gt; f = c_float()</div><div class="line">&gt;&gt;&gt; s = create_string_buffer(&apos;\000&apos; * 32)</div><div class="line">&gt;&gt;&gt; print i.value, f.value, repr(s.value)</div><div class="line">0 0.0 &apos;&apos;</div><div class="line">&gt;&gt;&gt; libc.sscanf(&quot;1 3.14 Hello&quot;, &quot;%d %f %s&quot;,</div><div class="line">...             byref(i), byref(f), s)</div><div class="line">3</div><div class="line">&gt;&gt;&gt; print i.value, f.value, repr(s.value)</div><div class="line">1 3.1400001049 &apos;Hello&apos;</div><div class="line">&gt;&gt;&gt;</div></pre></td></tr></table></figure>
+<h2 id="结构和联合"><a href="#结构和联合" class="headerlink" title="结构和联合"></a>结构和联合</h2><p>结构和联合必须继承自ctypes模块的 Structure 和 Union 类。每个子类必须定义 <em>fields</em> 属性，该属性必须是2元素元组的列表，包含字段名和字段类型。</p>
+<p>字段类型必须是ctypes类型，例如 c_int ，或者其他派生的ctypes类型：结构、联合、数组、指针。</p>
+<p>这里有个POINT结构体的简单例子，包含两个整数叫做x和y，同时展示了如何构造结构体:</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div></pre></td><td class="code"><pre><div class="line">&gt;&gt;&gt; from ctypes import *</div><div class="line">&gt;&gt;&gt; class POINT(Structure):</div><div class="line">...     _fields_ = [(&quot;x&quot;, c_int),</div><div class="line">...                 (&quot;y&quot;, c_int)]</div><div class="line">...</div><div class="line">&gt;&gt;&gt; point = POINT(10, 20)</div><div class="line">&gt;&gt;&gt; print point.x, point.y</div><div class="line">10 20</div><div class="line">&gt;&gt;&gt; point = POINT(y=5)</div><div class="line">&gt;&gt;&gt; print point.x, point.y</div><div class="line">0 5</div><div class="line">&gt;&gt;&gt; POINT(1, 2, 3)</div><div class="line">Traceback (most recent call last):</div><div class="line">  File &quot;&lt;stdin&gt;&quot;, line 1, in ?</div><div class="line">ValueError: too many initializers</div><div class="line">&gt;&gt;&gt;</div></pre></td></tr></table></figure>
+<p>你还可以构造更多复杂的结构体。结构体可以自包含作为一个字段类型。<br>这里是一个RECT结构体，它包含了两个POINT结构体分别名为upperleft和lowerright：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div></pre></td><td class="code"><pre><div class="line">&gt;&gt;&gt; class RECT(Structure):</div><div class="line">...     _fields_ = [(&quot;upperleft&quot;, POINT),</div><div class="line">...                 (&quot;lowerright&quot;, POINT)]</div><div class="line">...</div><div class="line">&gt;&gt;&gt; rc = RECT(point)</div><div class="line">&gt;&gt;&gt; print rc.upperleft.x, rc.upperleft.y</div><div class="line">0 5</div><div class="line">&gt;&gt;&gt; print rc.lowerright.x, rc.lowerright.y</div><div class="line">0 0</div><div class="line">&gt;&gt;&gt;</div></pre></td></tr></table></figure>
+<p>嵌套结构体可以通过下面多种方法初始化：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line">&gt;&gt;&gt; r = RECT(POINT(1, 2), POINT(3, 4))</div><div class="line">&gt;&gt;&gt; r = RECT((1, 2), (3, 4))</div></pre></td></tr></table></figure>
+<p>域描述可以检索到类，这对调试有很大的帮助，因为它们可以提供到有用的信息：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div></pre></td><td class="code"><pre><div class="line">&gt;&gt;&gt; print POINT.x</div><div class="line">&lt;Field type=c_long, ofs=0, size=4&gt;</div><div class="line">&gt;&gt;&gt; print POINT.y</div><div class="line">&lt;Field type=c_long, ofs=4, size=4&gt;</div><div class="line">&gt;&gt;&gt;</div></pre></td></tr></table></figure>
+<h2 id="结构-联合对齐和字节序"><a href="#结构-联合对齐和字节序" class="headerlink" title="结构/联合对齐和字节序"></a>结构/联合对齐和字节序</h2><p>默认情况下结构体和联合的对齐使用C编译器相同的方式。这可以通过 <em>pack</em> 类属性来重载其行为。这必须设置一个正数指定字段的最大对齐。这个功能与MSVC中的 #pragma pack(n) 功能一样。</p>
+<p>ctypes中的结构体和联合使用本地字节序。想要用非本地字节序，可以使用 BigEndianStructure 、LittleEndianStructure 、 BigEndianUnion 、 LittleEndianUnion 基类。这些类无法包含指针字段。</p>
+<h2 id="结构与联合中的位字段"><a href="#结构与联合中的位字段" class="headerlink" title="结构与联合中的位字段"></a>结构与联合中的位字段</h2><p>创建结构与联合体时，可以包含位字段。只有整型域才可以使用位字段，位宽可以在<em>fields</em>元组的第三个选项中指定：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div></pre></td><td class="code"><pre><div class="line">&gt;&gt;&gt; class Int(Structure):</div><div class="line">...     _fields_ = [(&quot;first_16&quot;, c_int, 16),</div><div class="line">...                 (&quot;second_16&quot;, c_int, 16)]</div><div class="line">...</div><div class="line">&gt;&gt;&gt; print Int.first_16</div><div class="line">&lt;Field type=c_long, ofs=0:0, bits=16&gt;</div><div class="line">&gt;&gt;&gt; print Int.second_16</div><div class="line">&lt;Field type=c_long, ofs=0:16, bits=16&gt;</div><div class="line">&gt;&gt;&gt;</div></pre></td></tr></table></figure>
+<h2 id="数组"><a href="#数组" class="headerlink" title="数组"></a>数组</h2><p>数组就是序列，包含固定数量(fixed number of)的相同类型的实例。<br>推荐的创建数组类型的方式是使用正数和乘号应用到类型:</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">TenPointsArrayType=POINT*10</div></pre></td></tr></table></figure>
+<p>这里有个巧妙的例子，一个结构体包含一个字段有4个POINT:</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div></pre></td><td class="code"><pre><div class="line">&gt;&gt;&gt; from ctypes import *</div><div class="line">&gt;&gt;&gt; class POINT(Structure):</div><div class="line">...    _fields_ = (&quot;x&quot;, c_int), (&quot;y&quot;, c_int)</div><div class="line">...</div><div class="line">&gt;&gt;&gt; class MyStruct(Structure):</div><div class="line">...    _fields_ = [(&quot;a&quot;, c_int),</div><div class="line">...                (&quot;b&quot;, c_float),</div><div class="line">...                (&quot;point_array&quot;, POINT * 4)]</div><div class="line">&gt;&gt;&gt;</div><div class="line">&gt;&gt;&gt; print len(MyStruct().point_array)</div><div class="line">4</div><div class="line">&gt;&gt;&gt;</div></pre></td></tr></table></figure>
+<p>可以通过下面的办法高效访问数组：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div></pre></td><td class="code"><pre><div class="line">arr = TenPointsArrayType()</div><div class="line">for pt in arr:</div><div class="line">    print pt.x, pt.y</div></pre></td></tr></table></figure>
+<p>上面的代码打印一行结果0 0，因为数组数据初始化为0。<br>可以通过下面的办法显式初始化：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div></pre></td><td class="code"><pre><div class="line">&gt;&gt;&gt; from ctypes import *</div><div class="line">&gt;&gt;&gt; TenIntegers = c_int * 10</div><div class="line">&gt;&gt;&gt; ii = TenIntegers(1, 2, 3, 4, 5, 6, 7, 8, 9, 10)</div><div class="line">&gt;&gt;&gt; print ii</div><div class="line">&lt;c_long_Array_10 object at 0x...&gt;</div><div class="line">&gt;&gt;&gt; for i in ii: print i,</div><div class="line">...</div><div class="line">1 2 3 4 5 6 7 8 9 10</div><div class="line">&gt;&gt;&gt;</div></pre></td></tr></table></figure>
+<h2 id="指针"><a href="#指针" class="headerlink" title="指针"></a>指针</h2><p>指针实例使用 pointer() 函数:</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div></pre></td><td class="code"><pre><div class="line">&gt;&gt;&gt; from ctypes import *</div><div class="line">&gt;&gt;&gt; i=c_int(42)</div><div class="line">&gt;&gt;&gt; pi=pointer(i)</div><div class="line">&gt;&gt;&gt;</div></pre></td></tr></table></figure>
+<p>指针实例有一个 contents 属性返回指针指向的内容对象，例如上面的例子:</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div></pre></td><td class="code"><pre><div class="line">&gt;&gt;&gt; pi.contents</div><div class="line">c_long(42)</div><div class="line">&gt;&gt;&gt;</div></pre></td></tr></table></figure>
+<p>注意ctypes没有OOR(Original Object Return原始对象返回)，他在你请求一个属性时构造一个新的、等同的对象:</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div></pre></td><td class="code"><pre><div class="line">&gt;&gt;&gt; pi.contents is i</div><div class="line">False</div><div class="line">&gt;&gt;&gt; pi.contents is pi.contents</div><div class="line">False</div><div class="line">&gt;&gt;&gt;</div></pre></td></tr></table></figure>
+<p>给指针的contents属性赋值一个新的c_int实例会改变指针指向内容的内存地址：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div></pre></td><td class="code"><pre><div class="line">&gt;&gt;&gt; i = c_int(99)</div><div class="line">&gt;&gt;&gt; pi.contents = i</div><div class="line">&gt;&gt;&gt; pi.contents</div><div class="line">c_long(99)</div><div class="line">&gt;&gt;&gt;</div></pre></td></tr></table></figure>
+<p>指针实例可以通过整数下标访问：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div></pre></td><td class="code"><pre><div class="line">&gt;&gt;&gt; pi[0]</div><div class="line">99</div><div class="line">&gt;&gt;&gt;</div></pre></td></tr></table></figure>
+<p>也可以通过下标访问的方式来改变指针指向的内容：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div></pre></td><td class="code"><pre><div class="line">&gt;&gt;&gt; print i</div><div class="line">c_long(99)</div><div class="line">&gt;&gt;&gt; pi[0] = 22</div><div class="line">&gt;&gt;&gt; print i</div><div class="line">c_long(22)</div><div class="line">&gt;&gt;&gt;</div></pre></td></tr></table></figure>
+<p>你也可以使用非0下标访问，但你必须知道你在做什么，比如在C语言：你可以访问或改变任意的内存地址。一般情况下，你仅可以在收到一个C函数返回来的指针，并且你知道它是指向了一个数组时才可以使用这个特性。</p>
+<p>指针函数不仅创建了指针实例，它还会先创建指针类型。这些就是指针函数POINTER的工作，它可以接受任何ctypes的类型，并返回一个新的指针：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div></pre></td><td class="code"><pre><div class="line">&gt;&gt;&gt; PI = POINTER(c_int)</div><div class="line">&gt;&gt;&gt; PI</div><div class="line">&lt;class &apos;ctypes.LP_c_long&apos;&gt;</div><div class="line">&gt;&gt;&gt; PI(42)</div><div class="line">Traceback (most recent call last):</div><div class="line">  File &quot;&lt;stdin&gt;&quot;, line 1, in ?</div><div class="line">TypeError: expected c_long instead of int</div><div class="line">&gt;&gt;&gt; PI(c_int(42))</div><div class="line">&lt;ctypes.LP_c_long object at 0x...&gt;</div><div class="line">&gt;&gt;&gt;</div></pre></td></tr></table></figure>
+<p>NULL指针具有默认的布尔值False：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div></pre></td><td class="code"><pre><div class="line">&gt;&gt;&gt; null_ptr = POINTER(c_int)()</div><div class="line">&gt;&gt;&gt; print bool(null_ptr)</div><div class="line">False</div><div class="line">&gt;&gt;&gt;</div></pre></td></tr></table></figure>
+<p>当访问或给NULL指针赋值时，会引发python类型检查异常：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div></pre></td><td class="code"><pre><div class="line">&gt;&gt;&gt; null_ptr[0]</div><div class="line">Traceback (most recent call last):</div><div class="line">    ....</div><div class="line">ValueError: NULL pointer access</div><div class="line">&gt;&gt;&gt;</div><div class="line"></div><div class="line">&gt;&gt;&gt; null_ptr[0] = 1234</div><div class="line">Traceback (most recent call last):</div><div class="line">    ....</div><div class="line">ValueError: NULL pointer access</div><div class="line">&gt;&gt;&gt;</div></pre></td></tr></table></figure>
+<h2 id="类型转换"><a href="#类型转换" class="headerlink" title="类型转换"></a>类型转换</h2><p>通常情况下，ctypes会做严格的类型检查。这意味着，如果形参有一个POINTER(c_int)指针指向一个函数或者结构体的成员域类型，那么实参只能接受相同类型的实例。但这个规则在ctypes处理其他对象时也有例外。比如，你可以传递兼容的数据类型来代替指针类型。所以，对于POINTER(c_int)指针类型来说，可以使用c_int数据来代替：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div></pre></td><td class="code"><pre><div class="line">&gt;&gt;&gt; class Bar(Structure):</div><div class="line">...     _fields_ = [(&quot;count&quot;, c_int), (&quot;values&quot;, POINTER(c_int))]</div><div class="line">...</div><div class="line">&gt;&gt;&gt; bar = Bar()</div><div class="line">&gt;&gt;&gt; bar.values = (c_int * 3)(1, 2, 3)</div><div class="line">&gt;&gt;&gt; bar.count = 3</div><div class="line">&gt;&gt;&gt; for i in range(bar.count):</div><div class="line">...     print bar.values[i]</div><div class="line">...</div><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">&gt;&gt;&gt;</div></pre></td></tr></table></figure>
+<p>可以通过给指针的values属性赋值为None来设置NULL指针：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line">&gt;&gt;&gt; bar.values = None</div><div class="line">&gt;&gt;&gt;</div></pre></td></tr></table></figure>
+<p>在C语言，你可以通过强制类型转换的方法来转换不兼容的类型。ctypes也提供了一个转换函数让你可以使用相同的方式进行类型转换。上面定义的Bar结构体中，它的value域可以支持POINTER(c_int)指针或者c_int数组，但不支持其他类型：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div></pre></td><td class="code"><pre><div class="line">&gt;&gt;&gt; bar.values = (c_byte * 4)()</div><div class="line">Traceback (most recent call last):</div><div class="line">  File &quot;&lt;stdin&gt;&quot;, line 1, in ?</div><div class="line">TypeError: incompatible types, c_byte_Array_4 instance instead of LP_c_long instance</div><div class="line">&gt;&gt;&gt;</div></pre></td></tr></table></figure>
+<p>在这种情况下，转换函数就方便多了。</p>
+<p>转换函数可以将一个能转换成ctypes指针的实例转换成另外一个ctypes指针类型。转换函数需要两个参数，第一个是能够转换成指针类型的cytpes实例类型，第二个是ctypes指针类型。它返回第二个参数类型的实例，并且这个实例与第一个参数共用同一块内存：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div></pre></td><td class="code"><pre><div class="line">&gt;&gt;&gt; a = (c_byte * 4)()</div><div class="line">&gt;&gt;&gt; cast(a, POINTER(c_int))</div><div class="line">&lt;ctypes.LP_c_long object at ...&gt;</div><div class="line">&gt;&gt;&gt;</div></pre></td></tr></table></figure>
+<p>所以，Bar结构的values域可以这样通过类型转换来赋值：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div></pre></td><td class="code"><pre><div class="line">&gt;&gt;&gt; bar = Bar()</div><div class="line">&gt;&gt;&gt; bar.values = cast((c_byte * 4)(), POINTER(c_int))</div><div class="line">&gt;&gt;&gt; print bar.values[0]</div><div class="line">0</div><div class="line">&gt;&gt;&gt;</div></pre></td></tr></table></figure>
+<h2 id="不完全的类型"><a href="#不完全的类型" class="headerlink" title="不完全的类型"></a>不完全的类型</h2><p>不完全的类型包含结构体，联合体或者类型未指定的数组。在C语言中，它们可以这样先声明后定义：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div></pre></td><td class="code"><pre><div class="line">struct cell; /* forward declaration */</div><div class="line"></div><div class="line">struct &#123;</div><div class="line">    char *name;</div><div class="line">    struct cell *next;</div><div class="line">&#125; cell;</div></pre></td></tr></table></figure>
+<p>直接这样转换成ctypes代码将会无效：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div></pre></td><td class="code"><pre><div class="line">&gt;&gt;&gt; class cell(Structure):</div><div class="line">...     _fields_ = [(&quot;name&quot;, c_char_p),</div><div class="line">...                 (&quot;next&quot;, POINTER(cell))]</div><div class="line">...</div><div class="line">Traceback (most recent call last):</div><div class="line">  File &quot;&lt;stdin&gt;&quot;, line 1, in ?</div><div class="line">  File &quot;&lt;stdin&gt;&quot;, line 2, in cell</div><div class="line">NameError: name &apos;cell&apos; is not defined</div><div class="line">&gt;&gt;&gt;</div></pre></td></tr></table></figure>
+<p>因为新类cell在类本身定义时是无效的。在ctypes，我们可以先定义cell类，然后再给它的<em>fields</em>属性赋值：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div></pre></td><td class="code"><pre><div class="line">&gt;&gt;&gt; from ctypes import *</div><div class="line">&gt;&gt;&gt; class cell(Structure):</div><div class="line">...     pass</div><div class="line">...</div><div class="line">&gt;&gt;&gt; cell._fields_ = [(&quot;name&quot;, c_char_p),</div><div class="line">...                  (&quot;next&quot;, POINTER(cell))]</div><div class="line">&gt;&gt;&gt;</div></pre></td></tr></table></figure>
+<p>让我们试一下效果。我们创建两个cell的实例，然后让他们互相指向对方，然后尝试访问指针链表几次：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div></pre></td><td class="code"><pre><div class="line">&gt;&gt;&gt; c1 = cell()</div><div class="line">&gt;&gt;&gt; c1.name = &quot;foo&quot;</div><div class="line">&gt;&gt;&gt; c2 = cell()</div><div class="line">&gt;&gt;&gt; c2.name = &quot;bar&quot;</div><div class="line">&gt;&gt;&gt; c1.next = pointer(c2)</div><div class="line">&gt;&gt;&gt; c2.next = pointer(c1)</div><div class="line">&gt;&gt;&gt; p = c1</div><div class="line">&gt;&gt;&gt; for i in range(8):</div><div class="line">...     print p.name,</div><div class="line">...     p = p.next[0]</div><div class="line">...</div><div class="line">foo bar foo bar foo bar foo bar</div><div class="line">&gt;&gt;&gt;</div></pre></td></tr></table></figure>
+<h2 id="回调函数"><a href="#回调函数" class="headerlink" title="回调函数"></a>回调函数</h2><p>ctypes允许从python回调中创建c回调函数指针。这个常常被称为回调函数。</p>
+<p>首先，你必须为回调函数创建一个类，这个类知道调用协议，函数返回值类型，函数接受的参数个数及类型。</p>
+<p>CFUNCTYPE工厂函数使用普通cdecl调用协议来为回调函数创建类型。并且，在Windows平台，WINFUNCTYPE工厂函数使用stdcall调用协议来为回调函数创建类型。</p>
+<p>这两个工厂函数在调用时，参数表都是使用返回值作为第一个参数，而将回调函数所需要的参数作为剩下的参数。</p>
+<p>在这里我将使用一个c标准库里的快排函数作为演示例子，快排是一个借助回调函数进行排序的函数。快排将会用到下面的整型数组：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div></pre></td><td class="code"><pre><div class="line">&gt;&gt;&gt; IntArray5 = c_int * 5</div><div class="line">&gt;&gt;&gt; ia = IntArray5(5, 1, 7, 33, 99)</div><div class="line">&gt;&gt;&gt; qsort = libc.qsort</div><div class="line">&gt;&gt;&gt; qsort.restype = None</div><div class="line">&gt;&gt;&gt;</div></pre></td></tr></table></figure>
+<p>快排调用时需要一个待排序的原始数据指针，数组元素个数，单个元素的大小，以及一个被称为回调的比较函数指针。回调函数形参表需要两个待比较元素类型的指针，它的返回值为，当第一个数据小于第二个时返回负整数，两个数据相等时返回0，其他情况返回正整数。</p>
+<p>所以，我们例子所需要的回调函数形参表是两个整型指针，它返回一个整数。首先我们用工厂函数创建回调函数的类型：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line">&gt;&gt;&gt; CMPFUNC = CFUNCTYPE(c_int, POINTER(c_int), POINTER(c_int))</div><div class="line">&gt;&gt;&gt;</div></pre></td></tr></table></figure>
+<p>在真正实现回调函数之前，我们简单打印获取到的参数，然后返回0（一步一步来）</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div></pre></td><td class="code"><pre><div class="line">&gt;&gt;&gt; def py_cmp_func(a, b):</div><div class="line">...     print &quot;py_cmp_func&quot;, a, b</div><div class="line">...     return 0</div><div class="line">...</div><div class="line">&gt;&gt;&gt;</div></pre></td></tr></table></figure>
+<p>创建C回调函数：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line">&gt;&gt;&gt; cmp_func = CMPFUNC(py_cmp_func)</div><div class="line">&gt;&gt;&gt;</div></pre></td></tr></table></figure>
+<p>然后运行一下：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div></pre></td><td class="code"><pre><div class="line">&gt;&gt;&gt; qsort(ia, len(ia), sizeof(c_int), cmp_func) # doctest: +WINDOWS</div><div class="line">py_cmp_func &lt;ctypes.LP_c_long object at 0x00...&gt; &lt;ctypes.LP_c_long object at 0x00...&gt;</div><div class="line">py_cmp_func &lt;ctypes.LP_c_long object at 0x00...&gt; &lt;ctypes.LP_c_long object at 0x00...&gt;</div><div class="line">py_cmp_func &lt;ctypes.LP_c_long object at 0x00...&gt; &lt;ctypes.LP_c_long object at 0x00...&gt;</div><div class="line">py_cmp_func &lt;ctypes.LP_c_long object at 0x00...&gt; &lt;ctypes.LP_c_long object at 0x00...&gt;</div><div class="line">py_cmp_func &lt;ctypes.LP_c_long object at 0x00...&gt; &lt;ctypes.LP_c_long object at 0x00...&gt;</div><div class="line">py_cmp_func &lt;ctypes.LP_c_long object at 0x00...&gt; &lt;ctypes.LP_c_long object at 0x00...&gt;</div><div class="line">py_cmp_func &lt;ctypes.LP_c_long object at 0x00...&gt; &lt;ctypes.LP_c_long object at 0x00...&gt;</div><div class="line">py_cmp_func &lt;ctypes.LP_c_long object at 0x00...&gt; &lt;ctypes.LP_c_long object at 0x00...&gt;</div><div class="line">py_cmp_func &lt;ctypes.LP_c_long object at 0x00...&gt; &lt;ctypes.LP_c_long object at 0x00...&gt;</div><div class="line">py_cmp_func &lt;ctypes.LP_c_long object at 0x00...&gt; &lt;ctypes.LP_c_long object at 0x00...&gt;</div><div class="line">&gt;&gt;&gt;</div></pre></td></tr></table></figure>
+<p>我们已经知道怎么访问指针指向的内容了，所以让我们重新定义一下回调函数：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div></pre></td><td class="code"><pre><div class="line">&gt;&gt;&gt; def py_cmp_func(a, b):</div><div class="line">...     print &quot;py_cmp_func&quot;, a[0], b[0]</div><div class="line">...     return 0</div><div class="line">...</div><div class="line">&gt;&gt;&gt; cmp_func = CMPFUNC(py_cmp_func)</div><div class="line">&gt;&gt;&gt;</div></pre></td></tr></table></figure>
+<p>这是我们在Windows上跑到的结果：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div></pre></td><td class="code"><pre><div class="line">&gt;&gt;&gt; qsort(ia, len(ia), sizeof(c_int), cmp_func) # doctest: +WINDOWS</div><div class="line">py_cmp_func 7 1</div><div class="line">py_cmp_func 33 1</div><div class="line">py_cmp_func 99 1</div><div class="line">py_cmp_func 5 1</div><div class="line">py_cmp_func 7 5</div><div class="line">py_cmp_func 33 5</div><div class="line">py_cmp_func 99 5</div><div class="line">py_cmp_func 7 99</div><div class="line">py_cmp_func 33 99</div><div class="line">py_cmp_func 7 33</div><div class="line">&gt;&gt;&gt;</div></pre></td></tr></table></figure>
+<p>有趣的是，在linux上排序函数运行更高效，它仅需要更少的比较的次数：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div></pre></td><td class="code"><pre><div class="line">&gt;&gt;&gt; qsort(ia, len(ia), sizeof(c_int), cmp_func) # doctest: +LINUX</div><div class="line">py_cmp_func 5 1</div><div class="line">py_cmp_func 33 99</div><div class="line">py_cmp_func 7 33</div><div class="line">py_cmp_func 5 7</div><div class="line">py_cmp_func 1 7</div><div class="line">&gt;&gt;&gt;</div></pre></td></tr></table></figure>
+<p>嗯，我们将要完成了！最后一步是要真正去对两个数据进行比较并且返回一个有用的结果：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div></pre></td><td class="code"><pre><div class="line">&gt;&gt;&gt; def py_cmp_func(a, b):</div><div class="line">...     print &quot;py_cmp_func&quot;, a[0], b[0]</div><div class="line">...     return a[0] - b[0]</div><div class="line">...</div><div class="line">&gt;&gt;&gt;</div></pre></td></tr></table></figure>
+<p>最后在Windows上运行的结果：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div></pre></td><td class="code"><pre><div class="line">&gt;&gt;&gt; qsort(ia, len(ia), sizeof(c_int), CMPFUNC(py_cmp_func)) # doctest: +WINDOWS</div><div class="line">py_cmp_func 33 7</div><div class="line">py_cmp_func 99 33</div><div class="line">py_cmp_func 5 99</div><div class="line">py_cmp_func 1 99</div><div class="line">py_cmp_func 33 7</div><div class="line">py_cmp_func 1 33</div><div class="line">py_cmp_func 5 33</div><div class="line">py_cmp_func 5 7</div><div class="line">py_cmp_func 1 7</div><div class="line">py_cmp_func 5 1</div><div class="line">&gt;&gt;&gt;</div></pre></td></tr></table></figure>
+<p>然后下面是linux上的结果:</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div></pre></td><td class="code"><pre><div class="line">&gt;&gt;&gt; qsort(ia, len(ia), sizeof(c_int), CMPFUNC(py_cmp_func)) # doctest: +LINUX</div><div class="line">py_cmp_func 5 1</div><div class="line">py_cmp_func 33 99</div><div class="line">py_cmp_func 7 33</div><div class="line">py_cmp_func 1 7</div><div class="line">py_cmp_func 5 7</div><div class="line">&gt;&gt;&gt;</div></pre></td></tr></table></figure>
+<p>很有趣地看到，Windows的快排比在linux版本的快排比较的次数多！</p>
+<p>我们可以简单检查一下排序结果：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div></pre></td><td class="code"><pre><div class="line">&gt;&gt;&gt; for i in ia: print i,</div><div class="line">...</div><div class="line">1 5 7 33 99</div><div class="line">&gt;&gt;&gt;</div></pre></td></tr></table></figure>
+<p>回调函数的重要提示：</p>
+<p>确保你在C代码的使用生命周期里保持引用CFUNCTYPE对象。ctypes并不会帮你做这样的事情，如果你没有做保证，它们就会被垃圾回收，然后当你调用这个回调函数时将会导致程序崩溃。</p>
+<h2 id="访问动态链接库导出的值"><a href="#访问动态链接库导出的值" class="headerlink" title="访问动态链接库导出的值"></a>访问动态链接库导出的值</h2><p>有时候，一个动态链接库不仅提供了函数，它还提供了变量。一个例子是，在Python自身库里使用了Py_OptimizeFlag标志变量，这个整型变量被设置为0，1，或者2，它依赖于python在启动时指定的-O或者-OO标志。<br>ctypes可以这样使用in_dll的类方法访问变量值。pythonapi是一个预定义符号可以访问Python C api：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div></pre></td><td class="code"><pre><div class="line">&gt;&gt;&gt; opt_flag = c_int.in_dll(pythonapi, &quot;Py_OptimizeFlag&quot;)</div><div class="line">&gt;&gt;&gt; print opt_flag</div><div class="line">c_long(0)</div><div class="line">&gt;&gt;&gt;</div></pre></td></tr></table></figure>
+<p>如果解析器使用-O命令启动，例子就会打印c_long(1)，或者c_long(2)如果指定-OO参数。</p>
+<p>Python的导出指针PyImport_FrozenModules也是一个扩展的例子展示指针的访问使用办法。</p>
+<p>根据Python docs文档：这个指针初始化指向一组”struct _frozen`”记录，以一个成员全部都是NULL或者0作为结束标志。当导入一个静态模块，它就会在这张表里面搜索。第三方代码可以利用此技巧提供一个静态模块的动态创建集合。</p>
+<p>所以熟悉这个指针证明还是挺有用的。为了限制例子的大小，我们仅展示这个表如果通过ctypes来访问。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div></pre></td><td class="code"><pre><div class="line">&gt;&gt;&gt; from ctypes import *</div><div class="line">&gt;&gt;&gt;</div><div class="line">&gt;&gt;&gt; class struct_frozen(Structure):</div><div class="line">...     _fields_ = [(&quot;name&quot;, c_char_p),</div><div class="line">...                 (&quot;code&quot;, POINTER(c_ubyte)),</div><div class="line">...                 (&quot;size&quot;, c_int)]</div><div class="line">...</div><div class="line">&gt;&gt;&gt;</div></pre></td></tr></table></figure>
+<p>我们已经定义struct_frozen的数据结构类型，所以我们可以获得指向这张表的指针：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div></pre></td><td class="code"><pre><div class="line">&gt;&gt;&gt; FrozenTable = POINTER(struct_frozen)</div><div class="line">&gt;&gt;&gt; table = FrozenTable.in_dll(pythonapi, &quot;PyImport_FrozenModules&quot;)</div><div class="line">&gt;&gt;&gt;</div></pre></td></tr></table></figure>
+<p>由于此表是一个struct_frozen记录的数据指针，所以我们可以迭代遍历它，不过我们必须保证结束我们的循环，因为此指针没有指明大小。迟早它会因为非法访问而导致崩溃，所以当我们访问到NULL实体时，最好结束循环：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div></pre></td><td class="code"><pre><div class="line">&gt;&gt;&gt; for item in table:</div><div class="line">...    print item.name, item.size</div><div class="line">...    if item.name is None:</div><div class="line">...        break</div><div class="line">...</div><div class="line">__hello__ 104</div><div class="line">__phello__ -104</div><div class="line">__phello__.spam 104</div><div class="line">None 0</div><div class="line">&gt;&gt;&gt;</div></pre></td></tr></table></figure>
+<p>事实上，标准Python有一个并不怎么出名的静态模块和一个静态包（相对于其他成员来说），它仅用于测试。试试用import <strong>hello</strong>吧。</p>
+<h2 id="意料之外"><a href="#意料之外" class="headerlink" title="意料之外"></a>意料之外</h2><p>在ctypes，有些坑可能你没想到。</p>
+<p>思考下面的例子：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div></pre></td><td class="code"><pre><div class="line">&gt;&gt;&gt; from ctypes import *</div><div class="line">&gt;&gt;&gt; class POINT(Structure):</div><div class="line">...     _fields_ = (&quot;x&quot;, c_int), (&quot;y&quot;, c_int)</div><div class="line">...</div><div class="line">&gt;&gt;&gt; class RECT(Structure):</div><div class="line">...     _fields_ = (&quot;a&quot;, POINT), (&quot;b&quot;, POINT)</div><div class="line">...</div><div class="line">&gt;&gt;&gt; p1 = POINT(1, 2)</div><div class="line">&gt;&gt;&gt; p2 = POINT(3, 4)</div><div class="line">&gt;&gt;&gt; rc = RECT(p1, p2)</div><div class="line">&gt;&gt;&gt; print rc.a.x, rc.a.y, rc.b.x, rc.b.y</div><div class="line">1 2 3 4</div><div class="line">&gt;&gt;&gt; # now swap the two points</div><div class="line">&gt;&gt;&gt; rc.a, rc.b = rc.b, rc.a</div><div class="line">&gt;&gt;&gt; print rc.a.x, rc.a.y, rc.b.x, rc.b.y</div><div class="line">3 4 3 4</div><div class="line">&gt;&gt;&gt;</div></pre></td></tr></table></figure>
+<p>嗯，我们当然期望最后一名打印3 4 1 2。到底发生了什么事？这里是上面rc.a, rc.b = rc.b, rc.a这一行的步骤：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div></pre></td><td class="code"><pre><div class="line">&gt;&gt;&gt; temp0, temp1 = rc.b, rc.a</div><div class="line">&gt;&gt;&gt; rc.a = temp0</div><div class="line">&gt;&gt;&gt; rc.b = temp1</div><div class="line">&gt;&gt;&gt;</div></pre></td></tr></table></figure>
+<p>注意，temp0和temp1都是使用了上述rc对象的内部缓存块对象。所以当执行rc.a = temp0时，拷贝了temp0的缓冲内容给rc的缓冲。依次地，又改为temp1的内容。所以最后一句rc.b = temp1并没有想像中那样的效果。<br>记住，检索结构体，联合体及数组并不是使用它们的拷贝，而是检索一个访问顶级对象相关缓冲区的封装对象。</p>
+<p>另外一个意想不到的例子是：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div></pre></td><td class="code"><pre><div class="line">&gt;&gt;&gt; s = c_char_p()</div><div class="line">&gt;&gt;&gt; s.value = &quot;abc def ghi&quot;</div><div class="line">&gt;&gt;&gt; s.value</div><div class="line">&apos;abc def ghi&apos;</div><div class="line">&gt;&gt;&gt; s.value is s.value</div><div class="line">False</div><div class="line">&gt;&gt;&gt;</div></pre></td></tr></table></figure>
+<p>为什么这里打印False？ctypes实例是一些包含内存块加上一些内容内存访问描述信息的对象。存储一个Python对象在内存块并不是存储对象本身，取而代之存储的是对象的内容。每次访问内容时都会构造一个新的Python对象！</p>
+<h2 id="可变大小的数据类型"><a href="#可变大小的数据类型" class="headerlink" title="可变大小的数据类型"></a>可变大小的数据类型</h2><p>ctypes提供了可变数组与结构体的支持（在0.9.9.7版本增加）。</p>
+<p>resize函数可以调整一个已经存在的ctypes对象的内存缓冲大小。这个函数以ctypes对象为第一个参数，以需要调整后的字节大小为第二个参数。重新调整的内存块大小不能小于原生对象类型的内存块大小，若你这么做，则会抛出ValueError：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div></pre></td><td class="code"><pre><div class="line">&gt;&gt;&gt; short_array = (c_short * 4)()</div><div class="line">&gt;&gt;&gt; print sizeof(short_array)</div><div class="line">8</div><div class="line">&gt;&gt;&gt; resize(short_array, 4)</div><div class="line">Traceback (most recent call last):</div><div class="line">    ...</div><div class="line">ValueError: minimum size is 8</div><div class="line">&gt;&gt;&gt; resize(short_array, 32)</div><div class="line">&gt;&gt;&gt; sizeof(short_array)</div><div class="line">32</div><div class="line">&gt;&gt;&gt; sizeof(type(short_array))</div><div class="line">8</div><div class="line">&gt;&gt;&gt;</div></pre></td></tr></table></figure>
+<p>这看起来不错，但怎么访问这个数据增加的元素呢？由于type方法仍然只知道有4个元素，当访问其他元素时我们会得到错误：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div></pre></td><td class="code"><pre><div class="line">&gt;&gt;&gt; short_array[:]</div><div class="line">[0, 0, 0, 0]</div><div class="line">&gt;&gt;&gt; short_array[7]</div><div class="line">Traceback (most recent call last):</div><div class="line">    ...</div><div class="line">IndexError: invalid index</div><div class="line">&gt;&gt;&gt;</div></pre></td></tr></table></figure>
+<p>ctypes中另外一种使用可变数据类型的方法是使用Python的动态语言特性，具体问题具体分析，当已经知道需要的数据大小时，才（重）定义数据类型。</p>
+<h2 id="bug-todo和未完成的东西"><a href="#bug-todo和未完成的东西" class="headerlink" title="bug, todo和未完成的东西"></a>bug, todo和未完成的东西</h2><p>没有实现枚举类型。你自己使用c_int作为基类就可以简单实现它。</p>
+<p>没有实现long double类型。</p>
+<h1 id="参考资料"><a href="#参考资料" class="headerlink" title="参考资料"></a>参考资料</h1><ol>
+<li><a href="http://starship.python.net/crew/theller/ctypes/tutorial.html#bugs-todo-and-non-implemented-things" target="_blank" rel="external">http://starship.python.net/crew/theller/ctypes/tutorial.html#bugs-todo-and-non-implemented-things</a><br>本文档翻译的文章。</li>
+<li><a href="http://gashero.iteye.com/blog/519837" target="_blank" rel="external">http://gashero.iteye.com/blog/519837</a><br>本文档主要借鉴参考的文章。</li>
+<li><a href="http://www.isnowfy.com/introduction-to-python-c-extension/" target="_blank" rel="external">http://www.isnowfy.com/introduction-to-python-c-extension/</a><br>简单列举了各种python的c扩展办法。</li>
+</ol>
+
+      
+    </div>
+
+    <div>
+      
+        
+
+      
+    </div>
+
+    <div>
+      
+        
+  <div style="padding: 10px 0; margin: 20px auto; width: 90%; text-align: center;">
+    <div>坚持原创技术分享，您的支持将鼓励我继续创作！</div>
+    <button id="rewardButton" disable="enable" onclick="var qr = document.getElementById('QR'); if (qr.style.display === 'none') {qr.style.display='block';} else {qr.style.display='none'}">
+      <span>赏</span>
+    </button>
+    <div id="QR" style="display: none;">
+      
+        <div id="wechat" style="display: inline-block">
+          <img id="wechat_qr" src="/images/wechatpay.jpg" alt="Noah Sun WeChat Pay"/>
+          <p>微信打赏</p>
+        </div>
+      
+      
+        <div id="alipay" style="display: inline-block">
+          <img id="alipay_qr" src="/images/alipay.jpg" alt="Noah Sun Alipay"/>
+          <p>支付宝打赏</p>
+        </div>
+      
+    </div>
+  </div>
+
+
+      
+    </div>
+
+    <div>
+      
+        
+  <ul class="post-copyright">
+    <li class="post-copyright-author">
+      <strong>本文作者：</strong>
+      Noah Sun
+    </li>
+    <li class="post-copyright-link">
+      <strong>本文链接：</strong>
+      <a href="http://www.noahsun.top/2017/09/17/ctypes使用指南/" title="ctypes使用指南">http://www.noahsun.top/2017/09/17/ctypes使用指南/</a>
+    </li>
+    <li class="post-copyright-license">
+      <strong>版权声明： </strong>
+      本博客所有文章除特别声明外，均采用 <a href="https://creativecommons.org/licenses/by-nc-sa/3.0/" rel="external nofollow" target="_blank">CC BY-NC-SA 3.0</a> 许可协议。转载请注明出处！
+    </li>
+  </ul>
+
+
+      
+    </div>
+
+    <footer class="post-footer">
+      
+        <div class="post-tags">
+          
+            <a href="/tags/ctypes/" rel="tag"># ctypes</a>
+          
+            <a href="/tags/Cross-language/" rel="tag"># Cross language</a>
+          
+        </div>
+      
+
+      
+      
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2017/08/05/Protocol-Buffers-使用教程/" rel="next" title="Protocol Buffers 使用教程">
+                <i class="fa fa-chevron-left"></i> Protocol Buffers 使用教程
+              </a>
+            
+          </div>
+
+          <span class="post-nav-divider"></span>
+
+          <div class="post-nav-prev post-nav-item">
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </article>
+
+
+
+    <div class="post-spread">
+      
+    </div>
+  </div>
+
+
+          </div>
+          
+
+
+          
+  <div class="comments" id="comments">
+    
+      <div id="disqus_thread">
+        <noscript>
+          Please enable JavaScript to view the
+          <a href="https://disqus.com/?ref_noscript">comments powered by Disqus.</a>
+        </noscript>
+      </div>
+    
+  </div>
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap" >
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <section class="site-overview sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+          <img class="site-author-image" itemprop="image"
+               src="/images/avatar.jpg"
+               alt="Noah Sun" />
+          <p class="site-author-name" itemprop="name">Noah Sun</p>
+           
+              <p class="site-description motion-element" itemprop="description">Noah Sun's Blog.</p>
+          
+        </div>
+        <nav class="site-state motion-element">
+
+          
+            <div class="site-state-item site-state-posts">
+              <a href="/archives/">
+                <span class="site-state-item-count">4</span>
+                <span class="site-state-item-name">日志</span>
+              </a>
+            </div>
+          
+
+          
+            
+            
+            <div class="site-state-item site-state-categories">
+              <a href="/categories/index.html">
+                <span class="site-state-item-count">2</span>
+                <span class="site-state-item-name">分类</span>
+              </a>
+            </div>
+          
+
+          
+            
+            
+            <div class="site-state-item site-state-tags">
+              <a href="/tags/index.html">
+                <span class="site-state-item-count">8</span>
+                <span class="site-state-item-name">标签</span>
+              </a>
+            </div>
+          
+
+        </nav>
+
+        
+
+        <div class="links-of-author motion-element">
+          
+            
+              <span class="links-of-author-item">
+                <a href="https://github.com/rukesun/" target="_blank" title="GitHub">
+                  
+                    <i class="fa fa-fw fa-github"></i>
+                  
+                  GitHub
+                </a>
+              </span>
+            
+              <span class="links-of-author-item">
+                <a href="https://www.facebook.com/Noah.D.Sun" target="_blank" title="Facebook">
+                  
+                    <i class="fa fa-fw fa-facebook"></i>
+                  
+                  Facebook
+                </a>
+              </span>
+            
+          
+        </div>
+
+        
+        
+
+        
+        
+
+        
+
+
+      </section>
+
+      
+      <!--noindex-->
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+
+            
+              
+            
+
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#ctypes-简介"><span class="nav-number">1.</span> <span class="nav-text">ctypes 简介</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#ctypes-入门"><span class="nav-number">2.</span> <span class="nav-text">ctypes 入门</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#载入动态链接库"><span class="nav-number">2.1.</span> <span class="nav-text">载入动态链接库</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#从载入的动态链接库中访问函数"><span class="nav-number">2.2.</span> <span class="nav-text">从载入的动态链接库中访问函数</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#调用函数"><span class="nav-number">2.3.</span> <span class="nav-text">调用函数</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#基本数据类型"><span class="nav-number">2.4.</span> <span class="nav-text">基本数据类型</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#调用函数，继续"><span class="nav-number">2.5.</span> <span class="nav-text">调用函数，继续</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#使用自定义数据类型调用函数"><span class="nav-number">2.6.</span> <span class="nav-text">使用自定义数据类型调用函数</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#指定必须的参数类型-函数原型"><span class="nav-number">2.7.</span> <span class="nav-text">指定必须的参数类型(函数原型)</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#返回类型"><span class="nav-number">2.8.</span> <span class="nav-text">返回类型</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#传递指针-或者传递参数引用"><span class="nav-number">2.9.</span> <span class="nav-text">传递指针(或者传递参数引用)</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#结构和联合"><span class="nav-number">2.10.</span> <span class="nav-text">结构和联合</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#结构-联合对齐和字节序"><span class="nav-number">2.11.</span> <span class="nav-text">结构/联合对齐和字节序</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#结构与联合中的位字段"><span class="nav-number">2.12.</span> <span class="nav-text">结构与联合中的位字段</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#数组"><span class="nav-number">2.13.</span> <span class="nav-text">数组</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#指针"><span class="nav-number">2.14.</span> <span class="nav-text">指针</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#类型转换"><span class="nav-number">2.15.</span> <span class="nav-text">类型转换</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#不完全的类型"><span class="nav-number">2.16.</span> <span class="nav-text">不完全的类型</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#回调函数"><span class="nav-number">2.17.</span> <span class="nav-text">回调函数</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#访问动态链接库导出的值"><span class="nav-number">2.18.</span> <span class="nav-text">访问动态链接库导出的值</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#意料之外"><span class="nav-number">2.19.</span> <span class="nav-text">意料之外</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#可变大小的数据类型"><span class="nav-number">2.20.</span> <span class="nav-text">可变大小的数据类型</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#bug-todo和未完成的东西"><span class="nav-number">2.21.</span> <span class="nav-text">bug, todo和未完成的东西</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#参考资料"><span class="nav-number">3.</span> <span class="nav-text">参考资料</span></a></li></ol></div>
+            
+
+          </div>
+        </section>
+      <!--/noindex-->
+      
+
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright" >
+  
+  &copy; 
+  <span itemprop="copyrightYear">2017</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">Noah Sun</span>
+</div>
+
+
+<div class="powered-by">
+  由 <a class="theme-link" href="https://hexo.io">Hexo</a> 强力驱动
+</div>
+
+<div class="theme-info">
+  主题 -
+  <a class="theme-link" href="https://github.com/iissnan/hexo-theme-next">
+    NexT.Pisces
+  </a>
+</div>
+
+
+        
+
+        
+      </div>
+    </footer>
+
+    
+      <div class="back-to-top">
+        <i class="fa fa-arrow-up"></i>
+        
+      </div>
+    
+
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  <script type="text/javascript" src="//cdn.jsdelivr.net/jquery/2.1.3/jquery.min.js"></script>
+
+  
+  <script type="text/javascript" src="//cdn.jsdelivr.net/fastclick/1.0.6/fastclick.min.js"></script>
+
+  
+  <script type="text/javascript" src="//cdn.jsdelivr.net/jquery.lazyload/1.9.3/jquery.lazyload.min.js"></script>
+
+  
+  <script type="text/javascript" src="//cdn.jsdelivr.net/velocity/1.2.3/velocity.min.js"></script>
+
+  
+  <script type="text/javascript" src="//cdn.jsdelivr.net/velocity/1.2.3/velocity.ui.min.js"></script>
+
+  
+  <script type="text/javascript" src="//cdn.jsdelivr.net/fancybox/2.1.5/jquery.fancybox.pack.js"></script>
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/utils.js?v=5.1.1"></script>
+
+  <script type="text/javascript" src="/js/src/motion.js?v=5.1.1"></script>
+
+
+
+  
+  
+
+
+  <script type="text/javascript" src="/js/src/affix.js?v=5.1.1"></script>
+
+  <script type="text/javascript" src="/js/src/schemes/pisces.js?v=5.1.1"></script>
+
+
+
+  
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=5.1.1"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=5.1.1"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/bootstrap.js?v=5.1.1"></script>
+
+
+
+  
+
+
+  
+
+    
+      <script id="dsq-count-scr" src="https://noahsun.disqus.com/count.js" async></script>
+    
+
+    
+      <script type="text/javascript">
+        var disqus_config = function () {
+          this.page.url = 'http://www.noahsun.top/2017/09/17/ctypes使用指南/';
+          this.page.identifier = '2017/09/17/ctypes使用指南/';
+          this.page.title = 'ctypes使用指南';
+        };
+        var d = document, s = d.createElement('script');
+        s.src = 'https://noahsun.disqus.com/embed.js';
+        s.setAttribute('data-timestamp', '' + +new Date());
+        (d.head || d.body).appendChild(s);
+      </script>
+    
+
+  
+
+
+
+
+	
+
+
+
+
+
+  
+
+
+
+
+
+
+
+
+  
+
+  <script type="text/javascript">
+    // Popup Window;
+    var isfetched = false;
+    var isXml = true;
+    // Search DB path;
+    var search_path = "search.xml";
+    if (search_path.length === 0) {
+      search_path = "search.xml";
+    } else if (/json$/i.test(search_path)) {
+      isXml = false;
+    }
+    var path = "/" + search_path;
+    // monitor main search box;
+
+    var onPopupClose = function (e) {
+      $('.popup').hide();
+      $('#local-search-input').val('');
+      $('.search-result-list').remove();
+      $('#no-result').remove();
+      $(".local-search-pop-overlay").remove();
+      $('body').css('overflow', '');
+    }
+
+    function proceedsearch() {
+      $("body")
+        .append('<div class="search-popup-overlay local-search-pop-overlay"></div>')
+        .css('overflow', 'hidden');
+      $('.search-popup-overlay').click(onPopupClose);
+      $('.popup').toggle();
+      var $localSearchInput = $('#local-search-input');
+      $localSearchInput.attr("autocapitalize", "none");
+      $localSearchInput.attr("autocorrect", "off");
+      $localSearchInput.focus();
+    }
+
+    // search function;
+    var searchFunc = function(path, search_id, content_id) {
+      'use strict';
+
+      // start loading animation
+      $("body")
+        .append('<div class="search-popup-overlay local-search-pop-overlay">' +
+          '<div id="search-loading-icon">' +
+          '<i class="fa fa-spinner fa-pulse fa-5x fa-fw"></i>' +
+          '</div>' +
+          '</div>')
+        .css('overflow', 'hidden');
+      $("#search-loading-icon").css('margin', '20% auto 0 auto').css('text-align', 'center');
+
+      $.ajax({
+        url: path,
+        dataType: isXml ? "xml" : "json",
+        async: true,
+        success: function(res) {
+          // get the contents from search data
+          isfetched = true;
+          $('.popup').detach().appendTo('.header-inner');
+          var datas = isXml ? $("entry", res).map(function() {
+            return {
+              title: $("title", this).text(),
+              content: $("content",this).text(),
+              url: $("url" , this).text()
+            };
+          }).get() : res;
+          var input = document.getElementById(search_id);
+          var resultContent = document.getElementById(content_id);
+          var inputEventFunction = function() {
+            var searchText = input.value.trim().toLowerCase();
+            var keywords = searchText.split(/[\s\-]+/);
+            if (keywords.length > 1) {
+              keywords.push(searchText);
+            }
+            var resultItems = [];
+            if (searchText.length > 0) {
+              // perform local searching
+              datas.forEach(function(data) {
+                var isMatch = false;
+                var hitCount = 0;
+                var searchTextCount = 0;
+                var title = data.title.trim();
+                var titleInLowerCase = title.toLowerCase();
+                var content = data.content.trim().replace(/<[^>]+>/g,"");
+                var contentInLowerCase = content.toLowerCase();
+                var articleUrl = decodeURIComponent(data.url);
+                var indexOfTitle = [];
+                var indexOfContent = [];
+                // only match articles with not empty titles
+                if(title != '') {
+                  keywords.forEach(function(keyword) {
+                    function getIndexByWord(word, text, caseSensitive) {
+                      var wordLen = word.length;
+                      if (wordLen === 0) {
+                        return [];
+                      }
+                      var startPosition = 0, position = [], index = [];
+                      if (!caseSensitive) {
+                        text = text.toLowerCase();
+                        word = word.toLowerCase();
+                      }
+                      while ((position = text.indexOf(word, startPosition)) > -1) {
+                        index.push({position: position, word: word});
+                        startPosition = position + wordLen;
+                      }
+                      return index;
+                    }
+
+                    indexOfTitle = indexOfTitle.concat(getIndexByWord(keyword, titleInLowerCase, false));
+                    indexOfContent = indexOfContent.concat(getIndexByWord(keyword, contentInLowerCase, false));
+                  });
+                  if (indexOfTitle.length > 0 || indexOfContent.length > 0) {
+                    isMatch = true;
+                    hitCount = indexOfTitle.length + indexOfContent.length;
+                  }
+                }
+
+                // show search results
+
+                if (isMatch) {
+                  // sort index by position of keyword
+
+                  [indexOfTitle, indexOfContent].forEach(function (index) {
+                    index.sort(function (itemLeft, itemRight) {
+                      if (itemRight.position !== itemLeft.position) {
+                        return itemRight.position - itemLeft.position;
+                      } else {
+                        return itemLeft.word.length - itemRight.word.length;
+                      }
+                    });
+                  });
+
+                  // merge hits into slices
+
+                  function mergeIntoSlice(text, start, end, index) {
+                    var item = index[index.length - 1];
+                    var position = item.position;
+                    var word = item.word;
+                    var hits = [];
+                    var searchTextCountInSlice = 0;
+                    while (position + word.length <= end && index.length != 0) {
+                      if (word === searchText) {
+                        searchTextCountInSlice++;
+                      }
+                      hits.push({position: position, length: word.length});
+                      var wordEnd = position + word.length;
+
+                      // move to next position of hit
+
+                      index.pop();
+                      while (index.length != 0) {
+                        item = index[index.length - 1];
+                        position = item.position;
+                        word = item.word;
+                        if (wordEnd > position) {
+                          index.pop();
+                        } else {
+                          break;
+                        }
+                      }
+                    }
+                    searchTextCount += searchTextCountInSlice;
+                    return {
+                      hits: hits,
+                      start: start,
+                      end: end,
+                      searchTextCount: searchTextCountInSlice
+                    };
+                  }
+
+                  var slicesOfTitle = [];
+                  if (indexOfTitle.length != 0) {
+                    slicesOfTitle.push(mergeIntoSlice(title, 0, title.length, indexOfTitle));
+                  }
+
+                  var slicesOfContent = [];
+                  while (indexOfContent.length != 0) {
+                    var item = indexOfContent[indexOfContent.length - 1];
+                    var position = item.position;
+                    var word = item.word;
+                    // cut out 100 characters
+                    var start = position - 20;
+                    var end = position + 80;
+                    if(start < 0){
+                      start = 0;
+                    }
+                    if (end < position + word.length) {
+                      end = position + word.length;
+                    }
+                    if(end > content.length){
+                      end = content.length;
+                    }
+                    slicesOfContent.push(mergeIntoSlice(content, start, end, indexOfContent));
+                  }
+
+                  // sort slices in content by search text's count and hits' count
+
+                  slicesOfContent.sort(function (sliceLeft, sliceRight) {
+                    if (sliceLeft.searchTextCount !== sliceRight.searchTextCount) {
+                      return sliceRight.searchTextCount - sliceLeft.searchTextCount;
+                    } else if (sliceLeft.hits.length !== sliceRight.hits.length) {
+                      return sliceRight.hits.length - sliceLeft.hits.length;
+                    } else {
+                      return sliceLeft.start - sliceRight.start;
+                    }
+                  });
+
+                  // select top N slices in content
+
+                  var upperBound = parseInt('1');
+                  if (upperBound >= 0) {
+                    slicesOfContent = slicesOfContent.slice(0, upperBound);
+                  }
+
+                  // highlight title and content
+
+                  function highlightKeyword(text, slice) {
+                    var result = '';
+                    var prevEnd = slice.start;
+                    slice.hits.forEach(function (hit) {
+                      result += text.substring(prevEnd, hit.position);
+                      var end = hit.position + hit.length;
+                      result += '<b class="search-keyword">' + text.substring(hit.position, end) + '</b>';
+                      prevEnd = end;
+                    });
+                    result += text.substring(prevEnd, slice.end);
+                    return result;
+                  }
+
+                  var resultItem = '';
+
+                  if (slicesOfTitle.length != 0) {
+                    resultItem += "<li><a href='" + articleUrl + "' class='search-result-title'>" + highlightKeyword(title, slicesOfTitle[0]) + "</a>";
+                  } else {
+                    resultItem += "<li><a href='" + articleUrl + "' class='search-result-title'>" + title + "</a>";
+                  }
+
+                  slicesOfContent.forEach(function (slice) {
+                    resultItem += "<a href='" + articleUrl + "'>" +
+                      "<p class=\"search-result\">" + highlightKeyword(content, slice) +
+                      "...</p>" + "</a>";
+                  });
+
+                  resultItem += "</li>";
+                  resultItems.push({
+                    item: resultItem,
+                    searchTextCount: searchTextCount,
+                    hitCount: hitCount,
+                    id: resultItems.length
+                  });
+                }
+              })
+            };
+            if (keywords.length === 1 && keywords[0] === "") {
+              resultContent.innerHTML = '<div id="no-result"><i class="fa fa-search fa-5x" /></div>'
+            } else if (resultItems.length === 0) {
+              resultContent.innerHTML = '<div id="no-result"><i class="fa fa-frown-o fa-5x" /></div>'
+            } else {
+              resultItems.sort(function (resultLeft, resultRight) {
+                if (resultLeft.searchTextCount !== resultRight.searchTextCount) {
+                  return resultRight.searchTextCount - resultLeft.searchTextCount;
+                } else if (resultLeft.hitCount !== resultRight.hitCount) {
+                  return resultRight.hitCount - resultLeft.hitCount;
+                } else {
+                  return resultRight.id - resultLeft.id;
+                }
+              });
+              var searchResultList = '<ul class=\"search-result-list\">';
+              resultItems.forEach(function (result) {
+                searchResultList += result.item;
+              })
+              searchResultList += "</ul>";
+              resultContent.innerHTML = searchResultList;
+            }
+          }
+
+          if ('auto' === 'auto') {
+            input.addEventListener('input', inputEventFunction);
+          } else {
+            $('.search-icon').click(inputEventFunction);
+            input.addEventListener('keypress', function (event) {
+              if (event.keyCode === 13) {
+                inputEventFunction();
+              }
+            });
+          }
+
+          // remove loading animation
+          $(".local-search-pop-overlay").remove();
+          $('body').css('overflow', '');
+
+          proceedsearch();
+        }
+      });
+    }
+
+    // handle and trigger popup window;
+    $('.popup-trigger').click(function(e) {
+      e.stopPropagation();
+      if (isfetched === false) {
+        searchFunc(path, 'local-search-input', 'local-search-result');
+      } else {
+        proceedsearch();
+      };
+    });
+
+    $('.popup-btn-close').click(onPopupClose);
+    $('.popup').click(function(e){
+      e.stopPropagation();
+    });
+    $(document).on('keyup', function (event) {
+      var shouldDismissSearchPopup = event.which === 27 &&
+        $('.search-popup').is(':visible');
+      if (shouldDismissSearchPopup) {
+        onPopupClose();
+      }
+    });
+  </script>
+
+
+
+
+
+  
+
+  
+  <script src="https://cdn1.lncld.net/static/js/av-core-mini-0.6.1.js"></script>
+  <script>AV.initialize("Cz56UW3FvEkwHB689nG2jLGm-gzGzoHsz", "zuFQDzA0SxPUkEfqOisL54YJ");</script>
+  <script>
+    function showTime(Counter) {
+      var query = new AV.Query(Counter);
+      var entries = [];
+      var $visitors = $(".leancloud_visitors");
+
+      $visitors.each(function () {
+        entries.push( $(this).attr("id").trim() );
+      });
+
+      query.containedIn('url', entries);
+      query.find()
+        .done(function (results) {
+          var COUNT_CONTAINER_REF = '.leancloud-visitors-count';
+
+          if (results.length === 0) {
+            $visitors.find(COUNT_CONTAINER_REF).text(0);
+            return;
+          }
+
+          for (var i = 0; i < results.length; i++) {
+            var item = results[i];
+            var url = item.get('url');
+            var time = item.get('time');
+            var element = document.getElementById(url);
+
+            $(element).find(COUNT_CONTAINER_REF).text(time);
+          }
+          for(var i = 0; i < entries.length; i++) {
+            var url = entries[i];
+            var element = document.getElementById(url);
+            var countSpan = $(element).find(COUNT_CONTAINER_REF);
+            if( countSpan.text() == '') {
+              countSpan.text(0);
+            }
+          }
+        })
+        .fail(function (object, error) {
+          console.log("Error: " + error.code + " " + error.message);
+        });
+    }
+
+    function addCount(Counter) {
+      var $visitors = $(".leancloud_visitors");
+      var url = $visitors.attr('id').trim();
+      var title = $visitors.attr('data-flag-title').trim();
+      var query = new AV.Query(Counter);
+
+      query.equalTo("url", url);
+      query.find({
+        success: function(results) {
+          if (results.length > 0) {
+            var counter = results[0];
+            counter.fetchWhenSave(true);
+            counter.increment("time");
+            counter.save(null, {
+              success: function(counter) {
+                var $element = $(document.getElementById(url));
+                $element.find('.leancloud-visitors-count').text(counter.get('time'));
+              },
+              error: function(counter, error) {
+                console.log('Failed to save Visitor num, with error message: ' + error.message);
+              }
+            });
+          } else {
+            var newcounter = new Counter();
+            /* Set ACL */
+            var acl = new AV.ACL();
+            acl.setPublicReadAccess(true);
+            acl.setPublicWriteAccess(true);
+            newcounter.setACL(acl);
+            /* End Set ACL */
+            newcounter.set("title", title);
+            newcounter.set("url", url);
+            newcounter.set("time", 1);
+            newcounter.save(null, {
+              success: function(newcounter) {
+                var $element = $(document.getElementById(url));
+                $element.find('.leancloud-visitors-count').text(newcounter.get('time'));
+              },
+              error: function(newcounter, error) {
+                console.log('Failed to create');
+              }
+            });
+          }
+        },
+        error: function(error) {
+          console.log('Error:' + error.code + " " + error.message);
+        }
+      });
+    }
+
+    $(function() {
+      var Counter = AV.Object.extend("Counter");
+      if ($('.leancloud_visitors').length == 1) {
+        addCount(Counter);
+      } else if ($('.post-title-link').length > 1) {
+        showTime(Counter);
+      }
+    });
+  </script>
+
+
+
+  
+
+  
+
+  
+
+  
+
+  
+
+</body>
+</html>
