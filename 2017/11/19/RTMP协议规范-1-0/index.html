@@ -1,0 +1,2303 @@
+<!doctype html>
+
+
+
+  
+
+
+<html class="theme-next pisces use-motion" lang="zh-CN,en,default">
+<head>
+  <meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+
+
+
+
+
+
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+    
+  
+  <link href="//cdn.jsdelivr.net/fancybox/2.1.5/jquery.fancybox.min.css" rel="stylesheet" type="text/css" />
+
+
+
+
+  
+  
+  
+  
+
+  
+    
+    
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+    
+    
+    <link href="//fonts.googleapis.com/css?family=Lato:300,300italic,400,400italic,700,700italic&subset=latin,latin-ext" rel="stylesheet" type="text/css">
+  
+
+
+
+
+
+
+  
+
+<link href="//maxcdn.bootstrapcdn.com/font-awesome/4.6.2/css/font-awesome.min.css" rel="stylesheet" type="text/css" />
+
+<link href="/css/main.css?v=5.1.1" rel="stylesheet" type="text/css" />
+
+
+  <meta name="keywords" content="RTMP," />
+
+
+
+
+
+
+
+
+  <link rel="shortcut icon" type="image/x-icon" href="/favicon.ico?v=5.1.1" />
+
+
+
+
+
+
+<meta name="description" content="译注本文档主要翻译于rtmp specification 1.0。 绝大部分使用直译，小部分使用意译。专有名词基本不翻译，既保留规范的原意，又不会感觉翻译起来怪怪的。 IntroductionAdobe’s Real Time Messaging Protocol (RTMP)通过一个可靠的流传输通道提供双向的消息复用服务，流传输通道类似于 TCP [RFC0793]，目的是在通信双方之间并行传输">
+<meta name="keywords" content="RTMP">
+<meta property="og:type" content="article">
+<meta property="og:title" content="RTMP协议规范_1.0">
+<meta property="og:url" content="http://www.noahsun.top/2017/11/19/RTMP协议规范-1-0/index.html">
+<meta property="og:site_name" content="Noah Sun&#39;s Home">
+<meta property="og:description" content="译注本文档主要翻译于rtmp specification 1.0。 绝大部分使用直译，小部分使用意译。专有名词基本不翻译，既保留规范的原意，又不会感觉翻译起来怪怪的。 IntroductionAdobe’s Real Time Messaging Protocol (RTMP)通过一个可靠的流传输通道提供双向的消息复用服务，流传输通道类似于 TCP [RFC0793]，目的是在通信双方之间并行传输">
+<meta property="og:locale" content="zh-CN">
+<meta property="og:image" content="http://ou7ri10jn.bkt.clouddn.com/rtmp_specification_1.0/5-2-2_C0_S0_bits.png">
+<meta property="og:image" content="http://ou7ri10jn.bkt.clouddn.com/rtmp_specification_1.0/5-2-3_C1_S1_bits.png">
+<meta property="og:image" content="http://ou7ri10jn.bkt.clouddn.com/rtmp_specification_1.0/5-2-4_C2_S2_bits.png">
+<meta property="og:image" content="http://ou7ri10jn.bkt.clouddn.com/rtmp_specification_1.0/5-2-5_PictorialRepresentationHandshake.png">
+<meta property="og:image" content="http://ou7ri10jn.bkt.clouddn.com/rtmp_specification_1.0/5-3-1_ChunkFormat.png">
+<meta property="og:image" content="http://ou7ri10jn.bkt.clouddn.com/rtmp_specification_1.0/5-3-1-1_ChunkBasicHeader1.png">
+<meta property="og:image" content="http://ou7ri10jn.bkt.clouddn.com/rtmp_specification_1.0/5-3-1-1_ChunkBasicHeader2.png">
+<meta property="og:image" content="http://ou7ri10jn.bkt.clouddn.com/rtmp_specification_1.0/5-3-1-1_ChunkBasicHeader3.png">
+<meta property="og:image" content="http://ou7ri10jn.bkt.clouddn.com/rtmp_specification_1.0/5-3-1-2-1_ChunkMessageHeaderType0.png">
+<meta property="og:image" content="http://ou7ri10jn.bkt.clouddn.com/rtmp_specification_1.0/5-3-1-2-2_ChunkMessageHeaderType1.png">
+<meta property="og:image" content="http://ou7ri10jn.bkt.clouddn.com/rtmp_specification_1.0/5-3-1-2-3_ChunkMessageHeaderType2.png">
+<meta property="og:image" content="http://ou7ri10jn.bkt.clouddn.com/rtmp_specification_1.0/5-3-2-1_SampleAudioMessagesToBeMadeIntoChunks.png">
+<meta property="og:image" content="http://ou7ri10jn.bkt.clouddn.com/rtmp_specification_1.0/5-3-2-1_FormatOfEachOfTheChunksOfAudioMessages.png">
+<meta property="og:image" content="http://ou7ri10jn.bkt.clouddn.com/rtmp_specification_1.0/5-3-2-2_SampleMessageToBeBrokenToChunks.png">
+<meta property="og:image" content="http://ou7ri10jn.bkt.clouddn.com/rtmp_specification_1.0/5-3-2-2_FormatOfEachOfTheChunks.png">
+<meta property="og:image" content="http://ou7ri10jn.bkt.clouddn.com/rtmp_specification_1.0/5-4-1_PayloadForTheSetChunkSizeProtocolMessage.png">
+<meta property="og:image" content="http://ou7ri10jn.bkt.clouddn.com/rtmp_specification_1.0/5-4-2_PayloadForTheAbortMessageProtocolMessage.png">
+<meta property="og:image" content="http://ou7ri10jn.bkt.clouddn.com/rtmp_specification_1.0/5-4-3_PayloadForTheAcknowledgementProtocolMessage.png">
+<meta property="og:image" content="http://ou7ri10jn.bkt.clouddn.com/rtmp_specification_1.0/5-4-4_PayloadForTheWindowAcknowledgementSizeProtocolMessage.png">
+<meta property="og:image" content="http://ou7ri10jn.bkt.clouddn.com/rtmp_specification_1.0/5-4-5_PayloadForTheSetPeerBandwidthProtocolMessage.png">
+<meta property="og:image" content="http://ou7ri10jn.bkt.clouddn.com/rtmp_specification_1.0/6-1-1_MessageHeader.png">
+<meta property="og:image" content="http://ou7ri10jn.bkt.clouddn.com/rtmp_specification_1.0/6-2_PayloadForTheUserControlProtocolMessage.png">
+<meta property="og:image" content="http://ou7ri10jn.bkt.clouddn.com/rtmp_specification_1.0/7-1-3_TheSharedObjectMessageFormat.png">
+<meta property="og:image" content="http://ou7ri10jn.bkt.clouddn.com/rtmp_specification_1.0/7-1-6_TheAggregateMessageFormat.png">
+<meta property="og:image" content="http://ou7ri10jn.bkt.clouddn.com/rtmp_specification_1.0/7-2-1-1_MessageFlowInTheConnectCommand.png">
+<meta property="og:image" content="http://ou7ri10jn.bkt.clouddn.com/rtmp_specification_1.0/7-2-2-1_MessageFlowInThePlayCommand.png">
+<meta property="og:image" content="http://ou7ri10jn.bkt.clouddn.com/rtmp_specification_1.0/7-2-2-2_MessageFlowInThePlay2Command.png">
+<meta property="og:image" content="http://ou7ri10jn.bkt.clouddn.com/rtmp_specification_1.0/7-3-1_MessageFlowInPublishingAVideoStream.png">
+<meta property="og:image" content="http://ou7ri10jn.bkt.clouddn.com/rtmp_specification_1.0/7-3-2_SharedObjectMessageBroadcast.png">
+<meta property="og:image" content="http://ou7ri10jn.bkt.clouddn.com/rtmp_specification_1.0/7-3-3_PublishingMetadata.png">
+<meta property="og:updated_time" content="2018-02-14T14:33:39.000Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="RTMP协议规范_1.0">
+<meta name="twitter:description" content="译注本文档主要翻译于rtmp specification 1.0。 绝大部分使用直译，小部分使用意译。专有名词基本不翻译，既保留规范的原意，又不会感觉翻译起来怪怪的。 IntroductionAdobe’s Real Time Messaging Protocol (RTMP)通过一个可靠的流传输通道提供双向的消息复用服务，流传输通道类似于 TCP [RFC0793]，目的是在通信双方之间并行传输">
+<meta name="twitter:image" content="http://ou7ri10jn.bkt.clouddn.com/rtmp_specification_1.0/5-2-2_C0_S0_bits.png">
+
+
+
+<script type="text/javascript" id="hexo.configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    root: '/',
+    scheme: 'Pisces',
+    sidebar: {"position":"left","display":"post","offset":12,"offset_float":0,"b2t":false,"scrollpercent":false},
+    fancybox: true,
+    motion: true,
+    duoshuo: {
+      userId: '0',
+      author: '博主'
+    },
+    algolia: {
+      applicationID: '',
+      apiKey: '',
+      indexName: '',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    }
+  };
+</script>
+
+
+
+  <link rel="canonical" href="http://www.noahsun.top/2017/11/19/RTMP协议规范-1-0/"/>
+
+
+
+
+
+  <title>RTMP协议规范_1.0 | Noah Sun's Home</title>
+  
+
+
+
+
+<script>
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+            (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+          m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','https://www.google-analytics.com/analytics.js','ga');
+  ga('create', 'UA-102233237-1', 'auto');
+  ga('send', 'pageview');
+</script>
+
+
+  <script type="text/javascript">
+    var _hmt = _hmt || [];
+    (function() {
+      var hm = document.createElement("script");
+      hm.src = "https://hm.baidu.com/hm.js?07c7e0461feabfd55d89458a5c4ae94b";
+      var s = document.getElementsByTagName("script")[0];
+      s.parentNode.insertBefore(hm, s);
+    })();
+  </script>
+
+
+
+
+
+
+
+
+
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="zh-CN">
+
+  
+  
+    
+  
+
+  <div class="container sidebar-position-left page-post-detail ">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-wrapper">
+  <div class="site-meta ">
+    
+
+    <div class="custom-logo-site-title">
+      <a href="/"  class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title">Noah Sun's Home</span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+      
+        <p class="site-subtitle"></p>
+      
+  </div>
+
+  <div class="site-nav-toggle">
+    <button>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+    </button>
+  </div>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu">
+      
+        
+        <li class="menu-item menu-item-home">
+          <a href="/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-home"></i> <br />
+            
+            首页
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-archive"></i> <br />
+            
+            归档
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-categories">
+          <a href="/categories/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-th"></i> <br />
+            
+            分类
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-tags">
+          <a href="/tags/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-tags"></i> <br />
+            
+            标签
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-about">
+          <a href="/about/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-user"></i> <br />
+            
+            关于
+          </a>
+        </li>
+      
+
+      
+        <li class="menu-item menu-item-search">
+          
+            <a href="javascript:;" class="popup-trigger">
+          
+            
+              <i class="menu-item-icon fa fa-search fa-fw"></i> <br />
+            
+            搜索
+          </a>
+        </li>
+      
+    </ul>
+  
+
+  
+    <div class="site-search">
+      
+  <div class="popup search-popup local-search-popup">
+  <div class="local-search-header clearfix">
+    <span class="search-icon">
+      <i class="fa fa-search"></i>
+    </span>
+    <span class="popup-btn-close">
+      <i class="fa fa-times-circle"></i>
+    </span>
+    <div class="local-search-input-wrapper">
+      <input autocomplete="off"
+             placeholder="搜索..." spellcheck="false"
+             type="text" id="local-search-input">
+    </div>
+  </div>
+  <div id="local-search-result"></div>
+</div>
+
+
+
+    </div>
+  
+</nav>
+
+
+
+ </div>
+    </header>
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
+    <link itemprop="mainEntityOfPage" href="http://www.noahsun.top/2017/11/19/RTMP协议规范-1-0/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="Noah Sun">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/images/avatar.jpg">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Noah Sun's Home">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">RTMP协议规范_1.0</h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2017-11-19T21:52:08+08:00">
+                2017-11-19
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+            <span class="post-category" >
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/Technology/" itemprop="url" rel="index">
+                    <span itemprop="name">Technology</span>
+                  </a>
+                </span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+              <span class="post-comments-count">
+                <span class="post-meta-divider">|</span>
+                <span class="post-meta-item-icon">
+                  <i class="fa fa-comment-o"></i>
+                </span>
+                <a href="/2017/11/19/RTMP协议规范-1-0/#comments" itemprop="discussionUrl">
+                  <span class="post-comments-count fb-comments-count" data-href="http://www.noahsun.top/2017/11/19/RTMP协议规范-1-0/" itemprop="commentCount">0</span> comments
+                </a>
+              </span>
+            
+          
+
+          
+          
+             <span id="/2017/11/19/RTMP协议规范-1-0/" class="leancloud_visitors" data-flag-title="RTMP协议规范_1.0">
+               <span class="post-meta-divider">|</span>
+               <span class="post-meta-item-icon">
+                 <i class="fa fa-eye"></i>
+               </span>
+               
+                 <span class="post-meta-item-text">阅读次数 </span>
+               
+                 <span class="leancloud-visitors-count"></span>
+             </span>
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <h1 id="译注"><a href="#译注" class="headerlink" title="译注"></a>译注</h1><p>本文档主要翻译于<a href="http://wwwimages.adobe.com/content/dam/Adobe/en/devnet/rtmp/pdf/rtmp_specificat
+ion_1.0.pdf" target="_blank" rel="external">rtmp specification 1.0</a>。</p>
+<p>绝大部分使用直译，小部分使用意译。专有名词基本不翻译，既保留规范的原意，又不会感觉翻译起来怪怪的。</p>
+<h1 id="Introduction"><a href="#Introduction" class="headerlink" title="Introduction"></a>Introduction</h1><p>Adobe’s Real Time Messaging Protocol (RTMP)通过一个可靠的流传输通道提供双向的消息复用服务，流传输通道类似于 TCP [RFC0793]，目的是在通信双方之间并行传输带有关联时间信息的音视频流和数据消息。实现通常按不同类型的消息分配不同的优先级，从而在传输带宽受限时可以影响消息在底层流传输通道的入队顺序。<br>本文档描述了实时消息传递协议的语法和操作。</p>
+<h2 id="Terminology"><a href="#Terminology" class="headerlink" title="Terminology"></a>Terminology</h2><p>本文档中的关键词，”MUST”、”MUST NOT”、”REQUIRED”、”SHALL”、”SHALL NOT”、<br>“SHOULD”、”SHOULD NOT”、”RECOMMENDED”、”NOT<br>RECOMMENDED”、”MAY”和”OPTIONAL”，都在[RFC2119]中解释描述。</p>
+<h1 id="Contributors"><a href="#Contributors" class="headerlink" title="Contributors"></a>Contributors</h1><p>Rajesh Mallipeddi，Adobe System 原成员，起草了本文档原始规范，并提供大部分的原始内容。<br>Mohit Srivastava，Adobe System 成员，推动了本规范的发展。</p>
+<h1 id="Definitions"><a href="#Definitions" class="headerlink" title="Definitions"></a>Definitions</h1><p>Payload：包含在一个包中的数据，比如音频采样数据或者视频压缩数据。有效载荷的格式和解释超出了本文档的范围。<br>Packet：一个数据包由固定头 header 和 payload 数据组成。一些底层的协议可能需要定义该数据包的封装。<br>Port：传输协议用来区分在一个给定的主机内的多个目的地的抽象。TCP/IP<br>协议使用小正整数来识别端口。OSI 传输层使用的传输选择器（TSEL）相当于端口。<br>Transport address：网络地址和端口的组合用来识别一个传输层级别的端点，比如一个IP 地址和TCP 端口。包从源Transport address 传输到目标的Transport<br>address。<br>Message stream：消息流的逻辑传输通道。<br>Message stream ID：每个消息都有一个与它相关联的 ID，以确定它的流在哪个消息流中。<br>Chunk：一段消息。消息被拆分成小的部分并且它们在网络发出去之前被转换。<br>Chunk stream：允许在一个特定方向上 chunk 流动的通信的逻辑通道。chunk<br>stream 可以从客户端传输到服务器或者反过来传输。<br>Chunk stream ID：每一块 chunk 都有一个与它关联的 ID，以标识它所在的chunk stream。<br>Multiplexing：使单独的音频/视频数据转换成一个连贯的音频/视频流的过程，使得有可能同时传输多个视频和音频。<br>DeMultiplexing：多路传输的反向过程，其中交错的音频和视频数据被组装成原始的音频和视频数据。<br>Remote Procedure Call (RPC)：允许客户端或服务器在对等端调用子程序或过程的请求。<br>Metadata：关于数据的描述。视频的元数据包括视频名称、持续时间、创作日期等。<br>Application Instance：服务器上的应用程序实例，客户端连接通过它来发送连接请求。<br>Action Message Format (AMF)：一个紧凑的二进制格式，用于序列化的<br>ActionScript 对象图。AMF 有两种版本：AMF 0 [AMF0]和 AMF 3 [AMF3]。</p>
+<h1 id="Byte-Order-Alignment-and-Time-Format"><a href="#Byte-Order-Alignment-and-Time-Format" class="headerlink" title="Byte Order, Alignment, and Time Format"></a>Byte Order, Alignment, and Time Format</h1><p>所有的整型字段都使用网络字节序传输，字节 0 为第一个字节，第 0 位在一个字或字段中是最重要的位。这种字节顺序俗称为大端模式。这种传输顺序在 IP 协议[RFC0791]中详细描述。如果没有另外说明，本文档中的数字常量都是十进制。<br>除非另有规定，RTMP 的所有数据都是字节对齐的；例如，一个 16 位的字段可能在一个奇数的字节偏移上。该位置如果指定填充，则填充字节值应该为零。<br>时间戳在 RTMP 是作为一个相对于未知时期的毫秒整数。通常，每个流将以时间戳 0 作为开始，但这不是必需的，只要两端在时间基准能达成一致即可。注意，这意味着任何在多个流的同步（尤其是独立的主机）需要一些 RTMP 之外的机制协助。<br>因为时间戳是 32 位长，他们每过 49 天，17 小时，2 分钟，47.296 秒就会轮转。因为数据流允许连续地，甚至可能多年不断地运行，一个 RTMP 应用在处理时间戳时应该使用序列号算法[RFC1982]，并且应该能够环绕式处理。 例如， 一个应用程序假定所有相邻的时间戳在 2 ^ 31 - 1 毫秒内都是彼此相邻的，所以10000 在 4000000000 后面，3000000000 在 4000000000 的前面。<br>相对之前提到的时间戳，时间戳增量也可以表示为无符号整数的毫秒。时间戳增量可能是 24 或 32 位长。</p>
+<h1 id="RTMP-Chunk-Stream"><a href="#RTMP-Chunk-Stream" class="headerlink" title="RTMP Chunk Stream"></a>RTMP Chunk Stream</h1><p>本节详述实时消息协议块流（RTMP 流块）。它为更高层次的多媒体流协议提供了复用和打包服务。<br>虽然 RTMP 块流设计工作于实时消息协议（第 6 节），但它可以处理任何发送一个消息流的协议。每个消息包含时间戳和 payload 类型识别。RTMP Chunk<br>Stream 和 RTMP 是适合多种音视频应用，包括一对一和一对多的直播点播服务， 交互式视频会议应用。<br>当使用一个可靠的传输协议如 TCP [RFC0793]，RTMP Chunk Stream 提供有保障的，按时间戳顺序的，端到端的，跨多个流的所有消息传输。RTMP Chunk Stream 不提供任何优先级控制或类似的形式，但可以通过更高级别的协议提供这样的优先级顺序。例如，基于每一个消息的发送或确认时间，一个实时视频服务器可能会选择放弃一个缓慢的客户端视频消息，以确保音频消息是及时收到的。<br>RTMP Chunk Stream 包括自带的协议控制信息，并且还为更高级别的协议嵌入用户控制消息提供了一种机制。</p>
+<h2 id="Message-Format"><a href="#Message-Format" class="headerlink" title="Message Format"></a>Message Format</h2><p>消息可以分割成多个 chunk 的格式，以支持取决于一个更高级别协议的复用。然而，消息格式应该包含用于创建 chunk 的以下字段。<br>Timestamp：消息的时间戳。这个字段可以传输 4 个字节。<br>Length：消息 payload 的长度。如果消息头不能省略，它应该包括在该长度中。此字段在 chunk header 中占用 3 个字节。<br>Type Id：一系列的类型 ID 被保留用于协议控制消息。这些传播信息的消息通过 RTMP Chunk Stream 协议和高层协议处理。所有其他类型的 ID 对高级别的协议是可用的，并被 RTMP Chunk Stream 视为不透明数值。事实上，在 RTMP Chunk Stream 中没有要求这些值被用来作为一个类型；所有（非协议）消息可能是同一类型，或应用程序可以使用此字段来区分同步轨道而不是类型。此字段占用 chunk header 中的 1 个字节。<br>Message Stream ID：消息流 ID 可以是任意的值。同一 Chunk Stream 上的不同的多路复用消息流是基于它们的消息流 ID 进行多路解码的。除此之外，据RTMP Chunk Stream 而言，这是一个不透明的值。这个字段以小端格式在 chunk header 中占用 4 个字节。</p>
+<h1 id="Handshake"><a href="#Handshake" class="headerlink" title="Handshake"></a>Handshake</h1><p>RTMP 连接以握手为开始。握手不同于协议的其余部分，它由三个静态大小的 chunk，而不是由可变大小的带有头的 chunk 组成。<br>客户端（已启动连接的端点）和服务器每方都分别发送相同的三个 chunk。为了方便表达，当由客户端发送时，这些 chunk 将被命名为 C0，C1 和 C2；当由服务器发送时，它们被命名为 S0，S1，S2。</p>
+<h3 id="Handshake-Sequence"><a href="#Handshake-Sequence" class="headerlink" title="Handshake Sequence"></a>Handshake Sequence</h3><p>握手开始，客户端发送 C0，C1 chunk。<br>客户端必须等到 S1 收到之后才能发送 C2。<br>客户端必须等到 S2 收到之后才能发送其他数据。</p>
+<p>服务器必须等到 C0 或可能 C1 收到之后才能发送 S0 和 S1。服务器必须等到 C1 收到之后才能发送 S2。服务器必须等到 C2 收到之后才能发送其他数据。</p>
+<h3 id="C0-and-S0-Format"><a href="#C0-and-S0-Format" class="headerlink" title="C0 and S0 Format"></a>C0 and S0 Format</h3><p>C0 和 S0 包是一个单字节，视为一个单一的 8 位整数字段：<br><img src="http://ou7ri10jn.bkt.clouddn.com/rtmp_specification_1.0/5-2-2_C0_S0_bits.png" alt="C0_S0_bits"><br>以下是 C0/S0 包的字段：<br>Version（8 位）：在 C0，此字段标识客户端所请求的 RTMP 协议版本。在<br>S0，此字段标识服务器选择的 RTMP 协议版本。本规范定义的版本号为 3。值0-2 由先前专有产品使用，现已弃用；4-31 留待将来实现；32-255 不允许使用（以区分 RTMP 和文本协议，因为它总是以一个可打印字符为开始）。当识别不出客户端请求的版本时，服务器应该响应版本号 3。客户端可能会选择降级到版本3，或放弃握手。</p>
+<h3 id="C1-and-S1-Format"><a href="#C1-and-S1-Format" class="headerlink" title="C1 and S1 Format"></a>C1 and S1 Format</h3><p>C1 和 S1 包都是 1536 个字节长，包括以下字段：<br><img src="http://ou7ri10jn.bkt.clouddn.com/rtmp_specification_1.0/5-2-3_C1_S1_bits.png" alt="C1_S1_bits"><br>Time （4 字节）：本字段包含一个时间戳，这应该作为未来从这个端点发出的所有块的时间基准。这可能是 0 ， 或一些任意的值。为了同步多个chunkstream，此端点可能要发送其他 chunkstream 的时间戳的当前值。<br>Zero（4 个字节）：这个字段必须都是 0。<br>Random data （1528 个字节）：此字段可以包含任何任意值。由于每个端点必须区分它发起的握手的应答和对端发起的握手，这个数据应该发送足够随机的东西。但不需要加密的安全性，甚至不需要动态值。</p>
+<h3 id="C2-and-S2-Format"><a href="#C2-and-S2-Format" class="headerlink" title="C2 and S2 Format"></a>C2 and S2 Format</h3><p>C2 和 S2 包都是 1536 个字节长，几乎是 S1 和 C1 的复制（分别地），它们包括以下字段：<br><img src="http://ou7ri10jn.bkt.clouddn.com/rtmp_specification_1.0/5-2-4_C2_S2_bits.png" alt="C2_S2_bits"></p>
+<p>Time（4 个字节）：该字段必须包含对方包内的发送时间戳，它分别在 S1<br>（ 对 于            C2） 或            C1（ 对 于    S2） 。<br>Time2（4 个字节）：该字段必须包含对方前面的包（S1 或 C1）被读取的时间戳。<br>Random echo（1528 个字节）：该字段必须包含对方发送的包（S1 或 C1） 的随机数字段，分别在 S1（对于 C2）和 C1（对于 S2）。每个端都可以使用 time 和 time2 字段与当前时间戳作为连接的带宽和/或延迟的快速评估，但这不太可能有用。</p>
+<h3 id="Handshake-Diagram"><a href="#Handshake-Diagram" class="headerlink" title="Handshake Diagram"></a>Handshake Diagram</h3><p><img src="http://ou7ri10jn.bkt.clouddn.com/rtmp_specification_1.0/5-2-5_PictorialRepresentationHandshake.png" alt="PictorialRepresentationHandshake"></p>
+<p>下面介绍握手图中所提到的状态：<br>Uninitialized：协议版本号在这个阶段中发送。客户端和服务器都是未初始化。该客户端在 C0 包发送协议版本号。如果服务器支持该版本，它将应答 S0 和 S1。如果没有，服务器响采取适当的行为应答。在 RTMP，这个动作是终止连接。<br>Version Sent：在未初始化状态之后，客户端和服务器都处在发送版本号的状态。客户端正在等待包 S1，而服务器等待包 C1。在收到期待的包之后，客户端发送数据包 C2 而服务器发送数据包 S2。然后状态就变成 Ack Sent。<br>Ack Sent：客户端和服务端分别等待 S2 和 C2。<br>Handshake Done：客户端和服务器可以交换消息的状态。</p>
+<h2 id="Chunking"><a href="#Chunking" class="headerlink" title="Chunking"></a>Chunking</h2><p>在握手之后，连接多路复用一个或多个 chunk stream。每个 chunk stream 都从一个消息流中传送一个类型的消息。创建的每个 chunk 都有一个与它关联的唯一标识，称为块流标识（chunk stream ID）。chunk 在网络上传输。在传输的过程中，每一个 chunk 必须在下一个 chunk 之前全部发送。在接收端，chunk 被组装成基于 chunk stream ID 的消息。<br>chunk 允许更高层协议上的大消息分解成较小的信息，例如防止大的优先级低的消息（如视频）阻塞小的高优先级的消息（如音频或控制）。<br>chunk 也让小消息以较小的开销被发送，因为 chunk header 包含压缩指示的信息，否则将被包含在消息本身。<br>chunk 大小是可配置的。它可以使用 chunk 大小控制消息来设置（第 5.4.1 节）。较大的 chunk 大小降低了处理器的使用率，但也导致更大的写入，在连接带宽较低时，可以延迟其他内容。较小的 chunk 不适合高比特率的流。chunk 大小在每个方向上都是独立维护的。</p>
+<h3 id="Chunk-Format"><a href="#Chunk-Format" class="headerlink" title="Chunk Format"></a>Chunk Format</h3><p>每一个 chunk 都包含头部和数据。头本身有三个部分：</p>
+<p><img src="http://ou7ri10jn.bkt.clouddn.com/rtmp_specification_1.0/5-3-1_ChunkFormat.png" alt="ChunkFormat"></p>
+<p>Basic Header（1 到 3 个字节）：此字段对 chunk stream ID 和 chunk type 进行编码。chunk type 决定 message header 的编码格式。它的长度完全取决于 chunk stream ID，这是一个可变长度的字段。<br>Message Header（0，3，7 或者 1 个字节）：该字段对发送的消息进行编码<br>（无论是在整体还是部分）。长度可以用 chunk header 中指定的 chunk type 来确定。<br>Extended Timestamp（0 或者 4 个字节）：这个字段在一定情况下出现，取决于 Chunk Message header 中编码的时间戳或时间戳差量。更多信息见 5.3.1.3 节。<br>Chunk Data（变长大小）：此 chunk 的有效负载，大小不超过配置的最大块大小。</p>
+<h4 id="Chunk-Basic-Header"><a href="#Chunk-Basic-Header" class="headerlink" title="Chunk Basic Header"></a>Chunk Basic Header</h4><p>Chunk Basic Header 编码 chunk stream ID 和 chunk 类型（按下图 FMT 字段表示）。chunk 类型决定已编码的消息头的格式。Chunk Basic Header 字段可能是 1，2，或 3 个字节，这取决于 chunk stream ID。<br>一个实现应该使用可以保存 ID 的最小表示（按需编码）。<br>该协议使用 3-65599 的 ID 支持多达 65597 个流。0，1，和 2 的 ID 是保留值。值 0 表示 2 字节的形式，并且 ID 在 64-319 的范围（第二字节+64）。值 1 表示 3 字节的形式，并且 ID 在 64-65599 的范围（第三字节×256+第二个字节+64）。值范围为 3-63 代表完整的 chunk stream ID。值为 2 的 chunk stream ID 是为低层协议控制信息和指令保留。<br>位 0-5（最重要的）在 Chunk Basic Header 中代表 chunk stream ID。chunk stream ID 2-63 可在这个字段用 1 字节的版本编码。</p>
+<p><img src="http://ou7ri10jn.bkt.clouddn.com/rtmp_specification_1.0/5-3-1-1_ChunkBasicHeader1.png" alt="ChunkBasicHeader1"></p>
+<p>chunk stream ID 64-319 可以在此头部用 2 字节的形式编码。ID 的计算方法为（第二个字节+64）。</p>
+<p><img src="http://ou7ri10jn.bkt.clouddn.com/rtmp_specification_1.0/5-3-1-1_ChunkBasicHeader2.png" alt="ChunkBasicHeader2"></p>
+<p>chunk stream ID 64-65599 可以在此字段用 3 字节版本编码。ID 的计算方法为（第三字节*256+第二字节+64）。</p>
+<p><img src="http://ou7ri10jn.bkt.clouddn.com/rtmp_specification_1.0/5-3-1-1_ChunkBasicHeader3.png" alt="ChunkBasicHeader3"></p>
+<p>cs id（6 个字节）：本字段包含 chunk stream ID，值从 2-36。值 0 和 1 表示此字段的 2 或 3 字节版本。<br>fmt（2 个字节）：该字段标识“chunk message header”所使用的四种格式之一。每个 chunk 类型的“chunk message header”在下一节中解释。<br>cs id - 64（8 或者 16 个字节）：此字段包含 chunk stream ID 减去 64 的值。例如，ID 365 将由 cs id 为 1，和这里（cs id - 64）的一个 16 位的 301 表示。<br>chunk stream ID 值 64-319 可以由 2 或 3 字节形式的头表示。</p>
+<h4 id="Chunk-Message-Header"><a href="#Chunk-Message-Header" class="headerlink" title="Chunk Message Header"></a>Chunk Message Header</h4><p>有四种不同格式的 chunk message header，由在 chunk basic header 的“fmt” 字段决定。<br>一个实现应该使用可能为每个 chunk message header 的最紧凑的表示。</p>
+<h5 id="Type-0"><a href="#Type-0" class="headerlink" title="Type 0"></a>Type 0</h5><p>类型0 的chunk header 是11 个字节长。这种类型必须使用在一个chunk stream<br>的开始，必要时，流时间戳可以后退（例如，由于回退定位）。</p>
+<p><img src="http://ou7ri10jn.bkt.clouddn.com/rtmp_specification_1.0/5-3-1-2-1_ChunkMessageHeaderType0.png" alt="ChunkMessageHeaderType0"></p>
+<p>timestamp（3 个字节）：对于一个类型 0 的 chunk，消息的绝对时间戳就在这里发送。如果时间戳大于或等于 16777215（十六进制 0xFFFFFF），该字段必须为 16777215，表明扩展时间戳（Extended Timestamp）字段编码的出现，以能够编码完整的 32 位时间戳。否则，这个字段应该是整个时间戳。</p>
+<h5 id="Type-1"><a href="#Type-1" class="headerlink" title="Type 1"></a>Type 1</h5><p>类型 1 的 chunk header 是 7 个字节长。不包含 message stream ID；此 chunk 采用与前面的 chunk 相同的流 ID。具有可变大小的消息的流（例如，许多视频格式）应该使用这个格式作为第一个之后的每一个新消息的第一个 chunk。</p>
+<p><img src="http://ou7ri10jn.bkt.clouddn.com/rtmp_specification_1.0/5-3-1-2-2_ChunkMessageHeaderType1.png" alt="ChunkMessageHeaderType1"></p>
+<h5 id="Type-2"><a href="#Type-2" class="headerlink" title="Type 2"></a>Type 2</h5><p>类型 2 的 chunk header 是 3 个字节长。既不包含流 ID，也不包含消息长度， 该 chunk 与前面的 chunk 具有相同的流 ID 和消息长度。具有常量大小的消息流</p>
+<p>（例如，一些音频和数据格式）应该使用这个格式作为第一个之后的每一个消息的第一个 chunk。<br><img src="http://ou7ri10jn.bkt.clouddn.com/rtmp_specification_1.0/5-3-1-2-3_ChunkMessageHeaderType2.png" alt=""></p>
+<h5 id="Type-3"><a href="#Type-3" class="headerlink" title="Type 3"></a>Type 3</h5><p>类型 3 的 chunk 没有消息头。流 ID、消息长度和时间戳增量字段都不存在； 这种类型的 chunk 采用与前面 chunk 相同的 Chunk Stream ID。当一个独立的消息被分成 chunk，除了第一个 chunk 之外，所有的消息 chunk 应该使用这种类型。参考实例 2（5.3.2.2 节）。一个由完全相同大小，流 ID 和时空消息组成的流在类型 2 的 chunk 之后应该都使用该类型的 chunk。参考实例 1（5.3.2.1 节）。如果第一消息和第二消息的差量与第一个消息的时间戳是相同的，然后类型 3 的chunk 可以立即跟随类型 0 的 chunk，因为无需一个类型 2 的 chunk 表示该差量。如果一个类型 3 的 chunk 跟随着类型 0 的 chunk，然后类型 3 的 chunk 的时间戳差量与类型 0 的 chunk 的时间戳相同。</p>
+<h5 id="Common-Header-Fields"><a href="#Common-Header-Fields" class="headerlink" title="Common Header Fields"></a>Common Header Fields</h5><p>chunk message header 中每个字段的描述：<br>timestamp delta（3 个字节）：对于类型 1 或类型 2 的 chunk，前面 chunk 的时间戳和当前 chunk 之间的区别就在此发送。如果差量大于或等于 16777215（十六进制 0xFFFFFF），该字段必须为 16777215，表明 Extended Timestamp 字段的出现，以编码整个 32 位的时间戳。否则，这个字段应该是整个时间戳。<br>message length（3 个字节）：对于一个类型 0 或类型 1 的 chunk，消息的长度在此发送。请注意，这通常与 chunk payload 的大小是不一样的。chunk payload 的长度是除了最后一个 chunk 的所有 chunk 的最大大小，剩余部分（对于小消息来说，可能是整个长度）就是最后 chunk 的大小。<br>message type id（1 个字节）：对于类型 0 或类型 1 的 chunk，消息的类型在此发送。<br>message stream id（4 个字节）：对于一个类型 0 的 chunk，它存储的是 message stream ID。Message stream ID 以小端格式存储。通常情况下，相同 chunk stream 中的所有消息都来自于同一个 message stream。虽然将 message stream 多路分离成相同的 chunk stream 是可能的，但它的效果比头部压缩的要差。然而，如果一个 message stream 关闭而另一个随后打开，但决没有理由说一个现有的 chunk stream 不能通过发送一个新的类型 0 的 chunk 以被重用。</p>
+<h4 id="Extended-Timestamp"><a href="#Extended-Timestamp" class="headerlink" title="Extended Timestamp"></a>Extended Timestamp</h4><p>Extended Timestamp 字段是用来编码大于 16777215（0xFFFFFF）的时间戳或时间戳增量；也就是说，它是对于类型 0，1 或者 2 的 chunk 中 24 位的时间或时间戳增量满足不了的情况而设计的。这个字段编码完整的 32 位时间或时间戳增量。这个字段的出现表示对于 16777215（0xFFFFFF）的情况，设置类型 0 的chunk 的时间戳或者类型 1、类型 2 的 chunk 的时间戳增量。当最近相同 chunk stream ID 的类型 0，1，或 2 的 chunk 指示存在 extended timestamp 字段时，这个字段在类型 3 的 chunk 中出现。</p>
+<h3 id="Examples"><a href="#Examples" class="headerlink" title="Examples"></a>Examples</h3><h4 id="Example-1"><a href="#Example-1" class="headerlink" title="Example 1"></a>Example 1</h4><p>这个例子显示了一个简单的音频信息流。这个例子演示了信息的冗余。<br><img src="http://ou7ri10jn.bkt.clouddn.com/rtmp_specification_1.0/5-3-2-1_SampleAudioMessagesToBeMadeIntoChunks.png" alt=""><br>下一个表格演示了在该流中产生的chunk。从消息3起，数据传输优化了。过了这一点之后 ，每个消息（头）只有1个字节的开销。<br><img src="http://ou7ri10jn.bkt.clouddn.com/rtmp_specification_1.0/5-3-2-1_FormatOfEachOfTheChunksOfAudioMessages.png" alt=""></p>
+<h4 id="Example-2"><a href="#Example-2" class="headerlink" title="Example 2"></a>Example 2</h4><p>此示例说明了一个消息因为太长，以至于无法适用一个128字节的chunk，从而被分解成多个chunk。<br><img src="http://ou7ri10jn.bkt.clouddn.com/rtmp_specification_1.0/5-3-2-2_SampleMessageToBeBrokenToChunks.png" alt=""><br>这里是产生的chunk：<br><img src="http://ou7ri10jn.bkt.clouddn.com/rtmp_specification_1.0/5-3-2-2_FormatOfEachOfTheChunks.png" alt=""><br>Chunk 1的头数据指定了整个消息是307个字节。<br>从两个例子中注意到，类型3的chunk可以用在两种不同的方式中。第一种是指定消息的继续。第二种是指定一个新的消息的开始，它的头可以来自于现有的状态数据。</p>
+<h2 id="Protocol-Control-Messages"><a href="#Protocol-Control-Messages" class="headerlink" title="Protocol Control Messages"></a>Protocol Control Messages</h2><p>RTMP Chunk Stream使用消息类型ID 1，2，3，5，和6来做协议控制消息。这些消息包含了RTMP Chunk Stream协议所需的信息。<br>这些协议控制消息必须有message stream ID 0（被称为控制流），并以chunk stream ID 2被发送。协议控制信息一经被收到后立马生效，它们的时间戳是被忽略的。</p>
+<h3 id="Set-Chunk-Size-1"><a href="#Set-Chunk-Size-1" class="headerlink" title="Set Chunk Size (1)"></a>Set Chunk Size (1)</h3><p>协议控制消息1，Set Chunk Size，用于通知对端一个新的最大chunk大小。<br>最大chunk大小默认为128字节，但客户端或服务器可以更改此值，并使用此消息更新其对端的状态。例如，假设一个客户端要发送131个字节的音频数据，并且chunk大小为128字节。在这种情况下，客户端可以将此消息发送到服务器，通知它，chunk大小现在为131个字节。然后，客户端可以在一个chunk中发送该音频数据。<br>最大chunk大小应该至少有128个字节，并且必须至少是1个字节。最大chunk大小是独立于每个方向保持的。<br><img src="http://ou7ri10jn.bkt.clouddn.com/rtmp_specification_1.0/5-4-1_PayloadForTheSetChunkSizeProtocolMessage.png" alt=""><br>0：这个位必须是0。<br>chunk size（31个字节）：此字段保存了新的最大chunk大小，以字节为单位，它将用于所有的发送端的后续chunk，直到进一步通知。有效大小为1到2147483647（0x7FFFFFFF），包括2147483647本身；然而，所有大小大于16777215（0xFFFFFF）是等价的，因为没有chunk大于一个消息，没有消息大于16777215个字节。 </p>
+<h3 id="Abort-Message-2"><a href="#Abort-Message-2" class="headerlink" title="Abort Message (2)"></a>Abort Message (2)</h3><p>协议控制消息2，Abort Message，用于通知对端，如果它是等待chunk来完成一个消息，然后丢弃在一个chunk stream上收到的部分消息。该端接收chunk stream ID作为该协议消息的payload。应用程序可以在关闭时发送此消息，以指示不需要进一步处理消息。<br><img src="http://ou7ri10jn.bkt.clouddn.com/rtmp_specification_1.0/5-4-2_PayloadForTheAbortMessageProtocolMessage.png" alt=""><br>chunk stream ID（32位）：这个字段保存了当前将被丢弃消息的chunk stream ID。 </p>
+<h3 id="Acknowledgement-3"><a href="#Acknowledgement-3" class="headerlink" title="Acknowledgement (3)"></a>Acknowledgement (3)</h3><p>客户端或服务器必须在接收到等于窗口大小的字节后向对端发送一个acknowledgment确认。窗口大小是发送端没有从接收端接收到确认前发送的最大字节数。此消息指定了序列号，它是到目前为止接收到的字节数。<br><img src="http://ou7ri10jn.bkt.clouddn.com/rtmp_specification_1.0/5-4-3_PayloadForTheAcknowledgementProtocolMessage.png" alt=""><br>sequence number（32个字节）：这个字段保存到目前为止接收到的字节数。</p>
+<h3 id="Window-Acknowledgement-Size-5"><a href="#Window-Acknowledgement-Size-5" class="headerlink" title="Window Acknowledgement Size (5)"></a>Window Acknowledgement Size (5)</h3><p>客户端或服务器发送此消息通知对方发送Acknowledgement之间的窗口大小。该发送端希望在它发送了窗口大小的字节数之后，从对端收到Acknowledgement。自上次Acknowledgement发送后，接收端接收指定的字节数后必须发送一个Acknowledgement（第5.4.3节），否则如果Acknowledgement还没有被发送，会话得从新开始。<br><img src="http://ou7ri10jn.bkt.clouddn.com/rtmp_specification_1.0/5-4-4_PayloadForTheWindowAcknowledgementSizeProtocolMessage.png" alt=""></p>
+<h3 id="Set-Peer-Bandwidth-6"><a href="#Set-Peer-Bandwidth-6" class="headerlink" title="Set Peer Bandwidth (6)"></a>Set Peer Bandwidth (6)</h3><p>客户端或服务器发送此消息以限制其对端的输出带宽。该端收到此消息后，通过限制未确认数据的发送量以达到输出带宽限制的目的，直到数据量达到此消息指定的窗口大小为止。该端收到此消息后，如果窗口大小与发送端上次发送该消息的不一样，它应该应答一个Window Acknowledgement Size的消息。<br><img src="http://ou7ri10jn.bkt.clouddn.com/rtmp_specification_1.0/5-4-5_PayloadForTheSetPeerBandwidthProtocolMessage.png" alt=""><br>Limit Type是下列值之一：<br>0 - Hard：该端应该限制它的输出带宽，直到指定的窗口大小为止。<br>1 - Soft：无论哪一个的窗口更小，该端应该限制它的输出带宽直到此消息指定的窗口大小为止或者直到该限制已经有效果为止。<br>2 - Dynamic：如果前一个是硬限制类型，那么此消息被认为是硬限制类型，否则忽略此消息。</p>
+<h1 id="RTMP-Message-Formats"><a href="#RTMP-Message-Formats" class="headerlink" title="RTMP Message Formats"></a>RTMP Message Formats</h1><p>此节说明RTMP消息的格式。它基于使用更低级的传输层网络在实体之间传输，例如RTMP Chunk Stream。<br>虽然RTMP被设计于用RTMP Chunk Stream工作，但它可以使用任何其他的传输协议发送消息。RTMP Chunk Stream和RTMP是适合多种音视频应用，包括一对一和一对多的直播点播服务，交互式视频会议应用。</p>
+<h2 id="RTMP-Message-Format"><a href="#RTMP-Message-Format" class="headerlink" title="RTMP Message Format"></a>RTMP Message Format</h2><p>服务器和客户端通过网络发送RTMP消息来彼此通信。该消息可以包括音频、视频、数据或任何其他消息。<br>RTMP消息有两部分，一个头部和有效载荷。</p>
+<h3 id="Message-Header"><a href="#Message-Header" class="headerlink" title="Message Header"></a>Message Header</h3><p>消息头包含以下部分：<br>Message Type：1个字节字段以表示消息类型。范围1-6的ID类型被保留用作协议控制消息。<br>Length：3个字节的字段，表示payload的字节大小。它被制定为大端格式。<br>Timestamp：4个字节的字段，它包含该消息的时间戳。这4个字节以大端字节序封包。<br>Message Stream Id：3个字节的字段，标识消息流。这几个字节被制定为大端格式。<br><img src="http://ou7ri10jn.bkt.clouddn.com/rtmp_specification_1.0/6-1-1_MessageHeader.png" alt=""></p>
+<h3 id="Message-Payload"><a href="#Message-Payload" class="headerlink" title="Message Payload"></a>Message Payload</h3><p>消息的另一部分是有效负载payload，这是消息中包含的实际数据。例如，它可以是一些音频采样或压缩的视频数据。payload的格式和解释超出了本文档的范围。 </p>
+<h2 id="User-Control-Messages-4"><a href="#User-Control-Messages-4" class="headerlink" title="User Control Messages (4)"></a>User Control Messages (4)</h2><p>RTMP使用ID为4的消息类型作为用户控制消息。这些消息包含了RTMP streaming层使用到的信息。ID 1，2，3，5和6的协议消息被用于RTMP Chunk Stream协议（第5.4节）。<br>用户控制信息应该使用message stream ID 0（称为控制流），当基于RTMP Chunk Stream发送时，它被用chunk stream ID 2来发送。用户控制信息在流中被收到时立马生效；它们的时间戳被忽略。<br>客户端或服务器发送此消息以通知对端用户控件事件。此消息传输事件类型Event type和事件数据Event data。<br><img src="http://ou7ri10jn.bkt.clouddn.com/rtmp_specification_1.0/6-2_PayloadForTheUserControlProtocolMessage.png" alt=""><br>前2个字节的消息数据用于标识事件类型。事件类型之后就是事件数据。事件数据字段的大小是可变的。然而，在消息通过RTMP Chunk Stream层传输的情况下，最大chunk大小（第5.4.1节）应该足够大，以让这些消息放在一个chunk中。<br>事件类型和事件数据在第7.1.7节中列举。</p>
+<h1 id="RTMP-Command-Messages"><a href="#RTMP-Command-Messages" class="headerlink" title="RTMP Command Messages"></a>RTMP Command Messages</h1><p>本节介绍了服务器和客户端之间相互通信的不同类型的消息和命令。<br>服务器和客户端之间交换的不同类型的消息包括用于发送音频数据的音频消息audio messages、用于发送视频数据的视频消息video messages、用于发送任何用户数据的数据消息data messages、共享对象消息shared object messages和命令消息command messages。共享对象消息提供了一个通用的方式来管理多个客户端和一个服务器之间的分布式数据。命令消息携带在客户端和服务器之间的AMF编码命令。客户端或服务器可以使用命令消息请求基于流的远程过程调用（RPC）与对方交流。</p>
+<h2 id="Types-of-Messages"><a href="#Types-of-Messages" class="headerlink" title="Types of Messages"></a>Types of Messages</h2><p>服务器和客户端通过网络上的消息互相通信。该消息可以是任何类型，其中包括音频消息、视频消息、命令消息、共享对象消息、数据消息和用户控制消息。</p>
+<h3 id="Command-Message-20-17"><a href="#Command-Message-20-17" class="headerlink" title="Command Message (20, 17)"></a>Command Message (20, 17)</h3><p>命令消息携带客户端和服务器之间的AMF编码命令。这些消息为AMF0编码分配消息类型值20，为AMF3 编码分配消息类型值17。这些消息被发送到对端执行一些操作，如连接，创建流、发布、播放，暂停。命令消息类型于状态和结果等，被用来通知发送者的请求命令状态。命令消息由命令名称command name、事务标识transaction ID和包含相关参数的命令对象command object组成。客户端或服务器可以使用命令消息请求基于流的远程过程调用（RPC）与对方交流。</p>
+<h3 id="Data-Message-18-15"><a href="#Data-Message-18-15" class="headerlink" title="Data Message (18, 15)"></a>Data Message (18, 15)</h3><p>客户端或服务器通过此消息发送元数据或任何用户数据给对端。元数据包括数据（音频，视频等）的详细信息，如创建时间，持续时间，主题等。这些消息为AMF0和AMF3分别被分配消息类型值18和15。</p>
+<h3 id="Shared-Object-Message-19-16"><a href="#Shared-Object-Message-19-16" class="headerlink" title="Shared Object Message (19, 16)"></a>Shared Object Message (19, 16)</h3><p>共享对象是一个在跨多个客户端，实例等同步的Flash对象（名称-值对的集合）。消息类型19（对于AMF0）和16（对于AMF3）被保留用作共享对象事件shared object events。每个消息可以包含多个事件。<br><img src="http://ou7ri10jn.bkt.clouddn.com/rtmp_specification_1.0/7-1-3_TheSharedObjectMessageFormat.png" alt=""><br>下面是支持的事件类型：</p>
+<table>
+<thead>
+<tr>
+<th>事件</th>
+<th>描述</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Use(=1)</td>
+<td>客户端发送此事件通知服务器一个名为共享对象的创建。 </td>
+</tr>
+<tr>
+<td>Release(=2)</td>
+<td>当在客户端删除共享对象时，客户端将此事件发送到服务器上。</td>
+</tr>
+<tr>
+<td>Request Change(=3)</td>
+<td>客户端发送此事件以请求更改与共享对象命名参数关联的值。 </td>
+</tr>
+<tr>
+<td>Change (=4)</td>
+<td>服务器发送此事件通知除了正在发起请求之外的所有客户端命名参数值的变化。</td>
+</tr>
+<tr>
+<td>Success (=5)</td>
+<td>如果请求被受理，服务器发送此事件给正在请求的客户端，以响应RequestChange事件。</td>
+</tr>
+<tr>
+<td>SendMessage(=6)</td>
+<td>客户端将此事件发送到服务器以广播一个消息。在接收此事件时，服务器向所有客户端广播消息，包括该发送者。</td>
+</tr>
+<tr>
+<td>Status (=7)</td>
+<td>服务器发送此事件以通知客户端相关的错误状况。</td>
+</tr>
+<tr>
+<td>Clear (=8)</td>
+<td>服务器将此事件发送给客户端，以清除共享对象。服务器还发送清除共享对象。服务器还发送此事件响应客户端在连接时发送的使用事件Use event。</td>
+</tr>
+<tr>
+<td>Remove (=9)</td>
+<td>服务器发送此事件让客户端删除一个插槽。</td>
+</tr>
+<tr>
+<td>Request Remove(=10)</td>
+<td>客户端发送此事件让服务器删除一个插槽。</td>
+</tr>
+<tr>
+<td>Use Success(=11)</td>
+<td>成功连接时，服务器将此事件发送给客户端。 </td>
+</tr>
+</tbody>
+</table>
+<h3 id="Audio-Message-8"><a href="#Audio-Message-8" class="headerlink" title="Audio Message (8)"></a>Audio Message (8)</h3><p>客户端或服务器通过发送此消息发送音频数据到对端。消息类型值8被保留用作音频消息。</p>
+<h3 id="Video-Message-9"><a href="#Video-Message-9" class="headerlink" title="Video Message (9)"></a>Video Message (9)</h3><p>客户端或服务器通过发送此消息发送视频数据到对端。消息类型值9被保留用作视频消息。</p>
+<h3 id="Aggregate-Message-22"><a href="#Aggregate-Message-22" class="headerlink" title="Aggregate Message (22)"></a>Aggregate Message (22)</h3><p>一个聚合消息是一个单一的包含了一系列RTMP子消息的消息，它们的格式在6.1节描述。消息类型22用于聚合消息。<br><img src="http://ou7ri10jn.bkt.clouddn.com/rtmp_specification_1.0/7-1-6_TheAggregateMessageFormat.png" alt=""><br>聚合消息的stream ID优先于聚合体内子消息的stream ID。<br>聚合消息和第一子消息的时间戳之间的差异是时间偏移，它被用于将子消息的时间戳归一化成流的时标。偏移量被加到每个子消息的时间戳，以变成归一化后的流时间。第一次子消息的时间戳应该与聚合消息的时间戳相同，所以偏移量应为0。<br>后面的指针包含在它头部中前一消息的大小。它被包含以匹配FLV文件格式并用于向后定位。<br>使用聚合消息有几个性能优势：</p>
+<ul>
+<li>chunk stream可以在一个chunk中至多发送一个完整的消息。因此，增加chunk的大小并且使用聚合消息减少了chunk发送的数量。</li>
+<li>子消息可以连续存储在内存中。当产生系统调用在网络上发送数据时，它更有效的。</li>
+</ul>
+<h3 id="User-Control-Message-Events"><a href="#User-Control-Message-Events" class="headerlink" title="User Control Message Events"></a>User Control Message Events</h3><p>客户端和服务器发送此消息把用户控制事件通知对端。有关该消息的格式，请参考第6.2节。<br>以下是支持的用户控制事件：</p>
+<table>
+<thead>
+<tr>
+<th>事件</th>
+<th>描述</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Stream Begin (=0)</td>
+<td>服务器发送此事件通知客户端流已成为功能，并可用于通信。默认情况下，在从客户端成功收到应用程序连接命令后，此事件以ID 0来发送。</td>
+</tr>
+<tr>
+<td>Stream EOF (=1)</td>
+<td>服务器发送此事件通知客户端该流请求的数据回放结束了。若不发出额外的命令，就没有更多的数据被发送了。客户端丢弃该流收到的消息。该4个字节的事件数据代表哪个stream ID的流播放已结束。</td>
+</tr>
+<tr>
+<td>StreamDry (=2)</td>
+<td>服务器发送此事件通知客户端，在流上没有更多的数据。如果服务器在一段时间内没有检测到任何的消息，它可以通知订阅的客户端流是结束的。该4个字节的事件数据代表结束流的stream ID。</td>
+</tr>
+<tr>
+<td>SetBufferLength (=3)</td>
+<td>客户端发送此事件通知服务器用于缓冲从流过来的任何数据的缓冲区大小（以毫秒为单位）。此事件在服务器开始处理流之前被发送。事件数据的前4个字节表示stream ID，而下面4个字节代表每毫秒缓冲区的长度。</td>
+</tr>
+<tr>
+<td>StreamIsRecorded (=4)</td>
+<td>服务器发送此事件来通知客户端，该流是一个记录流。4个字节的事件数据代表记录流的stream ID。</td>
+</tr>
+<tr>
+<td>PingRequest (=6)</td>
+<td>服务器发送此事件来测试客户端是否是可到达的。事件数据是4个字节的时间戳，代表当服务器发出命令时，本地服务器的时间。客户收到PingRequest时响应PingResponse。</td>
+</tr>
+<tr>
+<td>PingResponse (=7)</td>
+<td>客户端向服务器发送此事件响应ping请求。事件数据是当收到PingRequest时的4个字节时间戳。</td>
+</tr>
+</tbody>
+</table>
+<h2 id="Types-of-Commands"><a href="#Types-of-Commands" class="headerlink" title="Types of Commands"></a>Types of Commands</h2><p>客户端和服务器交换AMF编码的命令。发送者发送一个命令消息，该命令消息包含命令名称command name、事务标识transaction ID和相关参数的命令对象command object。例如，连接命令包含“app”参数，它告诉服务器该客户端要连接的应用程序名称。接收端处理命令并使用相同的transaction ID回应。响应字符串要么是_result，要么是_error，要么是方法名method name，例如，方法名是verifyClient或contactExternalServer。<br>命令字符串_result或_error表示一个应答。transaction ID指示应答相关的重要命令。它与在IMAP等多种协议的标签tag是相同的。命令字符串中的方法名表示发送端正在试图在接收端运行一个方法。<br>下面类型的对象用于发送各种命令：<br>NetConnection：一个服务器和客户端之间的连接的一个更高级别表示的对象。<br>NetStream：一个表示发送音频流、视频流和其他相关数据的信道对象。我们还发送如播放，暂停等控制数据流的命令。</p>
+<h3 id="NetConnection-Commands"><a href="#NetConnection-Commands" class="headerlink" title="NetConnection Commands"></a>NetConnection Commands</h3><p>NetConnection管理客户端和服务器之间的双向连接。此外，它为异步远程方法调用提供了支持。<br>下面的命令可以在NetConnection上发送：</p>
+<ul>
+<li>connect</li>
+<li>call</li>
+<li>close</li>
+<li>createStream</li>
+</ul>
+<h4 id="Connect"><a href="#Connect" class="headerlink" title="Connect"></a>Connect</h4><p>客户端向服务器发送连接命令，请求连接到服务器应用程序实例。<br>从客户端到服务器的命令结构如下：</p>
+<table>
+<thead>
+<tr>
+<th>字段名</th>
+<th>类型</th>
+<th>描述</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Command Name</td>
+<td>String</td>
+<td>命令名称，设置为“connect”。 </td>
+</tr>
+<tr>
+<td>Transaction ID</td>
+<td>Number</td>
+<td>通常设置为1。</td>
+</tr>
+<tr>
+<td>Command Object</td>
+<td>Object</td>
+<td>包含名称-值对的命令对象。</td>
+</tr>
+<tr>
+<td>Optional User Arguments</td>
+<td>Object</td>
+<td>任何可选的信息。</td>
+</tr>
+</tbody>
+</table>
+<p>以下是连接命令对象中使用的名称-值对的描述：</p>
+<table>
+<thead>
+<tr>
+<th>属性</th>
+<th>类型</th>
+<th>描述</th>
+<th>样例值</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>app</td>
+<td>String</td>
+<td>客户端要连接的服务器应用程序名</td>
+<td>testapp</td>
+</tr>
+<tr>
+<td>flashver</td>
+<td>String</td>
+<td>Flash Player的版本号。它与ApplicationScript中getversion()方法返回的字符串是一样的。</td>
+<td>FMSc/1.0</td>
+</tr>
+<tr>
+<td>swfUrl</td>
+<td>String</td>
+<td>发起连接的SWF源文件的URL</td>
+<td>file://C:/FlvPlayer.swf</td>
+</tr>
+<tr>
+<td>tcUrl</td>
+<td>String</td>
+<td>服务器URL。它具有以下的格式。protocol://servername:port/appName/appInstance</td>
+<td>rtmp://localhost:1935/testapp/instance1</td>
+</tr>
+<tr>
+<td>fpad</td>
+<td>Boolean</td>
+<td>如果使用代理，值为true。</td>
+<td>true或者false</td>
+</tr>
+<tr>
+<td>audioCodecs</td>
+<td>Number</td>
+<td>指示客户端支持的音频编码。</td>
+<td>SUPPORT_SND_MP3</td>
+</tr>
+<tr>
+<td>videoCodecs</td>
+<td>Number</td>
+<td>指示支持什么视频编码。</td>
+<td>SUPPORT_VID_SORENSON</td>
+</tr>
+<tr>
+<td>videoFunction</td>
+<td>Number</td>
+<td>指示支持什么专用的视频方法。</td>
+<td>SUPPORT_VID_CLIENT_SEEK</td>
+</tr>
+<tr>
+<td>pageUrl</td>
+<td>String</td>
+<td>SWF文件从哪里加载的网页URL。</td>
+<td><a href="http://somehost/sample.html" target="_blank" rel="external">http://somehost/sample.html</a></td>
+</tr>
+<tr>
+<td>objectEncoding</td>
+<td>Number</td>
+<td>AMF编码方法。</td>
+<td>AMF3</td>
+</tr>
+</tbody>
+</table>
+<p>audioCodecs属性的标志值：</p>
+<table>
+<thead>
+<tr>
+<th>编解码标志</th>
+<th>用法</th>
+<th>值</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>SUPPORT_SND_NONE</td>
+<td>原始音频，无压缩</td>
+<td>0x0001</td>
+</tr>
+<tr>
+<td>SUPPORT_SND_ADPCM</td>
+<td>ADPCM压缩</td>
+<td>0x0002</td>
+</tr>
+<tr>
+<td>SUPPORT_SND_MP3</td>
+<td>mp3压缩</td>
+<td>0x0004</td>
+</tr>
+<tr>
+<td>SUPPORT_SND_INTEL</td>
+<td>未使用</td>
+<td>0x0008</td>
+</tr>
+<tr>
+<td>SUPPORT_SND_UNUSED</td>
+<td>未使用</td>
+<td>0x0010</td>
+</tr>
+<tr>
+<td>SUPPORT_SND_NELLY8</td>
+<td>8-kHz采样速率的NellyMoser压缩</td>
+<td>0x0020</td>
+</tr>
+<tr>
+<td>SUPPORT_SND_NELLY</td>
+<td>NellyMoser压缩（5，11，22，和44 kHz采样速率）</td>
+<td>0x0040</td>
+</tr>
+<tr>
+<td>SUPPORT_SND_G711A</td>
+<td>G711A声音压缩（仅Flash Media Server支持）</td>
+<td>0x0080</td>
+</tr>
+<tr>
+<td>SUPPORT_SND_G711U</td>
+<td>G711U声音压缩（仅Flash Media Server支持）</td>
+<td>0x0100</td>
+</tr>
+<tr>
+<td>SUPPORT_SND_NELLY16</td>
+<td>16-kHz采样速率的NellyMoser压缩</td>
+<td>0x0200</td>
+</tr>
+<tr>
+<td>SUPPORT_SND_AAC</td>
+<td>高级音频编码（AAC）编解码</td>
+<td>0x0400</td>
+</tr>
+<tr>
+<td>SUPPORT_SND_SPEEX</td>
+<td>Speex音频</td>
+<td>0x0800</td>
+</tr>
+<tr>
+<td>SUPPORT_SND_ALL</td>
+<td>所有RTMP支持的音频编解码</td>
+<td>0x0FFF</td>
+</tr>
+</tbody>
+</table>
+<p>videoCodecs属性的标志值：</p>
+<table>
+<thead>
+<tr>
+<th>编解码标志</th>
+<th>用法</th>
+<th>值</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>SUPPORT_VID_UNUSED</td>
+<td>废弃值</td>
+<td>0x0001</td>
+</tr>
+<tr>
+<td>SUPPORT_VID_JPEG</td>
+<td>废弃值</td>
+<td>0x0002</td>
+</tr>
+<tr>
+<td>SUPPORT_VID_SORENSON</td>
+<td>Sorenson Flash视频</td>
+<td>0x0004</td>
+</tr>
+<tr>
+<td>SUPPORT_VID_HOMEBREW</td>
+<td>V1屏幕共享</td>
+<td>0x0008</td>
+</tr>
+<tr>
+<td>SUPPORT_VID_VP6 (On2)</td>
+<td>On2视频（Flash 8+）</td>
+<td>0x0010</td>
+</tr>
+<tr>
+<td>SUPPORT_VID_VP6ALPHA(On2 with alpha channel)</td>
+<td>带有alpha通道的On2视频</td>
+<td>0x0020</td>
+</tr>
+<tr>
+<td>SUPPORT_VID_HOMEBREWV(screensharing v2)</td>
+<td>屏幕共享版本2（Flash 8+）</td>
+<td>0x0040</td>
+</tr>
+<tr>
+<td>SUPPORT_VID_H264</td>
+<td>H264视频</td>
+<td>0x0080</td>
+</tr>
+<tr>
+<td>SUPPORT_VID_ALL</td>
+<td>所有的RTMP支持的视频编解码</td>
+<td>0x00FF</td>
+</tr>
+</tbody>
+</table>
+<p>videoFunction属性的标志值：</p>
+<table>
+<thead>
+<tr>
+<th>方法标志</th>
+<th>用法</th>
+<th>值</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>SUPPORT_VID_CLIENT_SEEK</td>
+<td>指示客户端可以进行帧精确控制查找</td>
+<td>1</td>
+</tr>
+</tbody>
+</table>
+<p>对象编码属性的值：</p>
+<table>
+<thead>
+<tr>
+<th>编码类型</th>
+<th>用法</th>
+<th>值</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>AMF0</td>
+<td>AMF0对象编码，Flash 6及更新版本支持</td>
+<td>0</td>
+</tr>
+<tr>
+<td>AMF1</td>
+<td>来自于Flash 9的AMF3编码（AS3）</td>
+<td>3</td>
+</tr>
+</tbody>
+</table>
+<p>从服务器到客户端的命令结构如下所示：</p>
+<table>
+<thead>
+<tr>
+<th>字段名</th>
+<th>类型</th>
+<th>描述</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Command Name</td>
+<td>String</td>
+<td>_result或者_error；表示响应是否为结果或者错误。</td>
+</tr>
+<tr>
+<td>Transaction ID</td>
+<td>Number</td>
+<td>对于connect的应答来说，Transaction ID是1</td>
+</tr>
+<tr>
+<td>Properties</td>
+<td>Object</td>
+<td>该连接的描述属性（fmsver等）的名称-值对。</td>
+</tr>
+<tr>
+<td>Information</td>
+<td>Object</td>
+<td>来自于服务器的描述应答的名称-值对。“code”，“level”，“description”是这些信息的几个名称。</td>
+</tr>
+</tbody>
+</table>
+<p><img src="http://ou7ri10jn.bkt.clouddn.com/rtmp_specification_1.0/7-2-1-1_MessageFlowInTheConnectCommand.png" alt=""></p>
+<p>在该命令执行期间的消息流程是：</p>
+<ol>
+<li>客户端发送connect命令给服务器，请求与服务器应用程序实例连接。</li>
+<li>在收到connect命令之后，服务器给客户端发送“Window Acknowledgement Size”的协议消息。服务器也会连接connect命令提到的应用程序。</li>
+<li>服务器给客户端发送“Set Peer Bandwidth”协议消息。</li>
+<li>在处理“Set Peer Bandwidth”协议消息之后，客户端给服务器发送“Window Acknowledgement Size”的协议消息。</li>
+<li>服务器给客户端发送另一个类型的协议消息，用户控制消息（StreamBegin）。</li>
+<li>服务器发送result命令消息通知客户端该连接的状态（成功或失败）。该命令指定transaction ID（对于connect命令来说，它总是等于1）。该消息也会指定一些属性，如Flash Media Server的版本（字符串）。另外，它指定了其他连接应答相关的信息，比如级别（字符串），编码（字符串），描述（字符串），对象编码（数字）等。</li>
+</ol>
+<h4 id="Call"><a href="#Call" class="headerlink" title="Call"></a>Call</h4><p>NetConnection对象的调用方法在接收端运行远程过程调用（RPC）。RPC调用的名称作为该call命令的参数传递。<br>发送端到接收端的命令结构如下所示：</p>
+<table>
+<thead>
+<tr>
+<th>字符名</th>
+<th>类型</th>
+<th>描述</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Procedure Name</td>
+<td>String</td>
+<td>远程过程调用的名称。</td>
+</tr>
+<tr>
+<td>Transaction ID</td>
+<td>Number</td>
+<td>如果需要一个应答，我们给出一个transaction Id。否则，我们传一个0的值。</td>
+</tr>
+<tr>
+<td>Command Object</td>
+<td>Object</td>
+<td>如果存在任何的命令信息，它就会被设置，否则，它被设置为null类型。</td>
+</tr>
+<tr>
+<td>Optional Arguments</td>
+<td>Object</td>
+<td>任何将要提供的可选参数。</td>
+</tr>
+</tbody>
+</table>
+<p>应答的命令结构如下所示：</p>
+<table>
+<thead>
+<tr>
+<th>字段名</th>
+<th>类型</th>
+<th>描述</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Command Name</td>
+<td>String</td>
+<td>命令名称。</td>
+</tr>
+<tr>
+<td>Transaction ID</td>
+<td>Number</td>
+<td>命令的ID，标识它属于哪个应答的。</td>
+</tr>
+<tr>
+<td>Command Object</td>
+<td>Object</td>
+<td>如果存在任何的命令信息，它就会被设置，否则，它被设置为null类型。</td>
+</tr>
+<tr>
+<td>Response</td>
+<td>Object</td>
+<td>该调用方法的应答。</td>
+</tr>
+</tbody>
+</table>
+<h4 id="createStream"><a href="#createStream" class="headerlink" title="createStream"></a>createStream</h4><p>客户端发送命令到服务器创建消息通信的逻辑通道。发布的音频、视频和元数据通过使用createStream命令创建的流通道传输。<br>NetConnection是默认的通信通道，它的stream ID为0。协议和少量命令消息，包括createStream，使用该默认的通信通道。<br>客户端到服务端的命令结构如下所示：</p>
+<table>
+<thead>
+<tr>
+<th>字段名</th>
+<th>类型</th>
+<th>描述</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Command Name</td>
+<td>String</td>
+<td>命令名称。设置为“createStream”。</td>
+</tr>
+<tr>
+<td>Transaction ID</td>
+<td>Number</td>
+<td>命令的会话ID。</td>
+</tr>
+<tr>
+<td>Command Object</td>
+<td>Object</td>
+<td>如果存在任何的命令信息，它就会被设置，否则，它被设置为null类型。</td>
+</tr>
+</tbody>
+</table>
+<p>服务器到客户端的命令结构如下所示：</p>
+<table>
+<thead>
+<tr>
+<th>字段名</th>
+<th>类型</th>
+<th>描述</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Command Name</td>
+<td>String</td>
+<td>_result或者_error；表示响应是否为结果或者错误。</td>
+</tr>
+<tr>
+<td>Transaction ID</td>
+<td>Number</td>
+<td>命令的ID，标识它属于哪个应答的。</td>
+</tr>
+<tr>
+<td>Command Object</td>
+<td>Object</td>
+<td>如果存在任何的命令信息，它就会被设置，否则，它被设置为null类型。</td>
+</tr>
+<tr>
+<td>Stream ID</td>
+<td>Number</td>
+<td>该返回值要么是stream ID，要么是一个错误信息对象。</td>
+</tr>
+</tbody>
+</table>
+<h3 id="NetStream-Commands"><a href="#NetStream-Commands" class="headerlink" title="NetStream Commands"></a>NetStream Commands</h3><p>NetStream定义了音频，视频和数据信息流可以在连通客户端到服务器的NetConnection上流通的通道。一个NetConnection对象可以支持多种数据流的多个NetStream。<br>以下命令可以在NetStream上从客户端发送到服务器：</p>
+<ul>
+<li>play</li>
+<li>play2</li>
+<li>deleteStream</li>
+<li>closeStream</li>
+<li>receiveAudio</li>
+<li>receiveVideo</li>
+<li>publish</li>
+<li>seek</li>
+<li>pause</li>
+</ul>
+<p>服务器使用“onStatus”命令给客户端发送NetStream状态更新：</p>
+<table>
+<thead>
+<tr>
+<th>字段名</th>
+<th>类型</th>
+<th>描述</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Command Name</td>
+<td>String</td>
+<td>命令名“onStatus”。</td>
+</tr>
+<tr>
+<td>Transaction ID</td>
+<td>Number</td>
+<td>Transaction ID设置为0。</td>
+</tr>
+<tr>
+<td>Command Object</td>
+<td>Null</td>
+<td>onStatus消息没有命令对象。</td>
+</tr>
+<tr>
+<td>Info Object</td>
+<td>Object</td>
+<td>一个AMF对象至少有下面3种属性：<br>“level”（字符串）：此消息的级别，“warning”、“status”或者“error”其中之一；<br>“code”（ 字符串）：消息代码，比如“NetStream.Play.Start”；<br>“description”（字符串）：一个可读的消息描述。<br>Info对象可能包含其他适合编码的属性。</td>
+</tr>
+</tbody>
+</table>
+<h4 id="play"><a href="#play" class="headerlink" title="play"></a>play</h4><p>客户端将此命令发送到服务器播放流。也可以多次使用此命令创建一个播放列表。<br>如果你想创建一个在不同直播或录制流之间切换的动态播放列表，调用play不止一次并传递false以每次都重置。相反，如果你想立即播放指定的流，传递true以重置清除任何其他播放队列的流。<br>从客户端到服务端的命令结构如下所示：</p>
+<table>
+<thead>
+<tr>
+<th>字段名</th>
+<th>类型</th>
+<th>描述</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Command Name</td>
+<td>String</td>
+<td>命令的名称，设置为“play”。</td>
+</tr>
+<tr>
+<td>Transaction ID</td>
+<td>Number</td>
+<td>Transaction ID设置为0。</td>
+</tr>
+<tr>
+<td>Command Object</td>
+<td>Null</td>
+<td>不存在命令信息，设置为null类型。</td>
+</tr>
+<tr>
+<td>Stream Name</td>
+<td>String</td>
+<td>播放流的名称。如果要播放视频（FLV）文件，指定不带文件扩展名（比如，“sample”）的流名称。如果要回放MP3或者ID3标签，你必须要流名称前加上mp3:的前缀（比如，“mp3:sample”）。如果要播放H.264/AAC文件，你必须在流名称前加上mp4:的前缀，并且指定文件名后缀。比如，要播放文件sample.m4v，指定“mp4:sample.m4v”。</td>
+</tr>
+<tr>
+<td>Start</td>
+<td>Number</td>
+<td>一个可选的参数，指定以秒为单位的起始时间。默认值为-2，意思是，该订阅者第一次尝试播放流名称字段指定的直播流。如果该名称的直播流没有被找到，它会播放同名的录播流。如果没有该名称的录播流，该订阅者等到该名称的直播流可用时再播放。如果你在Start字段中传递-1，那么只有流名称字段指定的直播流才会被播放。如果你在Start字段传递0或者一个正数，一个在流名称字段指定的录播流会被播放，起始时间是Start字段指定的时间。如果找不到该记录流，播放列表的下一个条目会被播放。</td>
+</tr>
+<tr>
+<td>Duration</td>
+<td>Number</td>
+<td>一个可选的参数，指定以秒为单位的回放时间段。默认值是-1。-1值意味着，直播流被播放直到它不可用，或者录播流被播放直到结束。如果你传递0，它会播放录播流中Start字段指定开始时间的一帧。它假定Start字段的值大于等于0。如果你指定一个正数，它会播放Duration字段指定该段时间的直播流。之后，它能够播放Duration字段指定该段时间的录播流。（如果流在Duration字段指定的时间前结束，回放随着流的结束而结束。）如果你传递一个不同于-1的负数，它会把该值解析为-1。</td>
+</tr>
+<tr>
+<td>Reset</td>
+<td>Boolean</td>
+<td>一个可选的布尔值或数字，它指定是否清除之前的所有播放列表。</td>
+</tr>
+</tbody>
+</table>
+<p><img src="http://ou7ri10jn.bkt.clouddn.com/rtmp_specification_1.0/7-2-2-1_MessageFlowInThePlayCommand.png" alt=""><br>在该命令执行期间的消息流程是：</p>
+<ol>
+<li>客户端在收到来自于服务器的createStream命令的成功结果后，发送play命令。</li>
+<li>在收到play命令的同时，服务器发送一个协议消息设置chunk的大小。</li>
+<li>服务器发送另一个协议消息（用户控制）指定“StreamIsRecorded”的事件，并且在该消息中带上stream ID。该消息在头2个字节带上事件类型并且在最后4个字节包含stream ID。</li>
+<li>服务器发送另一个协议消息（用户控制）指定“StreamBegin”事件，以向客户端指示流的开始。</li>
+<li>如果客户端发送的play命令成功的话，该服务器发送一个onStatus的命令消息NetStream.Play.Start和NetStream.Play.Reset。只有客户端发送的play命令带有reset标志时，服务器才会发送NetStream.Play.Reset。如果要播放的流没在被找到，服务器发送NetStream.Play.StreamNotFound的onStatus消息回应。</li>
+</ol>
+<p>之后，服务器发送音频和视频数据在客户端播放。</p>
+<h4 id="play2"><a href="#play2" class="headerlink" title="play2"></a>play2</h4><p>不同于play命令，play2可以切换一个不同的码率而不改变播放内容的时间轴。服务器为客户端可以在play2中请求的所有支持的码率维护多个字段。<br>客户端到服务器的命令结构如下：</p>
+<table>
+<thead>
+<tr>
+<th>字段名</th>
+<th>类型</th>
+<th>描述</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Command Name</td>
+<td>String</td>
+<td>命令的名称，设置为“play2”。</td>
+</tr>
+<tr>
+<td>Transaction ID</td>
+<td>Number</td>
+<td>Transaction ID设置为0。</td>
+</tr>
+<tr>
+<td>Command Object</td>
+<td>Null</td>
+<td>不存在命令信息，设置为null类型。</td>
+</tr>
+<tr>
+<td>Parameters</td>
+<td>Object</td>
+<td>一个AMF编码的对象，它的属性是描述flash.net.NetStreamPlayOptions ActionScript对象的公有属性。</td>
+</tr>
+</tbody>
+</table>
+<p>NetStreamPlayOptions对象的公共属性在ActionScript 3语言参考手册中描述。<br>该命令的消息流程如下图所示：<br><img src="http://ou7ri10jn.bkt.clouddn.com/rtmp_specification_1.0/7-2-2-2_MessageFlowInThePlay2Command.png" alt=""></p>
+<h4 id="deleteStream"><a href="#deleteStream" class="headerlink" title="deleteStream"></a>deleteStream</h4><p>当NetStream对象将要被销毁时，它发送该deleteStream命令。<br>客户端到服务器的命令结构如下所示：</p>
+<table>
+<thead>
+<tr>
+<th>字段名</th>
+<th>类型</th>
+<th>描述</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Command Name</td>
+<td>String</td>
+<td>命令的名称，设置为“deleteStream”。</td>
+</tr>
+<tr>
+<td>Transaction ID</td>
+<td>Number</td>
+<td>Transaction ID设置为0。</td>
+</tr>
+<tr>
+<td>Command Object</td>
+<td>Null</td>
+<td>不存在命令信息，设置为null类型。</td>
+</tr>
+<tr>
+<td>Stream ID</td>
+<td>Number</td>
+<td>在服务器上销毁流的ID。</td>
+</tr>
+</tbody>
+</table>
+<p>该服务器不需要发送任何应答。</p>
+<h4 id="receiveAudio"><a href="#receiveAudio" class="headerlink" title="receiveAudio"></a>receiveAudio</h4><p>NetStream发送receiveAudio消息通知服务器是否发送或不发送音频到客户端。<br>客户端到服务端的命令结构如下：</p>
+<table>
+<thead>
+<tr>
+<th>字段名</th>
+<th>类型</th>
+<th>描述</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Command Name</td>
+<td>String</td>
+<td>命令的名称，设置为“receiveAudio”。</td>
+</tr>
+<tr>
+<td>Transaction ID</td>
+<td>Number</td>
+<td>Transaction ID设置为0。</td>
+</tr>
+<tr>
+<td>Command Object</td>
+<td>Null</td>
+<td>不存在命令信息，设置为null类型。</td>
+</tr>
+<tr>
+<td>Bool Flag</td>
+<td>Boolean</td>
+<td>true或者false表示是否接收音频。</td>
+</tr>
+</tbody>
+</table>
+<p>如果receiveAudio命令发送带有flase的bool flag，服务器不发送任何响应。如果这个标志被设置为true，服务器应答NetStream.Seek.Notify和NetStream.Play.Start的状态消息。</p>
+<h4 id="receiveVideo"><a href="#receiveVideo" class="headerlink" title="receiveVideo"></a>receiveVideo</h4><p>NetStream发送receiveVideo消息通知服务器是否发送或不发送视频到客户端。<br>客户端到服务端的命令结构如下：</p>
+<table>
+<thead>
+<tr>
+<th>字段名</th>
+<th>类型</th>
+<th>描述</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Command Name</td>
+<td>String</td>
+<td>命令的名称，设置为“receiveVideo”。</td>
+</tr>
+<tr>
+<td>Transaction ID</td>
+<td>Number</td>
+<td>Transaction ID设置为0。</td>
+</tr>
+<tr>
+<td>Command Object</td>
+<td>Null</td>
+<td>不存在命令信息，设置为null类型。</td>
+</tr>
+<tr>
+<td>Bool Flag</td>
+<td>Boolean</td>
+<td>true或者false表示是否接收视频。</td>
+</tr>
+</tbody>
+</table>
+<p>如果receiveVideo命令发送带有flase的bool flag，服务器不发送任何响应。如果这个标志被设置为true，服务器应答NetStream.Seek.Notify和NetStream.Play.Start的状态消息。</p>
+<h4 id="publish"><a href="#publish" class="headerlink" title="publish"></a>publish</h4><p>客户端发送publish命令将已命名的流发布到服务器上。使用这个名称，任何客户端都可以播放此流，并接收已发布的音频、视频和数据消息。<br>客户端到服务端的命令结构如下：</p>
+<table>
+<thead>
+<tr>
+<th>字段名</th>
+<th>类型</th>
+<th>描述</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Command Name</td>
+<td>String</td>
+<td>命令的名称，设置为“publish”。</td>
+</tr>
+<tr>
+<td>Transaction ID</td>
+<td>Number</td>
+<td>Transaction ID设置为0。</td>
+</tr>
+<tr>
+<td>Command Object</td>
+<td>Null</td>
+<td>不存在命令信息，设置为null类型。</td>
+</tr>
+<tr>
+<td>Publishing Name</td>
+<td>String</td>
+<td>发布流的名称。</td>
+</tr>
+<tr>
+<td>Publishing Type</td>
+<td>String</td>
+<td>发布的类型。设置为“live”，“record”或者“append”。<br>record：该流已被发布并且数据被记录到一个新的文件。该文件存储在服务器的一个包含服务器应用程序目录的子目录。如果文件已经存在，则它被覆盖。<br>append：流已经被发布，并且该数据被追加到一个文件。如果找不到文件，则创建它。<br>live：直播数据被发布，而没有记录到文件。</td>
+</tr>
+</tbody>
+</table>
+<p>服务器应答onStatus命令，以标记发布的开始。</p>
+<h4 id="seek"><a href="#seek" class="headerlink" title="seek"></a>seek</h4><p>客户端发送seek命令以定位媒体文件内或者播放列表的某个位置（以毫秒为单位）。<br>客户端到服务端的命令结构如下：</p>
+<table>
+<thead>
+<tr>
+<th>字段名</th>
+<th>类型</th>
+<th>描述</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Command Name</td>
+<td>String</td>
+<td>命令的名称，设置为“seek”。</td>
+</tr>
+<tr>
+<td>Transaction ID</td>
+<td>Number</td>
+<td>Transaction ID设置为0。</td>
+</tr>
+<tr>
+<td>Command Object</td>
+<td>Null</td>
+<td>不存在命令信息，设置为null类型。</td>
+</tr>
+<tr>
+<td>milliSeconds</td>
+<td>Number</td>
+<td>定位到播放列表的毫秒数。</td>
+</tr>
+</tbody>
+</table>
+<p>当定位成功，服务器发送NetStream.Seek.Notify的状态消息。失败的时候，它返回一个_error的消息。</p>
+<h4 id="pause"><a href="#pause" class="headerlink" title="pause"></a>pause</h4><p>客户端发送pause命令以告诉服务器暂停或者开始播放。<br>客户端到服务端的命令结构如下：</p>
+<table>
+<thead>
+<tr>
+<th>字段名</th>
+<th>类型</th>
+<th>描述</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Command Name</td>
+<td>String</td>
+<td>命令的名称，设置为“pause”。</td>
+</tr>
+<tr>
+<td>Transaction ID</td>
+<td>Number</td>
+<td>Transaction ID设置为0。</td>
+</tr>
+<tr>
+<td>Command Object</td>
+<td>Null</td>
+<td>不存在命令信息，设置为null类型。</td>
+</tr>
+<tr>
+<td>Pause/Unpause Flag</td>
+<td>Boolean</td>
+<td>true或者false，以表示暂停或者恢复播放。</td>
+</tr>
+<tr>
+<td>milliSeconds</td>
+<td>Number</td>
+<td>毫秒数，在流的哪个位置被暂停或者恢复播放的。当流被暂停，这就是客户端的当前流的时间。当播放被恢复，该服务器仅会发送带有大于此值的时间戳的消息。</td>
+</tr>
+</tbody>
+</table>
+<p>当流被暂停，服务器发送一个NetStream.Pause.Notify的状态消息。当一个流变成未暂停状态，NetStream.Unpause.Notify被发送。失败的时候，它返回一个_error的消息。</p>
+<h2 id="Message-Exchange-Examples"><a href="#Message-Exchange-Examples" class="headerlink" title="Message Exchange Examples"></a>Message Exchange Examples</h2><p>这里是一些样例，以解释使用RTMP的消息交换。</p>
+<h3 id="Publish-Recorded-Video"><a href="#Publish-Recorded-Video" class="headerlink" title="Publish Recorded Video"></a>Publish Recorded Video</h3><p>这个例子说明了一个发布者如何可以发布一个流，然后将视频推流到服务器上。其他客户端可以订阅这个已发布的流，并播放视频。<br><img src="http://ou7ri10jn.bkt.clouddn.com/rtmp_specification_1.0/7-3-1_MessageFlowInPublishingAVideoStream.png" alt=""></p>
+<h3 id="Broadcast-a-Shared-Object-Message"><a href="#Broadcast-a-Shared-Object-Message" class="headerlink" title="Broadcast a Shared Object Message"></a>Broadcast a Shared Object Message</h3><p>这个例子说明了在创建和更改共享对象时所交换的消息。它也说明了共享对象消息广播的过程。<br><img src="http://ou7ri10jn.bkt.clouddn.com/rtmp_specification_1.0/7-3-2_SharedObjectMessageBroadcast.png" alt=""></p>
+<h3 id="Publish-Metadata-from-Recorded-Stream"><a href="#Publish-Metadata-from-Recorded-Stream" class="headerlink" title="Publish Metadata from Recorded Stream"></a>Publish Metadata from Recorded Stream</h3><p>这个例子描述了发布元数据的消息交换。<br><img src="http://ou7ri10jn.bkt.clouddn.com/rtmp_specification_1.0/7-3-3_PublishingMetadata.png" alt=""></p>
+<h1 id="References"><a href="#References" class="headerlink" title="References"></a>References</h1><p></p><p align="left"><br>[RFC0791] Postel, J., “Internet Protocol”, STD 5, RFC 791,<br>September 1981.<br>[RFC0793] Postel, J., “Transmission Control Protocol”, STD 7,<br>RFC 793, September 1981.<br>[RFC1982] Elz, R. and R. Bush, “Serial Number Arithmetic”, RFC 1982,<br>August 1996.<br>[RFC2119] Bradner, S., “Key words for use in RFCs to Indicate<br>Requirement Levels”, BCP 14, RFC 2119, March 1997.<br>[AS3] Adobe Systems, Inc., “ActionScript 3.0 Reference for the<br>Adobe Flash Platform”, 2011, <a href="http://www.adobe.com/devnet/
+actionscript/documentation.html" target="_blank" rel="external">http://www.adobe.com/devnet/
+actionscript/documentation.html</a>.<br>[AMF0] Adobe Systems, Inc., “Action Message Format – AMF 0”,<br>December 2007, <a href="http://opensource.adobe.com/wiki/download/
+attachments/1114283/amf0_spec_121207.pdf" target="_blank" rel="external">http://opensource.adobe.com/wiki/download/
+attachments/1114283/amf0_spec_121207.pdf</a>.<br>[AMF3] Adobe Systems, Inc., “Action Message Format – AMF 3”,<br>May 2008, <a href="http://opensource.adobe.com/wiki/download/
+attachments/1114283/amf3_spec_05_05_08.pdf" target="_blank" rel="external">http://opensource.adobe.com/wiki/download/
+attachments/1114283/amf3_spec_05_05_08.pdf</a>.<br></p><br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div></pre></td><td class="code"><pre><div class="line">Authors’ Addresses</div><div class="line">Hardeep Singh Parmar (editor)</div><div class="line">Adobe Systems Incorporated</div><div class="line">345 Park Ave</div><div class="line">San Jose, CA 95110-2704</div><div class="line">US</div><div class="line">Phone: +1 408 536 6000</div><div class="line">Email: hparmar@adobe.com</div><div class="line">URI:  http://www.adobe.com/</div><div class="line"></div><div class="line">Michael C. Thornburgh (editor)</div><div class="line">Adobe Systems Incorporated</div><div class="line">345 Park Ave</div><div class="line">San Jose, CA 95110-2704</div><div class="line">US</div><div class="line">Phone: +1 408 536 6000</div><div class="line">Email: mthornbu@adobe.com</div><div class="line">URI: http://www.adobe.com/</div></pre></td></tr></table></figure><p></p>
+
+      
+    </div>
+
+    <div>
+      
+        
+
+      
+    </div>
+
+    <div>
+      
+        
+  <div style="padding: 10px 0; margin: 20px auto; width: 90%; text-align: center;">
+    <div>坚持原创技术分享，您的支持将鼓励我继续创作！</div>
+    <button id="rewardButton" disable="enable" onclick="var qr = document.getElementById('QR'); if (qr.style.display === 'none') {qr.style.display='block';} else {qr.style.display='none'}">
+      <span>赏</span>
+    </button>
+    <div id="QR" style="display: none;">
+      
+        <div id="wechat" style="display: inline-block">
+          <img id="wechat_qr" src="/images/wechatpay.jpg" alt="Noah Sun WeChat Pay"/>
+          <p>微信打赏</p>
+        </div>
+      
+      
+        <div id="alipay" style="display: inline-block">
+          <img id="alipay_qr" src="/images/alipay.jpg" alt="Noah Sun Alipay"/>
+          <p>支付宝打赏</p>
+        </div>
+      
+    </div>
+  </div>
+
+
+      
+    </div>
+
+    <div>
+      
+        
+  <ul class="post-copyright">
+    <li class="post-copyright-author">
+      <strong>本文作者：</strong>
+      Noah Sun
+    </li>
+    <li class="post-copyright-link">
+      <strong>本文链接：</strong>
+      <a href="http://www.noahsun.top/2017/11/19/RTMP协议规范-1-0/" title="RTMP协议规范_1.0">http://www.noahsun.top/2017/11/19/RTMP协议规范-1-0/</a>
+    </li>
+    <li class="post-copyright-license">
+      <strong>版权声明： </strong>
+      本博客所有文章除特别声明外，均采用 <a href="https://creativecommons.org/licenses/by-nc-sa/3.0/" rel="external nofollow" target="_blank">CC BY-NC-SA 3.0</a> 许可协议。转载请注明出处！
+    </li>
+  </ul>
+
+
+      
+    </div>
+
+    <footer class="post-footer">
+      
+        <div class="post-tags">
+          
+            <a href="/tags/RTMP/" rel="tag"># RTMP</a>
+          
+        </div>
+      
+
+      
+      
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2017/09/17/ctypes使用指南/" rel="next" title="ctypes使用指南">
+                <i class="fa fa-chevron-left"></i> ctypes使用指南
+              </a>
+            
+          </div>
+
+          <span class="post-nav-divider"></span>
+
+          <div class="post-nav-prev post-nav-item">
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </article>
+
+
+
+    <div class="post-spread">
+      
+    </div>
+  </div>
+
+
+          </div>
+          
+
+
+          
+  <div class="comments" id="comments">
+    
+      <div id="disqus_thread">
+        <noscript>
+          Please enable JavaScript to view the
+          <a href="https://disqus.com/?ref_noscript">comments powered by Disqus.</a>
+        </noscript>
+      </div>
+    
+  </div>
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap" >
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <section class="site-overview sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+          <img class="site-author-image" itemprop="image"
+               src="/images/avatar.jpg"
+               alt="Noah Sun" />
+          <p class="site-author-name" itemprop="name">Noah Sun</p>
+           
+              <p class="site-description motion-element" itemprop="description">Noah Sun's Blog.</p>
+          
+        </div>
+        <nav class="site-state motion-element">
+
+          
+            <div class="site-state-item site-state-posts">
+              <a href="/archives/">
+                <span class="site-state-item-count">5</span>
+                <span class="site-state-item-name">日志</span>
+              </a>
+            </div>
+          
+
+          
+            
+            
+            <div class="site-state-item site-state-categories">
+              <a href="/categories/index.html">
+                <span class="site-state-item-count">2</span>
+                <span class="site-state-item-name">分类</span>
+              </a>
+            </div>
+          
+
+          
+            
+            
+            <div class="site-state-item site-state-tags">
+              <a href="/tags/index.html">
+                <span class="site-state-item-count">9</span>
+                <span class="site-state-item-name">标签</span>
+              </a>
+            </div>
+          
+
+        </nav>
+
+        
+
+        <div class="links-of-author motion-element">
+          
+            
+              <span class="links-of-author-item">
+                <a href="https://github.com/rukesun/" target="_blank" title="GitHub">
+                  
+                    <i class="fa fa-fw fa-github"></i>
+                  
+                  GitHub
+                </a>
+              </span>
+            
+              <span class="links-of-author-item">
+                <a href="https://www.facebook.com/Noah.D.Sun" target="_blank" title="Facebook">
+                  
+                    <i class="fa fa-fw fa-facebook"></i>
+                  
+                  Facebook
+                </a>
+              </span>
+            
+          
+        </div>
+
+        
+        
+
+        
+        
+
+        
+
+
+      </section>
+
+      
+      <!--noindex-->
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+
+            
+              
+            
+
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#译注"><span class="nav-number">1.</span> <span class="nav-text">译注</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#Introduction"><span class="nav-number">2.</span> <span class="nav-text">Introduction</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#Terminology"><span class="nav-number">2.1.</span> <span class="nav-text">Terminology</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#Contributors"><span class="nav-number">3.</span> <span class="nav-text">Contributors</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#Definitions"><span class="nav-number">4.</span> <span class="nav-text">Definitions</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#Byte-Order-Alignment-and-Time-Format"><span class="nav-number">5.</span> <span class="nav-text">Byte Order, Alignment, and Time Format</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#RTMP-Chunk-Stream"><span class="nav-number">6.</span> <span class="nav-text">RTMP Chunk Stream</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#Message-Format"><span class="nav-number">6.1.</span> <span class="nav-text">Message Format</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#Handshake"><span class="nav-number">7.</span> <span class="nav-text">Handshake</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#Handshake-Sequence"><span class="nav-number">7.0.1.</span> <span class="nav-text">Handshake Sequence</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#C0-and-S0-Format"><span class="nav-number">7.0.2.</span> <span class="nav-text">C0 and S0 Format</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#C1-and-S1-Format"><span class="nav-number">7.0.3.</span> <span class="nav-text">C1 and S1 Format</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#C2-and-S2-Format"><span class="nav-number">7.0.4.</span> <span class="nav-text">C2 and S2 Format</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Handshake-Diagram"><span class="nav-number">7.0.5.</span> <span class="nav-text">Handshake Diagram</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Chunking"><span class="nav-number">7.1.</span> <span class="nav-text">Chunking</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#Chunk-Format"><span class="nav-number">7.1.1.</span> <span class="nav-text">Chunk Format</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#Chunk-Basic-Header"><span class="nav-number">7.1.1.1.</span> <span class="nav-text">Chunk Basic Header</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#Chunk-Message-Header"><span class="nav-number">7.1.1.2.</span> <span class="nav-text">Chunk Message Header</span></a><ol class="nav-child"><li class="nav-item nav-level-5"><a class="nav-link" href="#Type-0"><span class="nav-number">7.1.1.2.1.</span> <span class="nav-text">Type 0</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#Type-1"><span class="nav-number">7.1.1.2.2.</span> <span class="nav-text">Type 1</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#Type-2"><span class="nav-number">7.1.1.2.3.</span> <span class="nav-text">Type 2</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#Type-3"><span class="nav-number">7.1.1.2.4.</span> <span class="nav-text">Type 3</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#Common-Header-Fields"><span class="nav-number">7.1.1.2.5.</span> <span class="nav-text">Common Header Fields</span></a></li></ol></li><li class="nav-item nav-level-4"><a class="nav-link" href="#Extended-Timestamp"><span class="nav-number">7.1.1.3.</span> <span class="nav-text">Extended Timestamp</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Examples"><span class="nav-number">7.1.2.</span> <span class="nav-text">Examples</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#Example-1"><span class="nav-number">7.1.2.1.</span> <span class="nav-text">Example 1</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#Example-2"><span class="nav-number">7.1.2.2.</span> <span class="nav-text">Example 2</span></a></li></ol></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Protocol-Control-Messages"><span class="nav-number">7.2.</span> <span class="nav-text">Protocol Control Messages</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#Set-Chunk-Size-1"><span class="nav-number">7.2.1.</span> <span class="nav-text">Set Chunk Size (1)</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Abort-Message-2"><span class="nav-number">7.2.2.</span> <span class="nav-text">Abort Message (2)</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Acknowledgement-3"><span class="nav-number">7.2.3.</span> <span class="nav-text">Acknowledgement (3)</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Window-Acknowledgement-Size-5"><span class="nav-number">7.2.4.</span> <span class="nav-text">Window Acknowledgement Size (5)</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Set-Peer-Bandwidth-6"><span class="nav-number">7.2.5.</span> <span class="nav-text">Set Peer Bandwidth (6)</span></a></li></ol></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#RTMP-Message-Formats"><span class="nav-number">8.</span> <span class="nav-text">RTMP Message Formats</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#RTMP-Message-Format"><span class="nav-number">8.1.</span> <span class="nav-text">RTMP Message Format</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#Message-Header"><span class="nav-number">8.1.1.</span> <span class="nav-text">Message Header</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Message-Payload"><span class="nav-number">8.1.2.</span> <span class="nav-text">Message Payload</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#User-Control-Messages-4"><span class="nav-number">8.2.</span> <span class="nav-text">User Control Messages (4)</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#RTMP-Command-Messages"><span class="nav-number">9.</span> <span class="nav-text">RTMP Command Messages</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#Types-of-Messages"><span class="nav-number">9.1.</span> <span class="nav-text">Types of Messages</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#Command-Message-20-17"><span class="nav-number">9.1.1.</span> <span class="nav-text">Command Message (20, 17)</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Data-Message-18-15"><span class="nav-number">9.1.2.</span> <span class="nav-text">Data Message (18, 15)</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Shared-Object-Message-19-16"><span class="nav-number">9.1.3.</span> <span class="nav-text">Shared Object Message (19, 16)</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Audio-Message-8"><span class="nav-number">9.1.4.</span> <span class="nav-text">Audio Message (8)</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Video-Message-9"><span class="nav-number">9.1.5.</span> <span class="nav-text">Video Message (9)</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Aggregate-Message-22"><span class="nav-number">9.1.6.</span> <span class="nav-text">Aggregate Message (22)</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#User-Control-Message-Events"><span class="nav-number">9.1.7.</span> <span class="nav-text">User Control Message Events</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Types-of-Commands"><span class="nav-number">9.2.</span> <span class="nav-text">Types of Commands</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#NetConnection-Commands"><span class="nav-number">9.2.1.</span> <span class="nav-text">NetConnection Commands</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#Connect"><span class="nav-number">9.2.1.1.</span> <span class="nav-text">Connect</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#Call"><span class="nav-number">9.2.1.2.</span> <span class="nav-text">Call</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#createStream"><span class="nav-number">9.2.1.3.</span> <span class="nav-text">createStream</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#NetStream-Commands"><span class="nav-number">9.2.2.</span> <span class="nav-text">NetStream Commands</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#play"><span class="nav-number">9.2.2.1.</span> <span class="nav-text">play</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#play2"><span class="nav-number">9.2.2.2.</span> <span class="nav-text">play2</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#deleteStream"><span class="nav-number">9.2.2.3.</span> <span class="nav-text">deleteStream</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#receiveAudio"><span class="nav-number">9.2.2.4.</span> <span class="nav-text">receiveAudio</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#receiveVideo"><span class="nav-number">9.2.2.5.</span> <span class="nav-text">receiveVideo</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#publish"><span class="nav-number">9.2.2.6.</span> <span class="nav-text">publish</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#seek"><span class="nav-number">9.2.2.7.</span> <span class="nav-text">seek</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#pause"><span class="nav-number">9.2.2.8.</span> <span class="nav-text">pause</span></a></li></ol></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Message-Exchange-Examples"><span class="nav-number">9.3.</span> <span class="nav-text">Message Exchange Examples</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#Publish-Recorded-Video"><span class="nav-number">9.3.1.</span> <span class="nav-text">Publish Recorded Video</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Broadcast-a-Shared-Object-Message"><span class="nav-number">9.3.2.</span> <span class="nav-text">Broadcast a Shared Object Message</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Publish-Metadata-from-Recorded-Stream"><span class="nav-number">9.3.3.</span> <span class="nav-text">Publish Metadata from Recorded Stream</span></a></li></ol></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#References"><span class="nav-number">10.</span> <span class="nav-text">References</span></a></li></ol></div>
+            
+
+          </div>
+        </section>
+      <!--/noindex-->
+      
+
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright" >
+  
+  &copy;  2017 - 
+  <span itemprop="copyrightYear">2018</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">Noah Sun</span>
+</div>
+
+
+<div class="powered-by">
+  由 <a class="theme-link" href="https://hexo.io">Hexo</a> 强力驱动
+</div>
+
+<div class="theme-info">
+  主题 -
+  <a class="theme-link" href="https://github.com/iissnan/hexo-theme-next">
+    NexT.Pisces
+  </a>
+</div>
+
+
+        
+
+        
+      </div>
+    </footer>
+
+    
+      <div class="back-to-top">
+        <i class="fa fa-arrow-up"></i>
+        
+      </div>
+    
+
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  <script type="text/javascript" src="//cdn.jsdelivr.net/jquery/2.1.3/jquery.min.js"></script>
+
+  
+  <script type="text/javascript" src="//cdn.jsdelivr.net/fastclick/1.0.6/fastclick.min.js"></script>
+
+  
+  <script type="text/javascript" src="//cdn.jsdelivr.net/jquery.lazyload/1.9.3/jquery.lazyload.min.js"></script>
+
+  
+  <script type="text/javascript" src="//cdn.jsdelivr.net/velocity/1.2.3/velocity.min.js"></script>
+
+  
+  <script type="text/javascript" src="//cdn.jsdelivr.net/velocity/1.2.3/velocity.ui.min.js"></script>
+
+  
+  <script type="text/javascript" src="//cdn.jsdelivr.net/fancybox/2.1.5/jquery.fancybox.pack.js"></script>
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/utils.js?v=5.1.1"></script>
+
+  <script type="text/javascript" src="/js/src/motion.js?v=5.1.1"></script>
+
+
+
+  
+  
+
+
+  <script type="text/javascript" src="/js/src/affix.js?v=5.1.1"></script>
+
+  <script type="text/javascript" src="/js/src/schemes/pisces.js?v=5.1.1"></script>
+
+
+
+  
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=5.1.1"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=5.1.1"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/bootstrap.js?v=5.1.1"></script>
+
+
+
+  
+
+
+  
+
+    
+      <script id="dsq-count-scr" src="https://noahsun.disqus.com/count.js" async></script>
+    
+
+    
+      <script type="text/javascript">
+        var disqus_config = function () {
+          this.page.url = 'http://www.noahsun.top/2017/11/19/RTMP协议规范-1-0/';
+          this.page.identifier = '2017/11/19/RTMP协议规范-1-0/';
+          this.page.title = 'RTMP协议规范_1.0';
+        };
+        var d = document, s = d.createElement('script');
+        s.src = 'https://noahsun.disqus.com/embed.js';
+        s.setAttribute('data-timestamp', '' + +new Date());
+        (d.head || d.body).appendChild(s);
+      </script>
+    
+
+  
+
+
+
+
+	
+
+
+
+
+
+  
+
+
+
+
+
+
+
+
+  
+
+  <script type="text/javascript">
+    // Popup Window;
+    var isfetched = false;
+    var isXml = true;
+    // Search DB path;
+    var search_path = "search.xml";
+    if (search_path.length === 0) {
+      search_path = "search.xml";
+    } else if (/json$/i.test(search_path)) {
+      isXml = false;
+    }
+    var path = "/" + search_path;
+    // monitor main search box;
+
+    var onPopupClose = function (e) {
+      $('.popup').hide();
+      $('#local-search-input').val('');
+      $('.search-result-list').remove();
+      $('#no-result').remove();
+      $(".local-search-pop-overlay").remove();
+      $('body').css('overflow', '');
+    }
+
+    function proceedsearch() {
+      $("body")
+        .append('<div class="search-popup-overlay local-search-pop-overlay"></div>')
+        .css('overflow', 'hidden');
+      $('.search-popup-overlay').click(onPopupClose);
+      $('.popup').toggle();
+      var $localSearchInput = $('#local-search-input');
+      $localSearchInput.attr("autocapitalize", "none");
+      $localSearchInput.attr("autocorrect", "off");
+      $localSearchInput.focus();
+    }
+
+    // search function;
+    var searchFunc = function(path, search_id, content_id) {
+      'use strict';
+
+      // start loading animation
+      $("body")
+        .append('<div class="search-popup-overlay local-search-pop-overlay">' +
+          '<div id="search-loading-icon">' +
+          '<i class="fa fa-spinner fa-pulse fa-5x fa-fw"></i>' +
+          '</div>' +
+          '</div>')
+        .css('overflow', 'hidden');
+      $("#search-loading-icon").css('margin', '20% auto 0 auto').css('text-align', 'center');
+
+      $.ajax({
+        url: path,
+        dataType: isXml ? "xml" : "json",
+        async: true,
+        success: function(res) {
+          // get the contents from search data
+          isfetched = true;
+          $('.popup').detach().appendTo('.header-inner');
+          var datas = isXml ? $("entry", res).map(function() {
+            return {
+              title: $("title", this).text(),
+              content: $("content",this).text(),
+              url: $("url" , this).text()
+            };
+          }).get() : res;
+          var input = document.getElementById(search_id);
+          var resultContent = document.getElementById(content_id);
+          var inputEventFunction = function() {
+            var searchText = input.value.trim().toLowerCase();
+            var keywords = searchText.split(/[\s\-]+/);
+            if (keywords.length > 1) {
+              keywords.push(searchText);
+            }
+            var resultItems = [];
+            if (searchText.length > 0) {
+              // perform local searching
+              datas.forEach(function(data) {
+                var isMatch = false;
+                var hitCount = 0;
+                var searchTextCount = 0;
+                var title = data.title.trim();
+                var titleInLowerCase = title.toLowerCase();
+                var content = data.content.trim().replace(/<[^>]+>/g,"");
+                var contentInLowerCase = content.toLowerCase();
+                var articleUrl = decodeURIComponent(data.url);
+                var indexOfTitle = [];
+                var indexOfContent = [];
+                // only match articles with not empty titles
+                if(title != '') {
+                  keywords.forEach(function(keyword) {
+                    function getIndexByWord(word, text, caseSensitive) {
+                      var wordLen = word.length;
+                      if (wordLen === 0) {
+                        return [];
+                      }
+                      var startPosition = 0, position = [], index = [];
+                      if (!caseSensitive) {
+                        text = text.toLowerCase();
+                        word = word.toLowerCase();
+                      }
+                      while ((position = text.indexOf(word, startPosition)) > -1) {
+                        index.push({position: position, word: word});
+                        startPosition = position + wordLen;
+                      }
+                      return index;
+                    }
+
+                    indexOfTitle = indexOfTitle.concat(getIndexByWord(keyword, titleInLowerCase, false));
+                    indexOfContent = indexOfContent.concat(getIndexByWord(keyword, contentInLowerCase, false));
+                  });
+                  if (indexOfTitle.length > 0 || indexOfContent.length > 0) {
+                    isMatch = true;
+                    hitCount = indexOfTitle.length + indexOfContent.length;
+                  }
+                }
+
+                // show search results
+
+                if (isMatch) {
+                  // sort index by position of keyword
+
+                  [indexOfTitle, indexOfContent].forEach(function (index) {
+                    index.sort(function (itemLeft, itemRight) {
+                      if (itemRight.position !== itemLeft.position) {
+                        return itemRight.position - itemLeft.position;
+                      } else {
+                        return itemLeft.word.length - itemRight.word.length;
+                      }
+                    });
+                  });
+
+                  // merge hits into slices
+
+                  function mergeIntoSlice(text, start, end, index) {
+                    var item = index[index.length - 1];
+                    var position = item.position;
+                    var word = item.word;
+                    var hits = [];
+                    var searchTextCountInSlice = 0;
+                    while (position + word.length <= end && index.length != 0) {
+                      if (word === searchText) {
+                        searchTextCountInSlice++;
+                      }
+                      hits.push({position: position, length: word.length});
+                      var wordEnd = position + word.length;
+
+                      // move to next position of hit
+
+                      index.pop();
+                      while (index.length != 0) {
+                        item = index[index.length - 1];
+                        position = item.position;
+                        word = item.word;
+                        if (wordEnd > position) {
+                          index.pop();
+                        } else {
+                          break;
+                        }
+                      }
+                    }
+                    searchTextCount += searchTextCountInSlice;
+                    return {
+                      hits: hits,
+                      start: start,
+                      end: end,
+                      searchTextCount: searchTextCountInSlice
+                    };
+                  }
+
+                  var slicesOfTitle = [];
+                  if (indexOfTitle.length != 0) {
+                    slicesOfTitle.push(mergeIntoSlice(title, 0, title.length, indexOfTitle));
+                  }
+
+                  var slicesOfContent = [];
+                  while (indexOfContent.length != 0) {
+                    var item = indexOfContent[indexOfContent.length - 1];
+                    var position = item.position;
+                    var word = item.word;
+                    // cut out 100 characters
+                    var start = position - 20;
+                    var end = position + 80;
+                    if(start < 0){
+                      start = 0;
+                    }
+                    if (end < position + word.length) {
+                      end = position + word.length;
+                    }
+                    if(end > content.length){
+                      end = content.length;
+                    }
+                    slicesOfContent.push(mergeIntoSlice(content, start, end, indexOfContent));
+                  }
+
+                  // sort slices in content by search text's count and hits' count
+
+                  slicesOfContent.sort(function (sliceLeft, sliceRight) {
+                    if (sliceLeft.searchTextCount !== sliceRight.searchTextCount) {
+                      return sliceRight.searchTextCount - sliceLeft.searchTextCount;
+                    } else if (sliceLeft.hits.length !== sliceRight.hits.length) {
+                      return sliceRight.hits.length - sliceLeft.hits.length;
+                    } else {
+                      return sliceLeft.start - sliceRight.start;
+                    }
+                  });
+
+                  // select top N slices in content
+
+                  var upperBound = parseInt('1');
+                  if (upperBound >= 0) {
+                    slicesOfContent = slicesOfContent.slice(0, upperBound);
+                  }
+
+                  // highlight title and content
+
+                  function highlightKeyword(text, slice) {
+                    var result = '';
+                    var prevEnd = slice.start;
+                    slice.hits.forEach(function (hit) {
+                      result += text.substring(prevEnd, hit.position);
+                      var end = hit.position + hit.length;
+                      result += '<b class="search-keyword">' + text.substring(hit.position, end) + '</b>';
+                      prevEnd = end;
+                    });
+                    result += text.substring(prevEnd, slice.end);
+                    return result;
+                  }
+
+                  var resultItem = '';
+
+                  if (slicesOfTitle.length != 0) {
+                    resultItem += "<li><a href='" + articleUrl + "' class='search-result-title'>" + highlightKeyword(title, slicesOfTitle[0]) + "</a>";
+                  } else {
+                    resultItem += "<li><a href='" + articleUrl + "' class='search-result-title'>" + title + "</a>";
+                  }
+
+                  slicesOfContent.forEach(function (slice) {
+                    resultItem += "<a href='" + articleUrl + "'>" +
+                      "<p class=\"search-result\">" + highlightKeyword(content, slice) +
+                      "...</p>" + "</a>";
+                  });
+
+                  resultItem += "</li>";
+                  resultItems.push({
+                    item: resultItem,
+                    searchTextCount: searchTextCount,
+                    hitCount: hitCount,
+                    id: resultItems.length
+                  });
+                }
+              })
+            };
+            if (keywords.length === 1 && keywords[0] === "") {
+              resultContent.innerHTML = '<div id="no-result"><i class="fa fa-search fa-5x" /></div>'
+            } else if (resultItems.length === 0) {
+              resultContent.innerHTML = '<div id="no-result"><i class="fa fa-frown-o fa-5x" /></div>'
+            } else {
+              resultItems.sort(function (resultLeft, resultRight) {
+                if (resultLeft.searchTextCount !== resultRight.searchTextCount) {
+                  return resultRight.searchTextCount - resultLeft.searchTextCount;
+                } else if (resultLeft.hitCount !== resultRight.hitCount) {
+                  return resultRight.hitCount - resultLeft.hitCount;
+                } else {
+                  return resultRight.id - resultLeft.id;
+                }
+              });
+              var searchResultList = '<ul class=\"search-result-list\">';
+              resultItems.forEach(function (result) {
+                searchResultList += result.item;
+              })
+              searchResultList += "</ul>";
+              resultContent.innerHTML = searchResultList;
+            }
+          }
+
+          if ('auto' === 'auto') {
+            input.addEventListener('input', inputEventFunction);
+          } else {
+            $('.search-icon').click(inputEventFunction);
+            input.addEventListener('keypress', function (event) {
+              if (event.keyCode === 13) {
+                inputEventFunction();
+              }
+            });
+          }
+
+          // remove loading animation
+          $(".local-search-pop-overlay").remove();
+          $('body').css('overflow', '');
+
+          proceedsearch();
+        }
+      });
+    }
+
+    // handle and trigger popup window;
+    $('.popup-trigger').click(function(e) {
+      e.stopPropagation();
+      if (isfetched === false) {
+        searchFunc(path, 'local-search-input', 'local-search-result');
+      } else {
+        proceedsearch();
+      };
+    });
+
+    $('.popup-btn-close').click(onPopupClose);
+    $('.popup').click(function(e){
+      e.stopPropagation();
+    });
+    $(document).on('keyup', function (event) {
+      var shouldDismissSearchPopup = event.which === 27 &&
+        $('.search-popup').is(':visible');
+      if (shouldDismissSearchPopup) {
+        onPopupClose();
+      }
+    });
+  </script>
+
+
+
+
+
+  
+
+  
+  <script src="https://cdn1.lncld.net/static/js/av-core-mini-0.6.1.js"></script>
+  <script>AV.initialize("Cz56UW3FvEkwHB689nG2jLGm-gzGzoHsz", "zuFQDzA0SxPUkEfqOisL54YJ");</script>
+  <script>
+    function showTime(Counter) {
+      var query = new AV.Query(Counter);
+      var entries = [];
+      var $visitors = $(".leancloud_visitors");
+
+      $visitors.each(function () {
+        entries.push( $(this).attr("id").trim() );
+      });
+
+      query.containedIn('url', entries);
+      query.find()
+        .done(function (results) {
+          var COUNT_CONTAINER_REF = '.leancloud-visitors-count';
+
+          if (results.length === 0) {
+            $visitors.find(COUNT_CONTAINER_REF).text(0);
+            return;
+          }
+
+          for (var i = 0; i < results.length; i++) {
+            var item = results[i];
+            var url = item.get('url');
+            var time = item.get('time');
+            var element = document.getElementById(url);
+
+            $(element).find(COUNT_CONTAINER_REF).text(time);
+          }
+          for(var i = 0; i < entries.length; i++) {
+            var url = entries[i];
+            var element = document.getElementById(url);
+            var countSpan = $(element).find(COUNT_CONTAINER_REF);
+            if( countSpan.text() == '') {
+              countSpan.text(0);
+            }
+          }
+        })
+        .fail(function (object, error) {
+          console.log("Error: " + error.code + " " + error.message);
+        });
+    }
+
+    function addCount(Counter) {
+      var $visitors = $(".leancloud_visitors");
+      var url = $visitors.attr('id').trim();
+      var title = $visitors.attr('data-flag-title').trim();
+      var query = new AV.Query(Counter);
+
+      query.equalTo("url", url);
+      query.find({
+        success: function(results) {
+          if (results.length > 0) {
+            var counter = results[0];
+            counter.fetchWhenSave(true);
+            counter.increment("time");
+            counter.save(null, {
+              success: function(counter) {
+                var $element = $(document.getElementById(url));
+                $element.find('.leancloud-visitors-count').text(counter.get('time'));
+              },
+              error: function(counter, error) {
+                console.log('Failed to save Visitor num, with error message: ' + error.message);
+              }
+            });
+          } else {
+            var newcounter = new Counter();
+            /* Set ACL */
+            var acl = new AV.ACL();
+            acl.setPublicReadAccess(true);
+            acl.setPublicWriteAccess(true);
+            newcounter.setACL(acl);
+            /* End Set ACL */
+            newcounter.set("title", title);
+            newcounter.set("url", url);
+            newcounter.set("time", 1);
+            newcounter.save(null, {
+              success: function(newcounter) {
+                var $element = $(document.getElementById(url));
+                $element.find('.leancloud-visitors-count').text(newcounter.get('time'));
+              },
+              error: function(newcounter, error) {
+                console.log('Failed to create');
+              }
+            });
+          }
+        },
+        error: function(error) {
+          console.log('Error:' + error.code + " " + error.message);
+        }
+      });
+    }
+
+    $(function() {
+      var Counter = AV.Object.extend("Counter");
+      if ($('.leancloud_visitors').length == 1) {
+        addCount(Counter);
+      } else if ($('.post-title-link').length > 1) {
+        showTime(Counter);
+      }
+    });
+  </script>
+
+
+
+  
+
+  
+
+  
+
+  
+
+  
+
+</body>
+</html>
