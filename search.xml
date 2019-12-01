@@ -1,6 +1,18 @@
 <?xml version="1.0" encoding="utf-8"?>
 <search>
   <entry>
+    <title><![CDATA[推荐的学习资源]]></title>
+    <url>%2F2019%2F12%2F01%2Frecommended-study-resources%2F</url>
+    <content type="text"><![CDATA[推荐的学习资源列表Golang语言the-way-to-go (recommend)golang.org (official) 数据库Mongodbmongodb-tutorial (recommend)docs.mongodb.com (official) Redisredis-tutorial (recommend)redisdocredis.io (official) SQLsql-tutorialmysql-tutorialdev.mysql.com (official) Nginxnginx.org (official)Nginx 配置详解Nginx 反向代理与负载均衡详解OpenResty最佳实践-NginxNginx开发从入门到精通]]></content>
+      <categories>
+        <category>Technology</category>
+      </categories>
+      <tags>
+        <tag>Study</tag>
+        <tag>Resource</tag>
+      </tags>
+  </entry>
+  <entry>
     <title><![CDATA[如何搭建个人私有云盘]]></title>
     <url>%2F2019%2F01%2F06%2F%E5%A6%82%E4%BD%95%E6%90%AD%E5%BB%BA%E4%B8%AA%E4%BA%BA%E7%A7%81%E6%9C%89%E4%BA%91%E7%9B%98%2F</url>
     <content type="text"><![CDATA[前言市场上有很多云盘的产品，比如百度云盘，不过本教程主要目的是要搭建个人私有云盘。查了网上很多资料，个人云盘也有很多，比如nextcloud，owncloud，seafile等。这里选择nextcloud，优势就不用说了，网上一搜一大把。 Nextcloud搭建办法主要的搭建办法有两个： 通过VPS一键安装 手动安装 通过VPS一键安装Vultr有一键安装Nextcloud的功能，非常方便。主要步骤如下： 注册vps 创建vps实例 Server Location -&gt; 选择一个好的机房，比如洛杉矶，日本和新加坡等。 Server Type -&gt; 选Application，选中Nextcloud Server Size -&gt; 根据自己需要选择 剩下的配置使用默认即可 首先，登陆Vultr官网，点击Create Account注册。选择一个好的机房，当然是自己测过才放心。这里推荐使用PingInfoView来测试。以下是vultr的机房： 列表如下，贴到PingInfoView上即可。 123456789101112131415sgp-ping.vultr.comhnd-jp-ping.vultr.comsyd-au-ping.vultr.comfra-de-ping.vultr.comams-nl-ping.vultr.comlon-gb-ping.vultr.compar-fr-ping.vultr.comwa-us-ping.vultr.comsjo-ca-us-ping.vultr.comlax-ca-us-ping.vultr.comil-us-ping.vultr.comnj-us-ping.vultr.comtx-us-ping.vultr.comga-us-ping.vultr.comfl-us-ping.vultr.com linux/mac用户可以使用我写的脚本vultr_test来测试。以下是我的测试结果：选择的原则是，ping值最小，丢包率最小。比如我的测试结果中，较不错的是sjo、wa和lax，都是美国机房。 接下来Server Type选Application，选中Nextcloud，如下所示根据自己的需要选择Server Size，剩下的配置使用默认即可。点击Deploy Now，然后静静地等待1~2分钟。部署完成后，查看实例详情，可以看到Nextcloud的地址，登陆账号和密码。打开你的Nextcloud地址，会提示不安全，这个是ssl证书问题，你可以直接忽略。下面是打开后的界面怎么样，是不是很期待？输入账号和密码，点击登录，网盘就可以使用了可以传视频，文档，可以自定义目录，更多的功能等待你去探索！好了，是不是有点小激动？麻麻再也不用担心我的小电影没地方放了。]]></content>
@@ -152,8 +164,8 @@
         <category>Technology</category>
       </categories>
       <tags>
-        <tag>Hello World</tag>
         <tag>Blog</tag>
+        <tag>Hello World</tag>
         <tag>hexo</tag>
       </tags>
   </entry>
