@@ -1,6 +1,19 @@
 <?xml version="1.0" encoding="utf-8"?>
 <search>
   <entry>
+    <title><![CDATA[TensorFlow安装教程]]></title>
+    <url>%2F2020%2F03%2F01%2Ftensorflow-install%2F</url>
+    <content type="text"><![CDATA[TensorFlow 安装环境要求TensorFlow在以下64位系统环境下经过测试和支持 Python 3.5–3.7 macOS 10.12.6 (Sierra) or later (no GPU support) Ubuntu 16.04 or later Raspbian 9.0 or later Windows 7 or later 在mac OS上安装在mac OS上通常有两种安装方法virtualenv+pip和docker。 通过virtualenv + pipPython 3 要求 Python 3.5–3.7pip &gt;= 19.0 Python 2.7 要求 Python == 2.7pip &gt;= 19.0 安装Pthon开发环境这里以Python 3 为例，如果你没有安装Python，pip和Virtualenv，请参考下面的方法，否则跳过这一步 12345/usr/bin/ruby -e &quot;$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install)&quot;export PATH=&quot;/usr/local/bin:/usr/local/sbin:$PATH&quot;brew updatebrew install python # Python 3sudo pip3 install -U virtualenv # system-wide install 创建一个VirtualenvVirtualenv 可以做到与其他 Python 开发隔离的虚拟环境。下面是在 ./py3x 目录下创建一个Python 3 的虚拟环境1virtualenv --system-site-packages -p python3 ./py3x 激活虚拟环境1source ./py3x/bin/activate # sh, bash, ksh, or zsh 在虚拟环境中升级pip1pip install --upgrade pip 如果不想使用虚拟环境，可以使用下面的命令退出1deactivate # don&apos;t exit until you&apos;re done using TensorFlow 通过pip安装TensorFlowpip有下面三种不同的TensorFlow包： tensorflow：最新稳定发布版 tf-nightly：预览版，可能不稳定 tensorflow==1.15：TensorFlow 1.x 的最后一个版本 安装示例1pip install --upgrade tensorflow 校验是否安装成功1python -c &quot;import tensorflow as tf;print(tf.reduce_sum(tf.random.normal([1000, 1000])))&quot; 通过dockerDocker 使用容器创建虚拟环境，以便将 TensorFlow 安装与系统的其余部分隔离开来。 官方 TensorFlow Docker 的镜像位于 tensorflow/tensorflow。下面是各标签的说明 标签 说明 latest TensorFlow 最新稳定版。 nightly TensorFlow 预览版（不稳定）。 version TensorFlow 指定版本，如1.15.0。 devel TensorFlow开发版，包含源码。 上面的标签也有一些变体，下面是相关的说明 标签变体 说明 tag-gpu 支持 GPU 的指定标签版本。 tag-py3 支持 Python 3 的指定标签版本。 tag-jupyter 带有 Jupyter 的指定标签版本（包含 TensorFlow 教程）。 这里假定你已经安装Docker，先拉取镜像，以支持 Python 3 的最新 TensorFlow 版本为例1docker pull tensorflow/tensorflow:latest-py3 # Download latest stable image 其他版本示例 123docker pull tensorflow/tensorflow # latest stable releasedocker pull tensorflow/tensorflow:devel-gpu # nightly dev release w/GPU supportdocker pull tensorflow/tensorflow:latest-gpu-jupyter # latest release w/ GPU support and Jupyter 启动 TensorFlow Docker 容器 1docker run [-it] [--rm] [-p hostPort:containerPort] tensorflow/tensorflow[:tag] [command] 以启动支持 Python 3 的最新 TensorFlow 版本为例 1docker run -it -p 8080:8080 tensorflow/tensorflow:latest-py3 启动 Python，验证你的环境 123&gt;&gt;&gt; import tensorflow as tf&gt;&gt;&gt; print(tf.__version__)2.1.0 在Linux上安装Linux上安装完Virtualenv或者Docker后，其他方法是一样的，不再详细说明。 参考[1] Install TensorFlow with pip[2] Install TensorFlow with Docker]]></content>
+      <categories>
+        <category>Technology</category>
+      </categories>
+      <tags>
+        <tag>TensorFlow</tag>
+        <tag>DeepLearning</tag>
+        <tag>Install</tag>
+      </tags>
+  </entry>
+  <entry>
     <title><![CDATA[推荐的学习资源]]></title>
     <url>%2F2019%2F12%2F01%2Frecommended-study-resources%2F</url>
     <content type="text"><![CDATA[推荐的学习资源列表Golang语言the-way-to-go (recommend)golang.org (official) 数据库Mongodbmongodb-tutorial (recommend)docs.mongodb.com (official) Redisredis-tutorial (recommend)redisdocredis.io (official) SQLsql-tutorialmysql-tutorialdev.mysql.com (official) Nginxnginx.org (official)Nginx 配置详解Nginx 反向代理与负载均衡详解OpenResty最佳实践-NginxNginx开发从入门到精通]]></content>
@@ -164,8 +177,8 @@
         <category>Technology</category>
       </categories>
       <tags>
-        <tag>Blog</tag>
         <tag>Hello World</tag>
+        <tag>Blog</tag>
         <tag>hexo</tag>
       </tags>
   </entry>
