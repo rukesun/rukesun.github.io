@@ -112,23 +112,27 @@
 
 
 
-  <meta name="description" content="Noah Sun&apos;s Blog.">
-<meta property="og:type" content="website">
-<meta property="og:title" content="Noah Sun&#39;s Home">
-<meta property="og:url" content="http://blog.noahsun.top/tags/Blog/index.html">
+  <meta name="description" content="前言编写良好的Commit messages可以达到以下几个重要的目的  加快review的流程 帮助我们编写良好的版本发布日志 让之后的维护者了解代码里出现特定变化和feature被添加的原因  目前，社区有多种 Commit message 的写法规范。来自Angular 规范是目前使用最广的写法，比较合理和系统化。如下图： Commit messages格式当前业界应用的比较广泛的是 Ang">
+<meta name="keywords" content="Git Commit,Git,Manual">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Git commit格式参考">
+<meta property="og:url" content="http://blog.noahsun.top/2020/03/22/git-commit-guidelines/index.html">
 <meta property="og:site_name" content="Noah Sun&#39;s Home">
-<meta property="og:description" content="Noah Sun&apos;s Blog.">
+<meta property="og:description" content="前言编写良好的Commit messages可以达到以下几个重要的目的  加快review的流程 帮助我们编写良好的版本发布日志 让之后的维护者了解代码里出现特定变化和feature被添加的原因  目前，社区有多种 Commit message 的写法规范。来自Angular 规范是目前使用最广的写法，比较合理和系统化。如下图： Commit messages格式当前业界应用的比较广泛的是 Ang">
 <meta property="og:locale" content="zh-CN">
+<meta property="og:image" content="http://image.noahsun.top/git_commit_guidelines/angular_commit_example.jpg">
+<meta property="og:updated_time" content="2020-03-22T14:18:48.608Z">
 <meta name="twitter:card" content="summary">
-<meta name="twitter:title" content="Noah Sun&#39;s Home">
-<meta name="twitter:description" content="Noah Sun&apos;s Blog.">
+<meta name="twitter:title" content="Git commit格式参考">
+<meta name="twitter:description" content="前言编写良好的Commit messages可以达到以下几个重要的目的  加快review的流程 帮助我们编写良好的版本发布日志 让之后的维护者了解代码里出现特定变化和feature被添加的原因  目前，社区有多种 Commit message 的写法规范。来自Angular 规范是目前使用最广的写法，比较合理和系统化。如下图： Commit messages格式当前业界应用的比较广泛的是 Ang">
+<meta name="twitter:image" content="http://image.noahsun.top/git_commit_guidelines/angular_commit_example.jpg">
 
 
 
 
 
 
-  <link rel="canonical" href="http://blog.noahsun.top/tags/Blog/">
+  <link rel="canonical" href="http://blog.noahsun.top/2020/03/22/git-commit-guidelines/">
 
 
 
@@ -138,7 +142,7 @@
   };
 </script>
 
-  <title>标签: Blog | Noah Sun's Home</title>
+  <title>Git commit格式参考 | Noah Sun's Home</title>
   
 
 
@@ -206,7 +210,7 @@
     
   
 
-  <div class="container sidebar-position-left ">
+  <div class="container sidebar-position-left page-post-detail">
     <div class="headband"></div>
 
     <header id="header" class="header" itemscope="" itemtype="http://schema.org/WPHeader">
@@ -267,7 +271,7 @@
         
         
           
-          <li class="menu-item menu-item-tags menu-item-active">
+          <li class="menu-item menu-item-tags">
     <a href="/tags/" rel="section">
       <i class="menu-item-icon fa fa-fw fa-tags"></i> <br>标签</a>
   </li>
@@ -337,108 +341,318 @@
           
             
 
-    
-    
-      
-      
-    
-      
-      
-    
-      
-      
-    
-      
-      
-    
-      
-      
-    
-    
-
-  
-
-
           
           <div id="content" class="content">
             
 
-  
-  
-  
-  <div class="post-block tag">
+  <div id="posts" class="posts-expand">
+    
 
-    <div id="posts" class="posts-collapse">
-      <div class="collection-title">
-        <h1>Blog<small>标签</small>
-        </h1>
-      </div>
+  
 
-      
-        
+  
+  
+  
+
+  
 
   <article class="post post-type-normal" itemscope="" itemtype="http://schema.org/Article">
-    <header class="post-header">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="http://blog.noahsun.top/2020/03/22/git-commit-guidelines/">
 
-      <h2 class="post-title">
+    <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="Noah Sun">
+      <meta itemprop="description" content="Noah Sun's Blog.">
+      <meta itemprop="image" content="http://image.noahsun.top/res/avatar.jpg">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope="" itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Noah Sun's Home">
+    </span>
+
+    
+      <header class="post-header">
+
         
-            <a class="post-title-link" href="/2017/07/23/The-background-of-this-blog/" itemprop="url">
-              
-                <span itemprop="name">The background of this blog</span>
-              
-            </a>
         
-      </h2>
+          <h1 class="post-title" itemprop="name headline">Git commit格式参考
+              
+            
+          </h1>
+        
 
-      <div class="post-meta">
-        <time class="post-time" itemprop="dateCreated" datetime="2017-07-23T23:15:18+08:00" content="2017-07-23">
-          07-23
-        </time>
-      </div>
+        <div class="post-meta">
+          <span class="post-time">
 
-    </header>
-  </article>
+            
+            
+            
 
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+
+              
+                
+              
+
+              <time title="创建时间：2020-03-22 21:47:24 / 修改时间：22:18:48" itemprop="dateCreated datePublished" datetime="2020-03-22T21:47:24+08:00">2020-03-22</time>
+            
+
+            
+              
+
+              
+            
+          </span>
+
+          
+            <span class="post-category">
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing"><a href="/categories/Technology/" itemprop="url" rel="index"><span itemprop="name">Technology</span></a></span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+              <span class="post-comments-count">
+                <span class="post-meta-divider">|</span>
+                <span class="post-meta-item-icon">
+                  <i class="fa fa-comment-o"></i>
+                </span>
+                <a href="/2020/03/22/git-commit-guidelines/#comments" itemprop="discussionUrl">
+                  <span class="post-meta-item-text">评论数：</span> <span class="post-comments-count fb-comments-count" data-href="http://blog.noahsun.top/2020/03/22/git-commit-guidelines/" itemprop="commentCount">0</span>
+                </a>
+              </span>
+            
+          
+
+          
+          
+             <span id="/2020/03/22/git-commit-guidelines/" class="leancloud_visitors" data-flag-title="Git commit格式参考">
+               <span class="post-meta-divider">|</span>
+               <span class="post-meta-item-icon">
+                 <i class="fa fa-eye"></i>
+               </span>
+               
+                 <span class="post-meta-item-text">阅读次数：</span>
+               
+                 <span class="leancloud-visitors-count"></span>
+             </span>
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
 
       
-        
+      
 
-  <article class="post post-type-normal" itemscope="" itemtype="http://schema.org/Article">
-    <header class="post-header">
-
-      <h2 class="post-title">
-        
-            <a class="post-title-link" href="/2017/06/18/hello-world/" itemprop="url">
-              
-                <span itemprop="name">Hello World</span>
-              
-            </a>
-        
-      </h2>
-
-      <div class="post-meta">
-        <time class="post-time" itemprop="dateCreated" datetime="2017-06-18T22:55:03+08:00" content="2017-06-18">
-          06-18
-        </time>
-      </div>
-
-    </header>
-  </article>
-
+      
+        <h1 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h1><p>编写良好的Commit messages可以达到以下几个重要的目的</p>
+<ul>
+<li>加快review的流程</li>
+<li>帮助我们编写良好的版本发布日志</li>
+<li>让之后的维护者了解代码里出现特定变化和feature被添加的原因</li>
+</ul>
+<p>目前，社区有多种 Commit message 的写法规范。来自Angular 规范是目前使用最广的写法，比较合理和系统化。如下图：<br><img src="http://image.noahsun.top/git_commit_guidelines/angular_commit_example.jpg" alt="angular_commit_example"></p>
+<h1 id="Commit-messages格式"><a href="#Commit-messages格式" class="headerlink" title="Commit messages格式"></a>Commit messages格式</h1><p>当前业界应用的比较广泛的是 <a href="https://github.com/angular/angular.js/blob/master/DEVELOPERS.md#-git-commit-guidelines" target="_blank" rel="noopener">Angular Git Commit Guidelines</a></p>
+<p>具体格式为:</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">&lt;type&gt;: &lt;subject&gt;</span><br><span class="line">&lt;BLANK LINE&gt;</span><br><span class="line">&lt;body&gt;</span><br><span class="line">&lt;BLANK LINE&gt;</span><br><span class="line">&lt;footer&gt;</span><br></pre></td></tr></table></figure>
+<p>每个commit message一般包含header、body和footer，header是必须的，body和footer不做强制要求，所以一般可以简化为</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">&lt;type&gt;(&lt;scope&gt;): &lt;subject&gt;</span><br></pre></td></tr></table></figure>
+<p>或者省略scope</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">&lt;type&gt;: &lt;subject&gt;</span><br></pre></td></tr></table></figure>
+<p>说明</p>
+<ul>
+<li>type: 本次 commit 的类型，诸如 bugfix docs style 等</li>
+<li>scope: 本次 commit 波及的范围</li>
+<li>subject: 简明扼要的阐述下本次 commit 的主旨</li>
+<li>body: 同样使用祈使句，在主体内容中我们需要把本次 commit 详细的描述一下，比如此次变更的动机</li>
+<li>footer: 描述下与之关联的 issue 或 break change，详见案例</li>
+</ul>
+<p>例子</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">feat(jqLite): add prop() support</span><br><span class="line">fix(ngStyle): correctly remove old style when new style value is invalid</span><br><span class="line">docs(developers): commit message format typo</span><br><span class="line">style(animator): style cleanup</span><br><span class="line">refactor(filter): filters are now injectable and services</span><br><span class="line">perf(*): don&apos;t trigger digests after enter/leave of structural directives</span><br><span class="line">test(mocks): test mocks with compiled angular</span><br><span class="line">chore(release): preparing release notes for 0.10.3</span><br></pre></td></tr></table></figure>
+<h2 id="Type"><a href="#Type" class="headerlink" title="Type"></a>Type</h2><p>类型必须是以下其中一种</p>
+<ul>
+<li>feat: 新功能</li>
+<li>fix: bug fix</li>
+<li>docs: 只改了文档</li>
+<li>style: 代码格式修改，不影响代码的逻辑性，比如空格，格式化，缺失分号等</li>
+<li>refactor: 代码重构，既不是bug fix也不是新功能</li>
+<li>perf: 性能优化</li>
+<li>test: 补充或修改测试代码</li>
+<li>chore: 改变构建流程，或者增加依赖库和工具等，比如增加文档生成工具</li>
+</ul>
+<h2 id="Scope"><a href="#Scope" class="headerlink" title="Scope"></a>Scope</h2><p>范围可以是指定提交更改位置的任何内容，比如search, location, browser, compile等</p>
+<p>你可以使用*来代替多个范围</p>
+<h2 id="Subject"><a href="#Subject" class="headerlink" title="Subject"></a>Subject</h2><p>主题包含对变更的简洁描述，有几个要求</p>
+<ul>
+<li>使用祈使句和现代时，比如使用change而不是changed或者changes</li>
+<li>首字母不要大写</li>
+<li>句末无需使用句号</li>
+</ul>
+<h2 id="Body"><a href="#Body" class="headerlink" title="Body"></a>Body</h2><p>主体与主题一样，应使用祈使句和现代时，应包括改变的动机，并将其与以前的行为进行对比。</p>
+<h2 id="Footer"><a href="#Footer" class="headerlink" title="Footer"></a>Footer</h2><p>描述一些重大的修改和相关的问题，详情参考 <a href="https://docs.google.com/document/d/1QrDFcIiPjSLDn3EL15IJygNPiHORgU1_OOAqWjiDU5Y/edit#heading=h.j8e4paqkfz0q" target="_blank" rel="noopener">AngularJS Message footer</a></p>
+<h2 id="Revert"><a href="#Revert" class="headerlink" title="Revert"></a>Revert</h2><p>当回滚提交时，必须以 revert: 作为开头然后紧跟着该提交的header。</p>
+<p>body部分可以这样描述</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"></span><br><span class="line">This reverts commit &lt;hash&gt;.</span><br></pre></td></tr></table></figure>
+<p>hash是将要被回滚的那个提交的SHA码。</p>
+<h1 id="参考"><a href="#参考" class="headerlink" title="参考"></a>参考</h1><p><a href="https://juejin.im/post/5b4328bbf265da0fa21a6820" target="_blank" rel="noopener">您必须知道的 Git 分支开发规范</a><br><a href="https://github.com/angular/angular.js/blob/master/DEVELOPERS.md#-git-commit-guidelines" target="_blank" rel="noopener">angular.js-git-commit-guidelines</a><br><a href="https://docs.google.com/document/d/1QrDFcIiPjSLDn3EL15IJygNPiHORgU1_OOAqWjiDU5Y/edit" target="_blank" rel="noopener">AngularJS Git Commit Message Conventions</a></p>
 
       
     </div>
 
+    
+
+    
+    
+    
+
+    
+
+    
+      <div>
+        <div style="padding: 10px 0; margin: 20px auto; width: 90%; text-align: center;">
+  <div>感谢你的阅读，如果文章对你有帮助，可以请作者喝杯茶!</div>
+  <button id="rewardButton" disable="enable" onclick="var qr = document.getElementById('QR'); if (qr.style.display === 'none') {qr.style.display='block';} else {qr.style.display='none'}">
+    <span>打赏</span>
+  </button>
+  <div id="QR" style="display: none;">
+
+    
+      <div id="wechat" style="display: inline-block">
+        <img id="wechat_qr" src="http://image.noahsun.top/res/wechatpay.jpg" alt="Noah Sun 微信支付">
+        <p>微信支付</p>
+      </div>
+    
+
+    
+      <div id="alipay" style="display: inline-block">
+        <img id="alipay_qr" src="http://image.noahsun.top/res/alipay.jpg" alt="Noah Sun 支付宝">
+        <p>支付宝</p>
+      </div>
+    
+
+    
+
+  </div>
+</div>
+
+      </div>
+    
+
+    
+      <div>
+        <ul class="post-copyright">
+  <li class="post-copyright-author">
+    <strong>本文作者： </strong>Noah Sun</li>
+  <li class="post-copyright-link">
+    <strong>本文链接：</strong>
+    <a href="http://blog.noahsun.top/2020/03/22/git-commit-guidelines/" title="Git commit格式参考">http://blog.noahsun.top/2020/03/22/git-commit-guidelines/</a>
+  </li>
+  <li class="post-copyright-license">
+    <strong>版权声明： </strong>本博客所有文章除特别声明外，均采用 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" rel="external nofollow" target="_blank">CC BY-NC-SA 4.0</a> 许可协议。转载请注明出处！</li>
+</ul>
+
+      </div>
+    
+
+    <footer class="post-footer">
+      
+        <div class="post-tags">
+          
+            <a href="/tags/Git-Commit/" rel="tag"># Git Commit</a>
+          
+            <a href="/tags/Git/" rel="tag"># Git</a>
+          
+            <a href="/tags/Manual/" rel="tag"># Manual</a>
+          
+        </div>
+      
+
+      
+      
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2020/03/22/one-git-flow/" rel="next" title="Git开发规范参考">
+                <i class="fa fa-chevron-left"></i> Git开发规范参考
+              </a>
+            
+          </div>
+
+          <span class="post-nav-divider"></span>
+
+          <div class="post-nav-prev post-nav-item">
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
   </div>
   
   
   
+  </article>
 
-  
+
+  </div>
 
 
           </div>
           
+
+  
+    <div class="comments" id="comments">
+      <div id="disqus_thread">
+        <noscript>
+          Please enable JavaScript to view the
+          <a href="https://disqus.com/?ref_noscript">comments powered by Disqus.</a>
+        </noscript>
+      </div>
+    </div>
+
+  
+
+
 
         </div>
         
@@ -459,8 +673,17 @@
       
 
       
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap">
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview-wrap">
+            站点概览
+          </li>
+        </ul>
+      
 
-      <section class="site-overview-wrap sidebar-panel sidebar-panel-active">
+      <section class="site-overview-wrap sidebar-panel">
         <div class="site-overview">
           <div class="site-author motion-element" itemprop="author" itemscope="" itemtype="http://schema.org/Person">
             
@@ -608,6 +831,22 @@
       </section>
 
       
+      <!--noindex-->
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+
+            
+              
+            
+
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#前言"><span class="nav-number">1.</span> <span class="nav-text">前言</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#Commit-messages格式"><span class="nav-number">2.</span> <span class="nav-text">Commit messages格式</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#Type"><span class="nav-number">2.1.</span> <span class="nav-text">Type</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Scope"><span class="nav-number">2.2.</span> <span class="nav-text">Scope</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Subject"><span class="nav-number">2.3.</span> <span class="nav-text">Subject</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Body"><span class="nav-number">2.4.</span> <span class="nav-text">Body</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Footer"><span class="nav-number">2.5.</span> <span class="nav-text">Footer</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Revert"><span class="nav-number">2.6.</span> <span class="nav-text">Revert</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#参考"><span class="nav-number">3.</span> <span class="nav-text">参考</span></a></li></ol></div>
+            
+
+          </div>
+        </section>
+      <!--/noindex-->
+      
 
       
 
@@ -744,6 +983,10 @@
 
 
   
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=6.4.2"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=6.4.2"></script>
+
+
 
   
 
@@ -758,6 +1001,23 @@
     <script id="dsq-count-scr" src="https://noahsun.disqus.com/count.js" async></script>
   
 
+  
+    <script type="text/javascript">
+      var disqus_config = function () {
+        this.page.url = 'http://blog.noahsun.top/2020/03/22/git-commit-guidelines/';
+        this.page.identifier = '2020/03/22/git-commit-guidelines/';
+        this.page.title = 'Git commit格式参考';
+        };
+      function loadComments () {
+        var d = document, s = d.createElement('script');
+        s.src = 'https://noahsun.disqus.com/embed.js';
+        s.setAttribute('data-timestamp', '' + +new Date());
+        (d.head || d.body).appendChild(s);
+      }
+      
+        loadComments();
+      
+    </script>
   
 
 
@@ -1102,43 +1362,42 @@
   
   <script>
     
-    function showTime(Counter) {
-      var entries = [];
+    function addCount(Counter) {
       var $visitors = $(".leancloud_visitors");
+      var url = $visitors.attr('id').trim();
+      var title = $visitors.attr('data-flag-title').trim();
 
-      $visitors.each(function () {
-        entries.push( $(this).attr("id").trim() );
-      });
-
-      Counter('get', '/classes/Counter', { where: JSON.stringify({ url: { "$in": entries } }) })
+      Counter('get', '/classes/Counter', { where: JSON.stringify({ url }) })
         .done(function ({ results }) {
-          var COUNT_CONTAINER_REF = '.leancloud-visitors-count';
-
-          if (results.length === 0) {
-            $visitors.find(COUNT_CONTAINER_REF).text(0);
-            return;
-          }
-
-          for (var i = 0; i < results.length; i++) {
-            var item = results[i];
-            var url = item.url;
-            var time = item.time;
-            var element = document.getElementById(url);
-
-            $(element).find(COUNT_CONTAINER_REF).text(time);
-          }
-          for(var i = 0; i < entries.length; i++) {
-            var url = entries[i];
-            var element = document.getElementById(url);
-            var countSpan = $(element).find(COUNT_CONTAINER_REF);
-            if( countSpan.text() == '') {
-              countSpan.text(0);
-            }
+          if (results.length > 0) {
+            var counter = results[0];
+            
+            Counter('put', `/classes/Counter/${counter.objectId}`, JSON.stringify({ time: { "__op":"Increment", "amount":1 } }))
+            
+            .done(function () {
+                  var $element = $(document.getElementById(url));
+                  $element.find('.leancloud-visitors-count').text(counter.time + 1);
+            })
+            
+            .fail(function ({ responseJSON }) {
+                console.log('Failed to save Visitor num, with error message: ' + responseJSON.error);
+            })
+          } else {
+            
+              Counter('post', '/classes/Counter', JSON.stringify({ title: title, url: url, time: 1}))
+                .done(function () {
+                  var $element = $(document.getElementById(url));
+                  $element.find('.leancloud-visitors-count').text(1);
+                })
+                .fail(function () {
+                  console.log('Failed to create');
+                });
+            
           }
         })
-        .fail(function ({ responseJSON }) {
-          console.log("LeanCloud Counter Error: " + responseJSON.code + " " + responseJSON.error);
-        });
+      .fail(function ({ responseJSON }) {
+        console.log('LeanCloud Counter Error:' + responseJSON.code + " " + responseJSON.error);
+      });
     }
     
 
@@ -1158,9 +1417,7 @@
             });
           };
           
-          if ($('.post-title-link').length >= 1) {
-            showTime(Counter);
-          }
+          addCount(Counter);
           
         })
     });
