@@ -1,6 +1,32 @@
 <?xml version="1.0" encoding="utf-8"?>
 <search>
   <entry>
+    <title><![CDATA[Git commit格式参考]]></title>
+    <url>%2F2020%2F03%2F22%2Fgit-commit-guidelines%2F</url>
+    <content type="text"><![CDATA[前言编写良好的Commit messages可以达到以下几个重要的目的 加快review的流程 帮助我们编写良好的版本发布日志 让之后的维护者了解代码里出现特定变化和feature被添加的原因 目前，社区有多种 Commit message 的写法规范。来自Angular 规范是目前使用最广的写法，比较合理和系统化。如下图： Commit messages格式当前业界应用的比较广泛的是 Angular Git Commit Guidelines 具体格式为: 12345&lt;type&gt;: &lt;subject&gt;&lt;BLANK LINE&gt;&lt;body&gt;&lt;BLANK LINE&gt;&lt;footer&gt; 每个commit message一般包含header、body和footer，header是必须的，body和footer不做强制要求，所以一般可以简化为 1&lt;type&gt;(&lt;scope&gt;): &lt;subject&gt; 或者省略scope 1&lt;type&gt;: &lt;subject&gt; 说明 type: 本次 commit 的类型，诸如 bugfix docs style 等 scope: 本次 commit 波及的范围 subject: 简明扼要的阐述下本次 commit 的主旨 body: 同样使用祈使句，在主体内容中我们需要把本次 commit 详细的描述一下，比如此次变更的动机 footer: 描述下与之关联的 issue 或 break change，详见案例 例子 12345678feat(jqLite): add prop() supportfix(ngStyle): correctly remove old style when new style value is invaliddocs(developers): commit message format typostyle(animator): style cleanuprefactor(filter): filters are now injectable and servicesperf(*): don&apos;t trigger digests after enter/leave of structural directivestest(mocks): test mocks with compiled angularchore(release): preparing release notes for 0.10.3 Type类型必须是以下其中一种 feat: 新功能 fix: bug fix docs: 只改了文档 style: 代码格式修改，不影响代码的逻辑性，比如空格，格式化，缺失分号等 refactor: 代码重构，既不是bug fix也不是新功能 perf: 性能优化 test: 补充或修改测试代码 chore: 改变构建流程，或者增加依赖库和工具等，比如增加文档生成工具 Scope范围可以是指定提交更改位置的任何内容，比如search, location, browser, compile等 你可以使用*来代替多个范围 Subject主题包含对变更的简洁描述，有几个要求 使用祈使句和现代时，比如使用change而不是changed或者changes 首字母不要大写 句末无需使用句号 Body主体与主题一样，应使用祈使句和现代时，应包括改变的动机，并将其与以前的行为进行对比。 Footer描述一些重大的修改和相关的问题，详情参考 AngularJS Message footer Revert当回滚提交时，必须以 revert: 作为开头然后紧跟着该提交的header。 body部分可以这样描述 12This reverts commit &lt;hash&gt;. hash是将要被回滚的那个提交的SHA码。 参考您必须知道的 Git 分支开发规范angular.js-git-commit-guidelinesAngularJS Git Commit Message Conventions]]></content>
+      <categories>
+        <category>Technology</category>
+      </categories>
+      <tags>
+        <tag>Git Commit</tag>
+        <tag>Git</tag>
+        <tag>Manual</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title><![CDATA[Git开发规范参考]]></title>
+    <url>%2F2020%2F03%2F22%2Fone-git-flow%2F</url>
+    <content type="text"><![CDATA[分支管理git 的分支管理功能非常强大，为了提高效率、避免分支混乱，我们参考git flow的开发流程规范或者可以直接使用git flow工具。 分支构成主要分支master分支：永远处在即将发布（production-ready）状态；develop分支：为开发分支，始终保持最新完成以及bug修复后的代码。 辅助分支feature分支：开发新功能的分支，基于develop，开发完成后merge回develop；release分支：准备要发布版本的分支（测试环境用的），用来修复SIT（System Integration Testing） bug；基于develop分支，完成后merge回develop和master分支；hotfix分支：修复线上（master）紧急bug，等不及release分支就必须马上上线；基于master分支，完成后merge回master和develop分支。 命名规范约定如下： feature分支命名：feature/name release分支命名：release/name hotfix分支命名：hotfix/name 常见的开发流程增加新功能12345(develop)$: git checkout -b feature/xxx # 从develop建立功能分支(feature/xxx)$: blabla # 开发(feature/xxx)$: git add xxx(feature/xxx)$: git commit -m &apos;commit comment&apos;(develop)$: git merge feature/xxx --no-ff # 把功能分支合并到develop 修复紧急bug123456(master)$: git checkout -b hotfix/xxx # 从master建立hotfix分支(hotfix/xxx)$: blabla # 开发(hotfix/xxx)$: git add xxx(hotfix/xxx)$: git commit -m &apos;commit comment&apos;(master)$: git merge hotfix/xxx --no-ff # 把hotfix分支合并到master，并上线到生产环境；注意，非管理员请用Merge Request；(develop)$: git merge hotfix/xxx --no-ff # 把hotfix分支合并到develop，同步代码 测试环境发布测试123(develop)$: git checkout -b release/x.y.z # 从develop建立预发布分支(release/x.y.z)$: blabla # 开发或者从其他feature分支合并代码(release/x.y.z)$: git merge develop --no-ff # 把develop分支合并到release/x.y.z，然后在测试环境拉取并测试 生产环境上线12(master)$: git merge release/x.y.z --no-ff # 把release/x.y.z或者develop测试好的代码合并到master(master)$: git tag -a 0.1.0 -m &apos;xxx&apos; # 给版本命名，打Tag 注意：这一步由master管理员做，普通开发人员合并代码请用Merge Request。 Tag管理Tag生成时间master分支每次发布时，必须打tag。 Tag命名规范版本格式：主版本号.次版本号.修订号，如：1.0.1。 版本号递增规则如下： 主版本号：当你做了不兼容的 API 修改；项目架构发生巨大变化； 次版本号：当你做了向下兼容的功能性新增； 修订号：当你做了向下兼容的问题修正；小的修改，如代码格式修正等。 参考您必须知道的 Git 分支开发规范分支管理规范git分支管理和工作流规范：具体规范]]></content>
+      <categories>
+        <category>Technology</category>
+      </categories>
+      <tags>
+        <tag>Git</tag>
+        <tag>Manual</tag>
+        <tag>GitFlow</tag>
+      </tags>
+  </entry>
+  <entry>
     <title><![CDATA[TensorFlow安装教程]]></title>
     <url>%2F2020%2F03%2F01%2Ftensorflow-install%2F</url>
     <content type="text"><![CDATA[TensorFlow 安装环境要求TensorFlow在以下64位系统环境下经过测试和支持 Python 3.5–3.7 macOS 10.12.6 (Sierra) or later (no GPU support) Ubuntu 16.04 or later Raspbian 9.0 or later Windows 7 or later 在mac OS上安装在mac OS上通常有两种安装方法virtualenv+pip和docker。 通过virtualenv + pipPython 3 要求 Python 3.5–3.7pip &gt;= 19.0 Python 2.7 要求 Python == 2.7pip &gt;= 19.0 安装Pthon开发环境这里以Python 3 为例，如果你没有安装Python，pip和Virtualenv，请参考下面的方法，否则跳过这一步 12345/usr/bin/ruby -e &quot;$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install)&quot;export PATH=&quot;/usr/local/bin:/usr/local/sbin:$PATH&quot;brew updatebrew install python # Python 3sudo pip3 install -U virtualenv # system-wide install 创建一个VirtualenvVirtualenv 可以做到与其他 Python 开发隔离的虚拟环境。下面是在 ./py3x 目录下创建一个Python 3 的虚拟环境1virtualenv --system-site-packages -p python3 ./py3x 激活虚拟环境1source ./py3x/bin/activate # sh, bash, ksh, or zsh 在虚拟环境中升级pip1pip install --upgrade pip 如果不想使用虚拟环境，可以使用下面的命令退出1deactivate # don&apos;t exit until you&apos;re done using TensorFlow 通过pip安装TensorFlowpip有下面三种不同的TensorFlow包： tensorflow：最新稳定发布版 tf-nightly：预览版，可能不稳定 tensorflow==1.15：TensorFlow 1.x 的最后一个版本 安装示例1pip install --upgrade tensorflow 校验是否安装成功1python -c &quot;import tensorflow as tf;print(tf.reduce_sum(tf.random.normal([1000, 1000])))&quot; 通过dockerDocker 使用容器创建虚拟环境，以便将 TensorFlow 安装与系统的其余部分隔离开来。 官方 TensorFlow Docker 的镜像位于 tensorflow/tensorflow。下面是各标签的说明 标签 说明 latest TensorFlow 最新稳定版。 nightly TensorFlow 预览版（不稳定）。 version TensorFlow 指定版本，如1.15.0。 devel TensorFlow开发版，包含源码。 上面的标签也有一些变体，下面是相关的说明 标签变体 说明 tag-gpu 支持 GPU 的指定标签版本。 tag-py3 支持 Python 3 的指定标签版本。 tag-jupyter 带有 Jupyter 的指定标签版本（包含 TensorFlow 教程）。 这里假定你已经安装Docker，先拉取镜像，以支持 Python 3 的最新 TensorFlow 版本为例1docker pull tensorflow/tensorflow:latest-py3 # Download latest stable image 其他版本示例 123docker pull tensorflow/tensorflow # latest stable releasedocker pull tensorflow/tensorflow:devel-gpu # nightly dev release w/GPU supportdocker pull tensorflow/tensorflow:latest-gpu-jupyter # latest release w/ GPU support and Jupyter 启动 TensorFlow Docker 容器 1docker run [-it] [--rm] [-p hostPort:containerPort] tensorflow/tensorflow[:tag] [command] 以启动支持 Python 3 的最新 TensorFlow 版本为例 1docker run -it -p 8080:8080 tensorflow/tensorflow:latest-py3 启动 Python，验证你的环境 123&gt;&gt;&gt; import tensorflow as tf&gt;&gt;&gt; print(tf.__version__)2.1.0 在Linux上安装Linux上安装完Virtualenv或者Docker后，其他方法是一样的，不再详细说明。 参考[1] Install TensorFlow with pip[2] Install TensorFlow with Docker]]></content>
@@ -33,8 +59,8 @@
         <category>Tools</category>
       </categories>
       <tags>
-        <tag>vps</tag>
         <tag>nextcloud</tag>
+        <tag>vps</tag>
       </tags>
   </entry>
   <entry>
@@ -106,8 +132,8 @@
         <category>Tools</category>
       </categories>
       <tags>
-        <tag>vpn</tag>
         <tag>vps</tag>
+        <tag>vpn</tag>
       </tags>
   </entry>
   <entry>
@@ -118,8 +144,8 @@
         <category>Tools</category>
       </categories>
       <tags>
-        <tag>vpn</tag>
         <tag>vps</tag>
+        <tag>vpn</tag>
       </tags>
   </entry>
   <entry>
@@ -177,8 +203,8 @@
         <category>Technology</category>
       </categories>
       <tags>
-        <tag>Hello World</tag>
         <tag>Blog</tag>
+        <tag>Hello World</tag>
         <tag>hexo</tag>
       </tags>
   </entry>
