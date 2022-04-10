@@ -1,0 +1,1518 @@
+<!DOCTYPE html>
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+
+<html class="theme-next pisces use-motion" lang="zh-CN,en,default">
+<head><meta name="generator" content="Hexo 3.8.0">
+  <meta charset="UTF-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+
+
+
+
+
+
+
+
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform">
+<meta http-equiv="Cache-Control" content="no-siteapp">
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+<link href="//cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet" type="text/css">
+
+<link href="/css/main.css?v=6.4.2" rel="stylesheet" type="text/css">
+
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png?v=6.4.2">
+
+
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png?v=6.4.2">
+
+
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png?v=6.4.2">
+
+
+  <link rel="mask-icon" href="/images/logo.svg?v=6.4.2" color="#222">
+
+
+
+
+
+
+
+
+
+<script type="text/javascript" id="hexo.configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    root: '/',
+    scheme: 'Pisces',
+    version: '6.4.2',
+    sidebar: {"position":"left","display":"post","offset":12,"b2t":false,"scrollpercent":false,"onmobile":false},
+    fancybox: false,
+    fastclick: false,
+    lazyload: false,
+    tabs: true,
+    motion: {"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},
+    algolia: {
+      applicationID: '',
+      apiKey: '',
+      indexName: '',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    }
+  };
+</script>
+
+
+  
+
+
+
+<script data-ad-client="ca-pub-3995563881232156" async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script>
+
+
+
+  <meta name="description" content="断点调试Visual Studio Code创建配置VSCode IDE要运行或者调试golang程序之前，需要创建运行配置 launch.json ，方法如下： 打开菜单“运行”-&amp;gt;“添加配置”，在创建的配置添加如下内容： 1234567891011121314151617&amp;#123;    // 使用 IntelliSense 了解相关属性。     // 悬停以查看现有属性的描述。">
+<meta name="keywords" content="programing,golang,pprof,vscode,goland">
+<meta property="og:type" content="article">
+<meta property="og:title" content="golang 调试分析方法">
+<meta property="og:url" content="http://blog.noahsun.top/2022/04/10/golang-debug-and-profile/index.html">
+<meta property="og:site_name" content="Noah Sun&#39;s Home">
+<meta property="og:description" content="断点调试Visual Studio Code创建配置VSCode IDE要运行或者调试golang程序之前，需要创建运行配置 launch.json ，方法如下： 打开菜单“运行”-&amp;gt;“添加配置”，在创建的配置添加如下内容： 1234567891011121314151617&amp;#123;    // 使用 IntelliSense 了解相关属性。     // 悬停以查看现有属性的描述。">
+<meta property="og:locale" content="zh-CN">
+<meta property="og:image" content="http://image.noahsun.top/golang_debug_and_profile/vscode_config_add.png">
+<meta property="og:image" content="http://image.noahsun.top/golang_debug_and_profile/vscode_breakpoint_add.png">
+<meta property="og:image" content="http://image.noahsun.top/golang_debug_and_profile/vscode_debug_main.png">
+<meta property="og:image" content="http://image.noahsun.top/golang_debug_and_profile/goland_config_add.png">
+<meta property="og:image" content="http://image.noahsun.top/golang_debug_and_profile/goland_config_select.png">
+<meta property="og:image" content="http://image.noahsun.top/golang_debug_and_profile/goland_debug_config.png">
+<meta property="og:image" content="http://image.noahsun.top/golang_debug_and_profile/goland_breakpoint_add.png">
+<meta property="og:image" content="http://image.noahsun.top/golang_debug_and_profile/goland_debug_main.png">
+<meta property="og:image" content="http://image.noahsun.top/golang_debug_and_profile/cpu_profile_graph_view.png">
+<meta property="og:image" content="http://image.noahsun.top/golang_debug_and_profile/cpu_profile_top_view.png">
+<meta property="og:image" content="http://image.noahsun.top/golang_debug_and_profile/cpu_profile_flame_graph.png">
+<meta property="og:image" content="http://image.noahsun.top/golang_debug_and_profile/cpu_profile_peek_view.png">
+<meta property="og:image" content="http://image.noahsun.top/golang_debug_and_profile/cpu_profile_source_view.png">
+<meta property="og:image" content="http://image.noahsun.top/golang_debug_and_profile/heap_profile_graph_view.png">
+<meta property="og:image" content="http://image.noahsun.top/golang_debug_and_profile/goroutine_profile_graph_view.png">
+<meta property="og:updated_time" content="2022-04-10T04:26:19.340Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="golang 调试分析方法">
+<meta name="twitter:description" content="断点调试Visual Studio Code创建配置VSCode IDE要运行或者调试golang程序之前，需要创建运行配置 launch.json ，方法如下： 打开菜单“运行”-&amp;gt;“添加配置”，在创建的配置添加如下内容： 1234567891011121314151617&amp;#123;    // 使用 IntelliSense 了解相关属性。     // 悬停以查看现有属性的描述。">
+<meta name="twitter:image" content="http://image.noahsun.top/golang_debug_and_profile/vscode_config_add.png">
+
+
+
+
+
+
+  <link rel="canonical" href="http://blog.noahsun.top/2022/04/10/golang-debug-and-profile/">
+
+
+
+<script type="text/javascript" id="page.configurations">
+  CONFIG.page = {
+    sidebar: "",
+  };
+</script>
+
+  <title>golang 调试分析方法 | Noah Sun's Home</title>
+  
+
+
+
+
+<script async src="https://www.googletagmanager.com/gtag/js?id=UA-102233237-1"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+
+  gtag('config', 'UA-102233237-1');
+</script>
+
+
+
+  <script type="text/javascript">
+    var _hmt = _hmt || [];
+    (function() {
+      var hm = document.createElement("script");
+      hm.src = "https://hm.baidu.com/hm.js?07c7e0461feabfd55d89458a5c4ae94b";
+      var s = document.getElementsByTagName("script")[0];
+      s.parentNode.insertBefore(hm, s);
+    })();
+  </script>
+
+
+
+
+
+
+  <noscript>
+  <style type="text/css">
+    .use-motion .motion-element,
+    .use-motion .brand,
+    .use-motion .menu-item,
+    .sidebar-inner,
+    .use-motion .post-block,
+    .use-motion .pagination,
+    .use-motion .comments,
+    .use-motion .post-header,
+    .use-motion .post-body,
+    .use-motion .collection-title { opacity: initial; }
+
+    .use-motion .logo,
+    .use-motion .site-title,
+    .use-motion .site-subtitle {
+      opacity: initial;
+      top: initial;
+    }
+
+    .use-motion {
+      .logo-line-before i { left: initial; }
+      .logo-line-after i { right: initial; }
+    }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope="" itemtype="http://schema.org/WebPage" lang="zh-CN">
+
+  
+  
+    
+  
+
+  <div class="container sidebar-position-left page-post-detail">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope="" itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-wrapper">
+  <div class="site-meta ">
+    
+
+    <div class="custom-logo-site-title">
+      <a href="/" class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title">Noah Sun's Home</span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+    
+  </div>
+
+  <div class="site-nav-toggle">
+    <button aria-label="切换导航栏">
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+    </button>
+  </div>
+</div>
+
+
+
+<nav class="site-nav">
+  
+    <ul id="menu" class="menu">
+      
+        
+        
+        
+          
+          <li class="menu-item menu-item-home">
+    <a href="/" rel="section">
+      <i class="menu-item-icon fa fa-fw fa-home"></i> <br>首页</a>
+  </li>
+        
+        
+        
+          
+          <li class="menu-item menu-item-archives">
+    <a href="/archives/" rel="section">
+      <i class="menu-item-icon fa fa-fw fa-archive"></i> <br>归档</a>
+  </li>
+        
+        
+        
+          
+          <li class="menu-item menu-item-categories">
+    <a href="/categories/" rel="section">
+      <i class="menu-item-icon fa fa-fw fa-th"></i> <br>分类</a>
+  </li>
+        
+        
+        
+          
+          <li class="menu-item menu-item-tags">
+    <a href="/tags/" rel="section">
+      <i class="menu-item-icon fa fa-fw fa-tags"></i> <br>标签</a>
+  </li>
+        
+        
+        
+          
+          <li class="menu-item menu-item-about">
+    <a href="/about/" rel="section">
+      <i class="menu-item-icon fa fa-fw fa-user"></i> <br>关于</a>
+  </li>
+
+      
+      
+        <li class="menu-item menu-item-search">
+          
+            <a href="javascript:;" class="popup-trigger">
+          
+            
+              <i class="menu-item-icon fa fa-search fa-fw"></i> <br>搜索</a>
+        </li>
+      
+    </ul>
+  
+
+  
+
+  
+    <div class="site-search">
+      
+  <div class="popup search-popup local-search-popup">
+  <div class="local-search-header clearfix">
+    <span class="search-icon">
+      <i class="fa fa-search"></i>
+    </span>
+    <span class="popup-btn-close">
+      <i class="fa fa-times-circle"></i>
+    </span>
+    <div class="local-search-input-wrapper">
+      <input autocomplete="off" placeholder="搜索..." spellcheck="false" type="text" id="local-search-input">
+    </div>
+  </div>
+  <div id="local-search-result"></div>
+</div>
+
+
+
+    </div>
+  
+</nav>
+
+
+
+  
+
+
+
+</div>
+    </header>
+
+    
+
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+            
+
+          
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+
+  
+  
+  
+
+  
+
+  <article class="post post-type-normal" itemscope="" itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="http://blog.noahsun.top/2022/04/10/golang-debug-and-profile/">
+
+    <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="Noah Sun">
+      <meta itemprop="description" content="Noah Sun's Blog.">
+      <meta itemprop="image" content="http://image.noahsun.top/res/avatar.jpg">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope="" itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Noah Sun's Home">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">golang 调试分析方法
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+
+            
+            
+            
+
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+
+              
+                
+              
+
+              <time title="创建时间：2022-04-10 10:27:04 / 修改时间：12:26:19" itemprop="dateCreated datePublished" datetime="2022-04-10T10:27:04+08:00">2022-04-10</time>
+            
+
+            
+              
+
+              
+            
+          </span>
+
+          
+            <span class="post-category">
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing"><a href="/categories/Technology/" itemprop="url" rel="index"><span itemprop="name">Technology</span></a></span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+              <span class="post-comments-count">
+                <span class="post-meta-divider">|</span>
+                <span class="post-meta-item-icon">
+                  <i class="fa fa-comment-o"></i>
+                </span>
+                <a href="/2022/04/10/golang-debug-and-profile/#comments" itemprop="discussionUrl">
+                  <span class="post-meta-item-text">评论数：</span> <span class="post-comments-count fb-comments-count" data-href="http://blog.noahsun.top/2022/04/10/golang-debug-and-profile/" itemprop="commentCount">0</span>
+                </a>
+              </span>
+            
+          
+
+          
+          
+             <span id="/2022/04/10/golang-debug-and-profile/" class="leancloud_visitors" data-flag-title="golang 调试分析方法">
+               <span class="post-meta-divider">|</span>
+               <span class="post-meta-item-icon">
+                 <i class="fa fa-eye"></i>
+               </span>
+               
+                 <span class="post-meta-item-text">阅读次数：</span>
+               
+                 <span class="leancloud-visitors-count"></span>
+             </span>
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <h1 id="断点调试"><a href="#断点调试" class="headerlink" title="断点调试"></a>断点调试</h1><h2 id="Visual-Studio-Code"><a href="#Visual-Studio-Code" class="headerlink" title="Visual Studio Code"></a>Visual Studio Code</h2><h3 id="创建配置"><a href="#创建配置" class="headerlink" title="创建配置"></a>创建配置</h3><p>VSCode IDE要运行或者调试golang程序之前，需要创建运行配置 launch.json ，方法如下：<br><img src="http://image.noahsun.top/golang_debug_and_profile/vscode_config_add.png" alt="vscode_config_add"></p>
+<p>打开菜单“运行”-&gt;“添加配置”，在创建的配置添加如下内容：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line">&#123;</span><br><span class="line">    // 使用 IntelliSense 了解相关属性。 </span><br><span class="line">    // 悬停以查看现有属性的描述。</span><br><span class="line">    // 欲了解更多信息，请访问: https://go.microsoft.com/fwlink/?linkid=830387</span><br><span class="line">    &quot;version&quot;: &quot;0.2.0&quot;,</span><br><span class="line">    &quot;configurations&quot;: [</span><br><span class="line">        &#123;</span><br><span class="line">            &quot;name&quot;: &quot;Launch Package&quot;,</span><br><span class="line">            &quot;type&quot;: &quot;go&quot;,</span><br><span class="line">            &quot;request&quot;: &quot;launch&quot;,</span><br><span class="line">            &quot;mode&quot;: &quot;auto&quot;,</span><br><span class="line">            &quot;cwd&quot;: &quot;$&#123;workspaceFolder&#125;&quot;,</span><br><span class="line">            &quot;program&quot;: &quot;$&#123;workspaceFolder&#125;/main.go&quot;,</span><br><span class="line">            &quot;args&quot;: []</span><br><span class="line">        &#125;</span><br><span class="line">    ]</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>配置说明：<br>cwd：当前工作目录，可以使用变量 ${workspaceFolder} 。<br>program：可执行程序或者文件。<br>args：程序运行所需参数，数组类型。</p>
+<p>更多配置的用法请参考 <a href="https://code.visualstudio.com/docs/editor/debugging#_launch-configurations" target="_blank" rel="noopener">visualstudio debugging</a></p>
+<h3 id="调试方法"><a href="#调试方法" class="headerlink" title="调试方法"></a>调试方法</h3><p>设置断点，如下图所示：<br><img src="http://image.noahsun.top/golang_debug_and_profile/vscode_breakpoint_add.png" alt="vscode_breakpoint_add"></p>
+<p>使用快捷键F5，或者打开菜单，点击“运行”-&gt;“启动调试”，调试主界面如下，这样就可以愉快的调试了。<br><img src="http://image.noahsun.top/golang_debug_and_profile/vscode_debug_main.png" alt="vscode_debug_main"></p>
+<h2 id="GoLand"><a href="#GoLand" class="headerlink" title="GoLand"></a>GoLand</h2><h3 id="创建配置-1"><a href="#创建配置-1" class="headerlink" title="创建配置"></a>创建配置</h3><p>打开菜单，“Run”-&gt;“Debug”<br><img src="http://image.noahsun.top/golang_debug_and_profile/goland_config_add.png" alt="goland_config_add"></p>
+<p>在弹出框选“Edit Configurations”<br><img src="http://image.noahsun.top/golang_debug_and_profile/goland_config_select.png" alt="goland_config_select"></p>
+<p>编辑配置如下图所示，编辑完后点击Apply应用即可完成。<br><img src="http://image.noahsun.top/golang_debug_and_profile/goland_debug_config.png" alt="goland_debug_config"></p>
+<h3 id="调试方法-1"><a href="#调试方法-1" class="headerlink" title="调试方法"></a>调试方法</h3><p>设置断点，如下图所示<br><img src="http://image.noahsun.top/golang_debug_and_profile/goland_breakpoint_add.png" alt="goland_breakpoint_add"></p>
+<p>启动debug，MAC快捷键control+option+D，或者点击菜单“Run”-&gt;“Debug”，选择之前创建的配置，即可调试，如下图所示：<br><img src="http://image.noahsun.top/golang_debug_and_profile/goland_debug_main.png" alt="goland_debug_main"></p>
+<h1 id="性能分析"><a href="#性能分析" class="headerlink" title="性能分析"></a>性能分析</h1><h2 id="pprof"><a href="#pprof" class="headerlink" title="pprof"></a>pprof</h2><p>pprof是Go的性能分析工具，在程序运行过程中，可以记录程序的运行信息，包括CPU、内存、goroutine、锁等。golang标准库提供了以下两种使用方式：</p>
+<ul>
+<li>net/http/pprof：采集 HTTP Server 的运行时数据进行分析</li>
+<li>runtime/pprof：采集程序（含Server和非Server）的运行数据进行分析</li>
+</ul>
+<p>另外，golang也提供了比较多好用的可视化工具来负责开发者做分析，使用方式包括报告的生成、交互式终端和Web界面。</p>
+<h3 id="pprof工具准备"><a href="#pprof工具准备" class="headerlink" title="pprof工具准备"></a>pprof工具准备</h3><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line"># 安装pprof工具</span><br><span class="line">go install github.com/google/pprof@latest</span><br><span class="line"></span><br><span class="line"># 安装图形化依赖工具 Graphviz</span><br><span class="line"># 以Mac为例，其他平台安装方法请参考 https://graphviz.org/download/</span><br><span class="line">brew install Graphviz</span><br><span class="line"></span><br><span class="line"># Mac平台如果安装有报错，比如</span><br><span class="line">==&gt; Pouring jasper-3.0.2.arm64_monterey.bottle.tar.gz</span><br><span class="line">Error: No such file or directory @ rb_sysopen - /Users/xxx/Library/Caches/Homebrew/downloads/d3af18f496d6e7cae9775e1e69ea79074687e03221367f075c3a6e6f2c77c705--jasper-3.0.2.arm64_monterey.bottle.tar.gz</span><br><span class="line"></span><br><span class="line"># 可以手工逐个安装报错的依赖，比如</span><br><span class="line">brew install jasper</span><br><span class="line">brew install gdk-pixbuf</span><br><span class="line">brew install pango</span><br><span class="line">brew install librsvg</span><br></pre></td></tr></table></figure>
+<h3 id="分析使用"><a href="#分析使用" class="headerlink" title="分析使用"></a>分析使用</h3><p>本例使用的完整 demo 放在 <a href="https://github.com/rukesun/go-learning.git" target="_blank" rel="noopener">go-learing</a> 的 examples/pprof 目录下。</p>
+<h4 id="标准库自带Web界面"><a href="#标准库自带Web界面" class="headerlink" title="标准库自带Web界面"></a>标准库自带Web界面</h4><h5 id="使用方法"><a href="#使用方法" class="headerlink" title="使用方法"></a>使用方法</h5><p>简单的demo</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line">package main</span><br><span class="line"></span><br><span class="line">import (</span><br><span class="line">        &quot;log&quot;</span><br><span class="line">        &quot;net/http&quot;</span><br><span class="line">        _ &quot;net/http/pprof&quot;</span><br><span class="line">)</span><br><span class="line"></span><br><span class="line">func main() &#123;</span><br><span class="line">        log.Printf(&quot;pprof demo is running&quot;)</span><br><span class="line">        http.ListenAndServe(&quot;0.0.0.0:8090&quot;, nil)</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>本例子使用标准库提供的 “net/http/pprof” 包，通过import该包后，HTTP服务程序就会注入 /debug/pprof 相关的路由，可以访问 <a href="http://localhost:8090/debug/pprof/" target="_blank" rel="noopener">http://localhost:8090/debug/pprof/</a> 查看总览，如下所示</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line">/debug/pprof/</span><br><span class="line"></span><br><span class="line">Types of profiles available:</span><br><span class="line">Count        Profile</span><br><span class="line">3        allocs</span><br><span class="line">0        block</span><br><span class="line">0        cmdline</span><br><span class="line">4        goroutine</span><br><span class="line">3        heap</span><br><span class="line">0        mutex</span><br><span class="line">0        profile</span><br><span class="line">7        threadcreate</span><br><span class="line">0        trace</span><br></pre></td></tr></table></figure>
+<p>下面是各种 profile 的描述：</p>
+<ul>
+<li>allocs: A sampling of all past memory allocations. 过去所有内存分配的抽样。</li>
+<li>block: Stack traces that led to blocking on synchronization primitives.  导致同步原语阻塞的堆栈跟踪。</li>
+<li>cmdline: The command line invocation of the current program. 当前程序的命令行调用。</li>
+<li>goroutine: Stack traces of all current goroutines. 堆栈当前所有goroutines的跟踪。</li>
+<li>heap: A sampling of memory allocations of live objects. You can specify the gc GET parameter to run GC before taking the heap sample. 活动对象的内存分配抽样。在获取堆样本之前，可以指定gc GET参数来运行gc。</li>
+<li>mutex: Stack traces of holders of contended mutexes. 竞争互斥锁持有者的堆栈跟踪。</li>
+<li>profile: CPU profile. You can specify the duration in the seconds GET parameter. After you get the profile file, use the go tool pprof command to investigate the profile. CPU profile。可以在GET参数中指定以秒为单位的持续时间，默认是30s。在获得profile文件之后，使用go工具pprof命令来研究它。</li>
+<li>threadcreate: Stack traces that led to the creation of new OS threads. 导致创建新的操作系统线程的堆栈跟踪。</li>
+<li>trace: A trace of execution of the current program. You can specify the duration in the seconds GET parameter. After you get the trace file, use the go tool trace command to investigate the trace. 当前程序执行的痕迹。可以在GET参数中指定以秒为单位的持续时间。在获得trace文件之后，使用go工具 trace 命令来研究它。</li>
+</ul>
+<h4 id="pprof工具的交互式终端"><a href="#pprof工具的交互式终端" class="headerlink" title="pprof工具的交互式终端"></a>pprof工具的交互式终端</h4><h5 id="使用方法-1"><a href="#使用方法-1" class="headerlink" title="使用方法"></a>使用方法</h5><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"># 方法一</span><br><span class="line">go tool pprof $&#123;source&#125;</span><br><span class="line"></span><br><span class="line"># 方法二，前提是要安装 pprof ，具体方法请查看“ pprof 工具准备”章节</span><br><span class="line">pprof $&#123;source&#125;</span><br></pre></td></tr></table></figure>
+<p>source可以是通过”net/http/pprof” 包提供的http url ，也可以是本地 profile 文件。</p>
+<h5 id="cpu分析"><a href="#cpu分析" class="headerlink" title="cpu分析"></a>cpu分析</h5><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br></pre></td><td class="code"><pre><span class="line">$ go tool pprof http://localhost:8090/debug/pprof/profile?seconds=15</span><br><span class="line"></span><br><span class="line">Fetching profile over HTTP from http://localhost:8090/debug/pprof/profile?seconds=15</span><br><span class="line">Saved profile in /Users/xxx/pprof/pprof.samples.cpu.004.pb.gz</span><br><span class="line">Type: cpu</span><br><span class="line">Time: Apr 5, 2022 at 3:13pm (CST)</span><br><span class="line">Duration: 15s, Total samples = 290ms ( 1.93%)</span><br><span class="line">Entering interactive mode (type &quot;help&quot; for commands, &quot;o&quot; for options)</span><br><span class="line">(pprof) help</span><br><span class="line">  Commands:</span><br><span class="line">    callgrind        Outputs a graph in callgrind format</span><br><span class="line">    comments         Output all profile comments</span><br><span class="line">    disasm           Output assembly listings annotated with samples</span><br><span class="line">    dot              Outputs a graph in DOT format</span><br><span class="line">    eog              Visualize graph through eog</span><br><span class="line">    evince           Visualize graph through evince</span><br><span class="line">    gif              Outputs a graph image in GIF format</span><br><span class="line">    gv               Visualize graph through gv</span><br><span class="line">    kcachegrind      Visualize report in KCachegrind</span><br><span class="line">    list             Output annotated source for functions matching regexp</span><br><span class="line">    pdf              Outputs a graph in PDF format</span><br><span class="line">    peek             Output callers/callees of functions matching regexp</span><br><span class="line">    png              Outputs a graph image in PNG format</span><br><span class="line">    proto            Outputs the profile in compressed protobuf format</span><br><span class="line">    ps               Outputs a graph in PS format</span><br><span class="line">    raw              Outputs a text representation of the raw profile</span><br><span class="line">    svg              Outputs a graph in SVG format</span><br><span class="line">    tags             Outputs all tags in the profile</span><br><span class="line">    text             Outputs top entries in text form</span><br><span class="line">    top              Outputs top entries in text form</span><br><span class="line">    topproto         Outputs top entries in compressed protobuf format</span><br><span class="line">    traces           Outputs all profile samples in text form</span><br><span class="line">    tree             Outputs a text rendering of call graph</span><br><span class="line">    web              Visualize graph through web browser</span><br><span class="line">    weblist          Display annotated source in a web browser</span><br><span class="line">    o/options        List options and their current values</span><br><span class="line">    q/quit/exit/^D   Exit pprof</span><br></pre></td></tr></table></figure>
+<p>执行该命令后，需等待seconds参数指定的时间（默认30s），采样完成后，即可用交互式命令进行分析，具体可以使用 help 指令查看说明，比如 top 可以查看占用 cpu 最多的 n 个记录。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">(pprof) top</span><br><span class="line">Showing nodes accounting for 290ms, 100% of 290ms total</span><br><span class="line">      flat  flat%   sum%        cum   cum%</span><br><span class="line">     280ms 96.55% 96.55%      280ms 96.55%  github.com/rukesun/go-learning/examples/pprof/internal/simulator.(*XXCPU).Run</span><br><span class="line">      10ms  3.45%   100%       10ms  3.45%  runtime.memmove</span><br><span class="line">         0     0%   100%       10ms  3.45%  github.com/rukesun/go-learning/examples/pprof/internal/simulator.(*XXHeap).Run</span><br><span class="line">         0     0%   100%       10ms  3.45%  runtime.growslice</span><br></pre></td></tr></table></figure>
+<ul>
+<li>flat：该位置的运行耗时</li>
+<li>flat%：该位置的 CPU 运行耗时总比例</li>
+<li>sum%：该位置累积使用 CPU 总比例</li>
+<li>cum：该位置加上它的子调用运行总耗时</li>
+<li>cum%：该位置加上它的的子调用的 CPU 运行耗时总比例</li>
+</ul>
+<p>最后一列为函数调用的位置。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br></pre></td><td class="code"><pre><span class="line">(pprof) help list</span><br><span class="line">Output annotated source for functions matching regexp</span><br><span class="line">  Usage:</span><br><span class="line">    list&lt;func_regex|address&gt; [-focus_regex]* [-ignore_regex]*</span><br><span class="line">    Include functions matching func_regex, or including the address specified.</span><br><span class="line">    Include samples matching focus_regex, and exclude ignore_regex.</span><br><span class="line"></span><br><span class="line">(pprof) list Run</span><br><span class="line">Total: 300ms</span><br><span class="line">ROUTINE ======================== github.com/rukesun/go-learning/examples/pprof/internal/simulator.(*XXCPU).Run in /Users/ht/research/golang/go-learning/examples/pprof/internal/simulator/xxcpu.go</span><br><span class="line">     270ms      300ms (flat, cum)   100% of Total</span><br><span class="line">         .          .     16:&#125;</span><br><span class="line">         .          .     17:</span><br><span class="line">         .          .     18:func (c *XXCPU) Run() &#123;</span><br><span class="line">         .          .     19:        log.Printf(&quot;%v Run&quot;, c.Name())</span><br><span class="line">         .          .     20:        loop := 1000000000</span><br><span class="line">     270ms      300ms     21:        for i := 0; i &lt; loop; i++ &#123;</span><br><span class="line">         .          .     22:                // do nothing</span><br><span class="line">         .          .     23:        &#125;</span><br><span class="line">         .          .     24:&#125;</span><br></pre></td></tr></table></figure>
+<p>通过list命令可以查看关联的代码，比如这里可以看出XXCPU的Run方法里面，有个循环的代码会消耗较多的 cpu 。</p>
+<p>内存分析</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br></pre></td><td class="code"><pre><span class="line">$ go tool pprof http://localhost:8090/debug/pprof/heap</span><br><span class="line"></span><br><span class="line">(pprof) top</span><br><span class="line">Showing nodes accounting for 36353.94kB, 100% of 36353.94kB total</span><br><span class="line">Showing top 10 nodes out of 20</span><br><span class="line">      flat  flat%   sum%        cum   cum%</span><br><span class="line">   32768kB 90.14% 90.14%    32768kB 90.14%  github.com/rukesun/go-learning/examples/pprof/internal/simulator.(*XXHeap).Run</span><br><span class="line"> 2048.81kB  5.64% 95.77%  2048.81kB  5.64%  runtime.malg</span><br><span class="line"> 1025.12kB  2.82% 98.59%  1025.12kB  2.82%  runtime.allocm</span><br><span class="line">     512kB  1.41%   100%      512kB  1.41%  runtime.doaddtimer</span><br><span class="line">         0     0%   100%      512kB  1.41%  runtime.mcall</span><br><span class="line">         0     0%   100%      512kB  1.41%  runtime.modtimer</span><br><span class="line">         0     0%   100%  1025.12kB  2.82%  runtime.mstart</span><br><span class="line">         0     0%   100%  1025.12kB  2.82%  runtime.mstart0</span><br><span class="line">         0     0%   100%  1025.12kB  2.82%  runtime.mstart1</span><br><span class="line">         0     0%   100%  1025.12kB  2.82%  runtime.newm</span><br><span class="line">(pprof) list Run</span><br><span class="line">Total: 35.50MB</span><br><span class="line">ROUTINE ======================== github.com/rukesun/go-learning/examples/pprof/internal/simulator.(*XXHeap).Run in /Users/xxx/research/golang/go-learning/examples/pprof/internal/simulator/xxheap.go</span><br><span class="line">      32MB       32MB (flat, cum) 90.14% of Total</span><br><span class="line">         .          .     17:&#125;</span><br><span class="line">         .          .     18:</span><br><span class="line">         .          .     19:func (h *XXHeap) Run() &#123;</span><br><span class="line">         .          .     20:        log.Printf(&quot;%v Run&quot;, h.Name())</span><br><span class="line">         .          .     21:        for i := 0; i &lt; 10; i++ &#123;</span><br><span class="line">      32MB       32MB     22:                h.data = append(h.data, [1024 * 1024]byte&#123;&#125;)</span><br><span class="line">         .          .     23:        &#125;</span><br><span class="line">         .          .     24:        log.Printf(&quot;After %v Run, len:%v, cap:%v&quot;, h.Name(), len(h.data), cap(h.data))</span><br><span class="line">         .          .     25:&#125;</span><br></pre></td></tr></table></figure>
+<p>同样通过top和list大法，找出内存分配较多的地方。</p>
+<h5 id="协程分析"><a href="#协程分析" class="headerlink" title="协程分析"></a>协程分析</h5><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br></pre></td><td class="code"><pre><span class="line">$ go tool pprof http://localhost:8090/debug/pprof/goroutine</span><br><span class="line"></span><br><span class="line">Fetching profile over HTTP from http://localhost:8090/debug/pprof/goroutine</span><br><span class="line">Saved profile in /Users/xxx/pprof/pprof.goroutine.001.pb.gz</span><br><span class="line">Type: goroutine</span><br><span class="line">Time: Apr 5, 2022 at 3:24pm (CST)</span><br><span class="line">Entering interactive mode (type &quot;help&quot; for commands, &quot;o&quot; for options)</span><br><span class="line"></span><br><span class="line">(pprof) top</span><br><span class="line">Showing nodes accounting for 3002, 100% of 3003 total</span><br><span class="line">Dropped 27 nodes (cum &lt;= 15)</span><br><span class="line">      flat  flat%   sum%        cum   cum%</span><br><span class="line">      3002   100%   100%       3002   100%  runtime.gopark</span><br><span class="line">         0     0%   100%       3000 99.90%  github.com/rukesun/go-learning/examples/pprof/internal/simulator.(*XXGoroutine).Run.func1</span><br><span class="line">         0     0%   100%       3000 99.90%  time.Sleep</span><br><span class="line"></span><br><span class="line">(pprof) list Run</span><br><span class="line">Total: 3003</span><br><span class="line">ROUTINE ======================== github.com/rukesun/go-learning/examples/pprof/internal/simulator.(*XXGoroutine).Run.func1 in /Users/xxx/research/golang/go-learning/examples/pprof/internal/simulator/xxgoroutine.go</span><br><span class="line">         0       3000 (flat, cum) 99.90% of Total</span><br><span class="line">         .          .     18:</span><br><span class="line">         .          .     19:func (g *XXGoroutine) Run() &#123;</span><br><span class="line">         .          .     20:        log.Printf(&quot;%v Run&quot;, g.Name())</span><br><span class="line">         .          .     21:        for i := 0; i &lt; 1000; i++ &#123;</span><br><span class="line">         .          .     22:                go func() &#123;</span><br><span class="line">         .       3000     23:                        time.Sleep(3600 * time.Second)</span><br><span class="line">         .          .     24:                &#125;()</span><br><span class="line">         .          .     25:        &#125;</span><br><span class="line">         .          .     26:&#125;</span><br><span class="line">ROUTINE ======================== runtime/pprof.writeRuntimeProfile in /Users/xxx/.gvm/gos/go1.18/src/runtime/pprof/pprof.go</span><br><span class="line">         0          1 (flat, cum) 0.033% of Total</span><br></pre></td></tr></table></figure>
+<p>同样通过top和list大法，找出协程分配较多的地方。</p>
+<h4 id="pprof工具的可视化界面"><a href="#pprof工具的可视化界面" class="headerlink" title="pprof工具的可视化界面"></a>pprof工具的可视化界面</h4><h5 id="使用方法-2"><a href="#使用方法-2" class="headerlink" title="使用方法"></a>使用方法</h5><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"># 方法一</span><br><span class="line">go tool pprof -http=:8091 $&#123;source&#125;</span><br><span class="line"></span><br><span class="line"># 方法二，前提是要安装 pprof ，具体方法请查看“ pprof 工具准备”章节</span><br><span class="line">pprof -http=:8091 $&#123;source&#125;</span><br><span class="line"></span><br><span class="line"># 方法三，在交互式界面上执行 web 指令</span><br><span class="line">go tool pprof $&#123;source&#125;</span><br><span class="line">(pprof) web</span><br></pre></td></tr></table></figure>
+<h5 id="cpu分析-1"><a href="#cpu分析-1" class="headerlink" title="cpu分析"></a>cpu分析</h5><p>执行命令</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">go tool pprof -http=:8091 http://localhost:8090/debug/pprof/profile?seconds=15</span><br></pre></td></tr></table></figure>
+<p>可视化Graph<br><img src="http://image.noahsun.top/golang_debug_and_profile/cpu_profile_graph_view.png" alt="cpu_profile_graph_view"><br>框越大线越粗，代表该代码处占用的时间越长。</p>
+<p>可视化Top<br><img src="http://image.noahsun.top/golang_debug_and_profile/cpu_profile_top_view.png" alt="cpu_profile_top_view"></p>
+<p>可视化火焰图<br><img src="http://image.noahsun.top/golang_debug_and_profile/cpu_profile_flame_graph.png" alt="cpu_profile_flame_graph"></p>
+<p>火焰图（Flame Graph）是由 Linux 性能优化大师 Brendan Gregg 发明的，它以一个全局的视野来看待时间分布，并且列出所有可能导致性能瓶颈的调用栈。<br>火焰图有以下特征：</p>
+<ul>
+<li>每一列代表一个调用栈，每一个格子代表一个函数。</li>
+<li>纵轴展示了栈的深度，正立火焰图按照调用关系从下到上排列（倒立火焰图方向刚好相反）。</li>
+<li>横轴部分，火焰图将采集的多个调用栈信息，通过按字母横向排序的方式将众多信息聚合在一起。需要注意的是它并不代表时间的先后。横轴格子的宽度代表其在采样中出现频率，所以一个格子的宽度越大，说明它是瓶颈原因的可能性就越大。</li>
+<li>火焰图格子的颜色是随机的暖色调，方便区分各个调用信息。</li>
+</ul>
+<p>可视化Peek<br><img src="http://image.noahsun.top/golang_debug_and_profile/cpu_profile_peek_view.png" alt="cpu_profile_peek_view"></p>
+<p>可视化Source<br><img src="http://image.noahsun.top/golang_debug_and_profile/cpu_profile_source_view.png" alt="cpu_profile_source_view"></p>
+<h5 id="内存分析"><a href="#内存分析" class="headerlink" title="内存分析"></a>内存分析</h5><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">go tool pprof -http=:8091 http://localhost:8090/debug/pprof/heap</span><br></pre></td></tr></table></figure>
+<p>可视化Graph<br><img src="http://image.noahsun.top/golang_debug_and_profile/heap_profile_graph_view.png" alt="heap_profile_graph_view"><br>其他图表请参考 cpu 分析部分，这里不再一一列举。</p>
+<h5 id="协程分析-1"><a href="#协程分析-1" class="headerlink" title="协程分析"></a>协程分析</h5><p>执行命令</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">go tool pprof -http=:8091 http://localhost:8090/debug/pprof/goroutine</span><br></pre></td></tr></table></figure>
+<p>可视化Graph<br><img src="http://image.noahsun.top/golang_debug_and_profile/goroutine_profile_graph_view.png" alt="goroutine_profile_graph_view"><br>其他图表请参考 cpu 分析部分，这里不再一一列举。</p>
+<h4 id="使用runtime-pprof生成profile文件调试"><a href="#使用runtime-pprof生成profile文件调试" class="headerlink" title="使用runtime/pprof生成profile文件调试"></a>使用runtime/pprof生成profile文件调试</h4><p>之前的章节使用 net/http/pprof 提供的 HTTP 接口进行调试分析，如果是非 HTTP 的程序或者因为数据安全问题，我们不想暴露 HTTP 接口，那么我们该如何分析调试？答案是在代码中引入 runtime/pprof 包，示例代码如下：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br></pre></td><td class="code"><pre><span class="line">var cpuprofile = flag.String(&quot;cpuprofile&quot;, &quot;&quot;, &quot;write cpu profile to `file`&quot;)</span><br><span class="line">var memprofile = flag.String(&quot;memprofile&quot;, &quot;&quot;, &quot;write memory profile to `file`&quot;)</span><br><span class="line"></span><br><span class="line">func main() &#123;</span><br><span class="line">    flag.Parse()</span><br><span class="line">    if *cpuprofile != &quot;&quot; &#123;</span><br><span class="line">        f, err := os.Create(*cpuprofile)</span><br><span class="line">        if err != nil &#123;</span><br><span class="line">            log.Fatal(&quot;could not create CPU profile: &quot;, err)</span><br><span class="line">        &#125;</span><br><span class="line">        defer f.Close() // error handling omitted for example</span><br><span class="line">        // 启动CPU Profile</span><br><span class="line">        if err := pprof.StartCPUProfile(f); err != nil &#123;</span><br><span class="line">            log.Fatal(&quot;could not start CPU profile: &quot;, err)</span><br><span class="line">        &#125;</span><br><span class="line">        // 停止CPU Profile</span><br><span class="line">        defer pprof.StopCPUProfile()</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    // ... rest of the program ...</span><br><span class="line"></span><br><span class="line">    if *memprofile != &quot;&quot; &#123;</span><br><span class="line">        f, err := os.Create(*memprofile)</span><br><span class="line">        if err != nil &#123;</span><br><span class="line">            log.Fatal(&quot;could not create memory profile: &quot;, err)</span><br><span class="line">        &#125;</span><br><span class="line">        defer f.Close() // error handling omitted for example</span><br><span class="line">        runtime.GC() // get up-to-date statistics</span><br><span class="line">        // 生成当前内存统计的 Heap Profile</span><br><span class="line">        if err := pprof.WriteHeapProfile(f); err != nil &#123;</span><br><span class="line">            log.Fatal(&quot;could not write memory profile: &quot;, err)</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>完整代码请参考 demo 工程的 pprof/internal/xxprof/xxprof.go ，通过上面的代码生成相关的 profile 文件之后，使用 pprof  工具即可分析调试。</p>
+<p>另外，为了便于使用，我们可以结合 signal 来使用，示例代码</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br></pre></td><td class="code"><pre><span class="line">package xxsignal</span><br><span class="line"></span><br><span class="line">import (</span><br><span class="line">        &quot;log&quot;</span><br><span class="line">        &quot;os&quot;</span><br><span class="line">        &quot;os/signal&quot;</span><br><span class="line">        &quot;syscall&quot;</span><br><span class="line"></span><br><span class="line">        &quot;github.com/rukesun/go-learning/examples/pprof/internal/xxprof&quot;</span><br><span class="line">)</span><br><span class="line"></span><br><span class="line">func init() &#123;</span><br><span class="line">        go func() &#123;</span><br><span class="line">                var profiler *xxprof.Profile</span><br><span class="line"></span><br><span class="line">                signals := make(chan os.Signal, 1)</span><br><span class="line">                signal.Notify(signals, syscall.SIGUSR1, syscall.SIGUSR2)</span><br><span class="line"></span><br><span class="line">                for &#123;</span><br><span class="line">                        v := &lt;-signals</span><br><span class="line">                        log.Printf(&quot;Got signal:&quot;, v)</span><br><span class="line">                        switch v &#123;</span><br><span class="line">                        case syscall.SIGUSR1:</span><br><span class="line">                        case syscall.SIGUSR2:</span><br><span class="line">                                if profiler == nil &#123;</span><br><span class="line">                                        profiler = xxprof.NewProfile()</span><br><span class="line">                                        profiler.Start()</span><br><span class="line">                                &#125; else &#123;</span><br><span class="line">                                        profiler.Stop()</span><br><span class="line">                                        profiler = nil</span><br><span class="line">                                &#125;</span><br><span class="line">                        default:</span><br><span class="line">                                log.Printf(&quot;Got unregistered signal:&quot;, v)</span><br><span class="line">                        &#125;</span><br><span class="line">                &#125;</span><br><span class="line">        &#125;()</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>在需要使用的程序 import xxsignal ，然后通过kill发送相关的信号即可。注意，使用 signal 时，需要使用 go build 编译成二进制可执行文件，通过 go run 的方式则不能捕获相关的信号。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">kill -SIGUSR2 $&#123;pid&#125;</span><br></pre></td></tr></table></figure>
+<h1 id="参考资料"><a href="#参考资料" class="headerlink" title="参考资料"></a>参考资料</h1><ol>
+<li>Debugging in Visual Studio Code, <a href="https://code.visualstudio.com/docs/editor/debugging" target="_blank" rel="noopener">https://code.visualstudio.com/docs/editor/debugging</a></li>
+<li>Running | Goland, <a href="https://www.jetbrains.com/help/go/running-applications.html" target="_blank" rel="noopener">https://www.jetbrains.com/help/go/running-applications.html</a></li>
+<li>Debugging | Goland, <a href="https://www.jetbrains.com/help/go/debugging-code.html" target="_blank" rel="noopener">https://www.jetbrains.com/help/go/debugging-code.html</a></li>
+<li>PProf README, <a href="https://github.com/google/pprof/blob/master/doc/README.md" target="_blank" rel="noopener">https://github.com/google/pprof/blob/master/doc/README.md</a></li>
+<li>Profiling a Go program, <a href="https://pkg.go.dev/runtime/pprof@go1.18#hdr-Profiling_a_Go_program" target="_blank" rel="noopener">https://pkg.go.dev/runtime/pprof@go1.18#hdr-Profiling_a_Go_program</a></li>
+<li>Go tool pprof, <a href="https://github.com/eddycjy/blog/blob/master/content/posts/go/tools/2018-09-15-go-tool-pprof.md" target="_blank" rel="noopener">https://github.com/eddycjy/blog/blob/master/content/posts/go/tools/2018-09-15-go-tool-pprof.md</a></li>
+<li>Go pprof practice, <a href="https://blog.wolfogre.com/posts/go-ppof-practice/" target="_blank" rel="noopener">https://blog.wolfogre.com/posts/go-ppof-practice/</a></li>
+<li>Go Zero profile, <a href="https://github.com/zeromicro/go-zero/blob/master/core/proc/profile.go" target="_blank" rel="noopener">https://github.com/zeromicro/go-zero/blob/master/core/proc/profile.go</a></li>
+</ol>
+<hr>
+
+      
+    </div>
+
+    
+
+    
+    
+    
+
+    
+
+    
+      <div>
+        <div style="padding: 10px 0; margin: 20px auto; width: 90%; text-align: center;">
+  <div>感谢你的阅读，如果文章对你有帮助，可以请作者喝杯茶!</div>
+  <button id="rewardButton" disable="enable" onclick="var qr = document.getElementById('QR'); if (qr.style.display === 'none') {qr.style.display='block';} else {qr.style.display='none'}">
+    <span>打赏</span>
+  </button>
+  <div id="QR" style="display: none;">
+
+    
+      <div id="wechat" style="display: inline-block">
+        <img id="wechat_qr" src="http://image.noahsun.top/res/wechatpay.jpg" alt="Noah Sun 微信支付">
+        <p>微信支付</p>
+      </div>
+    
+
+    
+      <div id="alipay" style="display: inline-block">
+        <img id="alipay_qr" src="http://image.noahsun.top/res/alipay.jpg" alt="Noah Sun 支付宝">
+        <p>支付宝</p>
+      </div>
+    
+
+    
+
+  </div>
+</div>
+
+      </div>
+    
+
+    
+      <div>
+        <ul class="post-copyright">
+  <li class="post-copyright-author">
+    <strong>本文作者： </strong>Noah Sun</li>
+  <li class="post-copyright-link">
+    <strong>本文链接：</strong>
+    <a href="http://blog.noahsun.top/2022/04/10/golang-debug-and-profile/" title="golang 调试分析方法">http://blog.noahsun.top/2022/04/10/golang-debug-and-profile/</a>
+  </li>
+  <li class="post-copyright-license">
+    <strong>版权声明： </strong>本博客所有文章除特别声明外，均采用 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" rel="external nofollow" target="_blank">CC BY-NC-SA 4.0</a> 许可协议。转载请注明出处！</li>
+</ul>
+
+      </div>
+    
+
+    <footer class="post-footer">
+      
+        <div class="post-tags">
+          
+            <a href="/tags/programing/" rel="tag"># programing</a>
+          
+            <a href="/tags/golang/" rel="tag"># golang</a>
+          
+            <a href="/tags/pprof/" rel="tag"># pprof</a>
+          
+            <a href="/tags/vscode/" rel="tag"># vscode</a>
+          
+            <a href="/tags/goland/" rel="tag"># goland</a>
+          
+        </div>
+      
+
+      
+      
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2020/03/22/git-commit-guidelines/" rel="next" title="Git commit格式参考">
+                <i class="fa fa-chevron-left"></i> Git commit格式参考
+              </a>
+            
+          </div>
+
+          <span class="post-nav-divider"></span>
+
+          <div class="post-nav-prev post-nav-item">
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+  </div>
+
+
+          </div>
+          
+
+  
+    <div class="comments" id="comments">
+      <div id="disqus_thread">
+        <noscript>
+          Please enable JavaScript to view the
+          <a href="https://disqus.com/?ref_noscript">comments powered by Disqus.</a>
+        </noscript>
+      </div>
+    </div>
+
+  
+
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap">
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview-wrap">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <section class="site-overview-wrap sidebar-panel">
+        <div class="site-overview">
+          <div class="site-author motion-element" itemprop="author" itemscope="" itemtype="http://schema.org/Person">
+            
+              <img class="site-author-image" itemprop="image" src="http://image.noahsun.top/res/avatar.jpg" alt="Noah Sun">
+            
+              <p class="site-author-name" itemprop="name">Noah Sun</p>
+              <p class="site-description motion-element" itemprop="description">Noah Sun's Blog.</p>
+          </div>
+
+          
+            <nav class="site-state motion-element">
+              
+                <div class="site-state-item site-state-posts">
+                
+                  <a href="/archives/">
+                
+                    <span class="site-state-item-count">18</span>
+                    <span class="site-state-item-name">日志</span>
+                  </a>
+                </div>
+              
+
+              
+                
+                
+                <div class="site-state-item site-state-categories">
+                  <a href="/categories/index.html">
+                    
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                    <span class="site-state-item-count">3</span>
+                    <span class="site-state-item-name">分类</span>
+                  </a>
+                </div>
+              
+
+              
+                
+                
+                <div class="site-state-item site-state-tags">
+                  <a href="/tags/index.html">
+                    
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                    <span class="site-state-item-count">32</span>
+                    <span class="site-state-item-name">标签</span>
+                  </a>
+                </div>
+              
+            </nav>
+          
+
+          
+
+          
+            <div class="links-of-author motion-element">
+              
+                <span class="links-of-author-item">
+                  <a href="https://github.com/rukesun/" target="_blank" title="GitHub"><i class="fa fa-fw fa-github"></i>GitHub</a>
+                  
+                </span>
+              
+                <span class="links-of-author-item">
+                  <a href="https://www.facebook.com/Noah.D.Sun" target="_blank" title="Facebook"><i class="fa fa-fw fa-facebook"></i>Facebook</a>
+                  
+                </span>
+              
+            </div>
+          
+
+          
+          
+
+          
+          
+
+          
+            
+          
+          
+
+        </div>
+      </section>
+
+      
+      <!--noindex-->
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+
+            
+              
+            
+
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#断点调试"><span class="nav-number">1.</span> <span class="nav-text">断点调试</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#Visual-Studio-Code"><span class="nav-number">1.1.</span> <span class="nav-text">Visual Studio Code</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#创建配置"><span class="nav-number">1.1.1.</span> <span class="nav-text">创建配置</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#调试方法"><span class="nav-number">1.1.2.</span> <span class="nav-text">调试方法</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#GoLand"><span class="nav-number">1.2.</span> <span class="nav-text">GoLand</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#创建配置-1"><span class="nav-number">1.2.1.</span> <span class="nav-text">创建配置</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#调试方法-1"><span class="nav-number">1.2.2.</span> <span class="nav-text">调试方法</span></a></li></ol></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#性能分析"><span class="nav-number">2.</span> <span class="nav-text">性能分析</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#pprof"><span class="nav-number">2.1.</span> <span class="nav-text">pprof</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#pprof工具准备"><span class="nav-number">2.1.1.</span> <span class="nav-text">pprof工具准备</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#分析使用"><span class="nav-number">2.1.2.</span> <span class="nav-text">分析使用</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#标准库自带Web界面"><span class="nav-number">2.1.2.1.</span> <span class="nav-text">标准库自带Web界面</span></a><ol class="nav-child"><li class="nav-item nav-level-5"><a class="nav-link" href="#使用方法"><span class="nav-number">2.1.2.1.1.</span> <span class="nav-text">使用方法</span></a></li></ol></li><li class="nav-item nav-level-4"><a class="nav-link" href="#pprof工具的交互式终端"><span class="nav-number">2.1.2.2.</span> <span class="nav-text">pprof工具的交互式终端</span></a><ol class="nav-child"><li class="nav-item nav-level-5"><a class="nav-link" href="#使用方法-1"><span class="nav-number">2.1.2.2.1.</span> <span class="nav-text">使用方法</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#cpu分析"><span class="nav-number">2.1.2.2.2.</span> <span class="nav-text">cpu分析</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#协程分析"><span class="nav-number">2.1.2.2.3.</span> <span class="nav-text">协程分析</span></a></li></ol></li><li class="nav-item nav-level-4"><a class="nav-link" href="#pprof工具的可视化界面"><span class="nav-number">2.1.2.3.</span> <span class="nav-text">pprof工具的可视化界面</span></a><ol class="nav-child"><li class="nav-item nav-level-5"><a class="nav-link" href="#使用方法-2"><span class="nav-number">2.1.2.3.1.</span> <span class="nav-text">使用方法</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#cpu分析-1"><span class="nav-number">2.1.2.3.2.</span> <span class="nav-text">cpu分析</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#内存分析"><span class="nav-number">2.1.2.3.3.</span> <span class="nav-text">内存分析</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#协程分析-1"><span class="nav-number">2.1.2.3.4.</span> <span class="nav-text">协程分析</span></a></li></ol></li><li class="nav-item nav-level-4"><a class="nav-link" href="#使用runtime-pprof生成profile文件调试"><span class="nav-number">2.1.2.4.</span> <span class="nav-text">使用runtime/pprof生成profile文件调试</span></a></li></ol></li></ol></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#参考资料"><span class="nav-number">3.</span> <span class="nav-text">参考资料</span></a></li></ol></div>
+            
+
+          </div>
+        </section>
+      <!--/noindex-->
+      
+
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright"> &copy; <span itemprop="copyrightYear">2022</span>
+  <span class="with-love" id="animate">
+    <i class="fa fa-user"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">Noah Sun</span>
+
+  
+
+  
+</div>
+
+
+
+
+  <div class="powered-by">由 <a class="theme-link" target="_blank" href="https://hexo.io">Hexo</a> 强力驱动 v3.8.0</div>
+
+
+
+  <span class="post-meta-divider">|</span>
+
+
+
+  <div class="theme-info">主题 – <a class="theme-link" target="_blank" href="https://theme-next.org">NexT.Pisces</a> v6.4.2</div>
+
+
+
+
+        
+
+
+
+
+
+
+
+
+        
+      </div>
+    </footer>
+
+    
+      <div class="back-to-top">
+        <i class="fa fa-arrow-up"></i>
+        
+      </div>
+    
+
+    
+	
+    
+
+    
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+    <script type="text/javascript" src="//cdn.jsdelivr.net/jquery/2.1.3/jquery.min.js"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/velocity-animate@1.2.1/velocity.min.js"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="//cdnjs.cloudflare.com/ajax/libs/velocity/1.2.1/velocity.ui.min.js"></script>
+  
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/utils.js?v=6.4.2"></script>
+
+  <script type="text/javascript" src="/js/src/motion.js?v=6.4.2"></script>
+
+
+
+  
+  
+
+
+  <script type="text/javascript" src="/js/src/affix.js?v=6.4.2"></script>
+
+  <script type="text/javascript" src="/js/src/schemes/pisces.js?v=6.4.2"></script>
+
+
+
+  
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=6.4.2"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=6.4.2"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/bootstrap.js?v=6.4.2"></script>
+
+
+
+  
+
+  
+    <script id="dsq-count-scr" src="https://noahsun.disqus.com/count.js" async></script>
+  
+
+  
+    <script type="text/javascript">
+      var disqus_config = function () {
+        this.page.url = 'http://blog.noahsun.top/2022/04/10/golang-debug-and-profile/';
+        this.page.identifier = '2022/04/10/golang-debug-and-profile/';
+        this.page.title = 'golang 调试分析方法';
+        };
+      function loadComments () {
+        var d = document, s = d.createElement('script');
+        s.src = 'https://noahsun.disqus.com/embed.js';
+        s.setAttribute('data-timestamp', '' + +new Date());
+        (d.head || d.body).appendChild(s);
+      }
+      
+        loadComments();
+      
+    </script>
+  
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  <script type="text/javascript">
+    // Popup Window;
+    var isfetched = false;
+    var isXml = true;
+    // Search DB path;
+    var search_path = "search.xml";
+    if (search_path.length === 0) {
+      search_path = "search.xml";
+    } else if (/json$/i.test(search_path)) {
+      isXml = false;
+    }
+    var path = "/" + search_path;
+    // monitor main search box;
+
+    var onPopupClose = function (e) {
+      $('.popup').hide();
+      $('#local-search-input').val('');
+      $('.search-result-list').remove();
+      $('#no-result').remove();
+      $(".local-search-pop-overlay").remove();
+      $('body').css('overflow', '');
+    }
+
+    function proceedsearch() {
+      $("body")
+        .append('<div class="search-popup-overlay local-search-pop-overlay"></div>')
+        .css('overflow', 'hidden');
+      $('.search-popup-overlay').click(onPopupClose);
+      $('.popup').toggle();
+      var $localSearchInput = $('#local-search-input');
+      $localSearchInput.attr("autocapitalize", "none");
+      $localSearchInput.attr("autocorrect", "off");
+      $localSearchInput.focus();
+    }
+
+    // search function;
+    var searchFunc = function(path, search_id, content_id) {
+      'use strict';
+
+      // start loading animation
+      $("body")
+        .append('<div class="search-popup-overlay local-search-pop-overlay">' +
+          '<div id="search-loading-icon">' +
+          '<i class="fa fa-spinner fa-pulse fa-5x fa-fw"></i>' +
+          '</div>' +
+          '</div>')
+        .css('overflow', 'hidden');
+      $("#search-loading-icon").css('margin', '20% auto 0 auto').css('text-align', 'center');
+
+      
+
+      $.ajax({
+        url: path,
+        dataType: isXml ? "xml" : "json",
+        async: true,
+        success: function(res) {
+          // get the contents from search data
+          isfetched = true;
+          $('.popup').detach().appendTo('.header-inner');
+          var datas = isXml ? $("entry", res).map(function() {
+            return {
+              title: $("title", this).text(),
+              content: $("content",this).text(),
+              url: $("url" , this).text()
+            };
+          }).get() : res;
+          var input = document.getElementById(search_id);
+          var resultContent = document.getElementById(content_id);
+          var inputEventFunction = function() {
+            var searchText = input.value.trim().toLowerCase();
+            var keywords = searchText.split(/[\s\-]+/);
+            if (keywords.length > 1) {
+              keywords.push(searchText);
+            }
+            var resultItems = [];
+            if (searchText.length > 0) {
+              // perform local searching
+              datas.forEach(function(data) {
+                var isMatch = false;
+                var hitCount = 0;
+                var searchTextCount = 0;
+                var title = data.title.trim();
+                var titleInLowerCase = title.toLowerCase();
+                var content = data.content.trim().replace(/<[^>]+>/g,"");
+                
+                var contentInLowerCase = content.toLowerCase();
+                var articleUrl = decodeURIComponent(data.url);
+                var indexOfTitle = [];
+                var indexOfContent = [];
+                // only match articles with not empty titles
+                if(title != '') {
+                  keywords.forEach(function(keyword) {
+                    function getIndexByWord(word, text, caseSensitive) {
+                      var wordLen = word.length;
+                      if (wordLen === 0) {
+                        return [];
+                      }
+                      var startPosition = 0, position = [], index = [];
+                      if (!caseSensitive) {
+                        text = text.toLowerCase();
+                        word = word.toLowerCase();
+                      }
+                      while ((position = text.indexOf(word, startPosition)) > -1) {
+                        index.push({position: position, word: word});
+                        startPosition = position + wordLen;
+                      }
+                      return index;
+                    }
+
+                    indexOfTitle = indexOfTitle.concat(getIndexByWord(keyword, titleInLowerCase, false));
+                    indexOfContent = indexOfContent.concat(getIndexByWord(keyword, contentInLowerCase, false));
+                  });
+                  if (indexOfTitle.length > 0 || indexOfContent.length > 0) {
+                    isMatch = true;
+                    hitCount = indexOfTitle.length + indexOfContent.length;
+                  }
+                }
+
+                // show search results
+
+                if (isMatch) {
+                  // sort index by position of keyword
+
+                  [indexOfTitle, indexOfContent].forEach(function (index) {
+                    index.sort(function (itemLeft, itemRight) {
+                      if (itemRight.position !== itemLeft.position) {
+                        return itemRight.position - itemLeft.position;
+                      } else {
+                        return itemLeft.word.length - itemRight.word.length;
+                      }
+                    });
+                  });
+
+                  // merge hits into slices
+
+                  function mergeIntoSlice(text, start, end, index) {
+                    var item = index[index.length - 1];
+                    var position = item.position;
+                    var word = item.word;
+                    var hits = [];
+                    var searchTextCountInSlice = 0;
+                    while (position + word.length <= end && index.length != 0) {
+                      if (word === searchText) {
+                        searchTextCountInSlice++;
+                      }
+                      hits.push({position: position, length: word.length});
+                      var wordEnd = position + word.length;
+
+                      // move to next position of hit
+
+                      index.pop();
+                      while (index.length != 0) {
+                        item = index[index.length - 1];
+                        position = item.position;
+                        word = item.word;
+                        if (wordEnd > position) {
+                          index.pop();
+                        } else {
+                          break;
+                        }
+                      }
+                    }
+                    searchTextCount += searchTextCountInSlice;
+                    return {
+                      hits: hits,
+                      start: start,
+                      end: end,
+                      searchTextCount: searchTextCountInSlice
+                    };
+                  }
+
+                  var slicesOfTitle = [];
+                  if (indexOfTitle.length != 0) {
+                    slicesOfTitle.push(mergeIntoSlice(title, 0, title.length, indexOfTitle));
+                  }
+
+                  var slicesOfContent = [];
+                  while (indexOfContent.length != 0) {
+                    var item = indexOfContent[indexOfContent.length - 1];
+                    var position = item.position;
+                    var word = item.word;
+                    // cut out 100 characters
+                    var start = position - 20;
+                    var end = position + 80;
+                    if(start < 0){
+                      start = 0;
+                    }
+                    if (end < position + word.length) {
+                      end = position + word.length;
+                    }
+                    if(end > content.length){
+                      end = content.length;
+                    }
+                    slicesOfContent.push(mergeIntoSlice(content, start, end, indexOfContent));
+                  }
+
+                  // sort slices in content by search text's count and hits' count
+
+                  slicesOfContent.sort(function (sliceLeft, sliceRight) {
+                    if (sliceLeft.searchTextCount !== sliceRight.searchTextCount) {
+                      return sliceRight.searchTextCount - sliceLeft.searchTextCount;
+                    } else if (sliceLeft.hits.length !== sliceRight.hits.length) {
+                      return sliceRight.hits.length - sliceLeft.hits.length;
+                    } else {
+                      return sliceLeft.start - sliceRight.start;
+                    }
+                  });
+
+                  // select top N slices in content
+
+                  var upperBound = parseInt('1');
+                  if (upperBound >= 0) {
+                    slicesOfContent = slicesOfContent.slice(0, upperBound);
+                  }
+
+                  // highlight title and content
+
+                  function highlightKeyword(text, slice) {
+                    var result = '';
+                    var prevEnd = slice.start;
+                    slice.hits.forEach(function (hit) {
+                      result += text.substring(prevEnd, hit.position);
+                      var end = hit.position + hit.length;
+                      result += '<b class="search-keyword">' + text.substring(hit.position, end) + '</b>';
+                      prevEnd = end;
+                    });
+                    result += text.substring(prevEnd, slice.end);
+                    return result;
+                  }
+
+                  var resultItem = '';
+
+                  if (slicesOfTitle.length != 0) {
+                    resultItem += "<li><a href='" + articleUrl + "' class='search-result-title'>" + highlightKeyword(title, slicesOfTitle[0]) + "</a>";
+                  } else {
+                    resultItem += "<li><a href='" + articleUrl + "' class='search-result-title'>" + title + "</a>";
+                  }
+
+                  slicesOfContent.forEach(function (slice) {
+                    resultItem += "<a href='" + articleUrl + "'>" +
+                      "<p class=\"search-result\">" + highlightKeyword(content, slice) +
+                      "...</p>" + "</a>";
+                  });
+
+                  resultItem += "</li>";
+                  resultItems.push({
+                    item: resultItem,
+                    searchTextCount: searchTextCount,
+                    hitCount: hitCount,
+                    id: resultItems.length
+                  });
+                }
+              })
+            };
+            if (keywords.length === 1 && keywords[0] === "") {
+              resultContent.innerHTML = '<div id="no-result"><i class="fa fa-search fa-5x" /></div>'
+            } else if (resultItems.length === 0) {
+              resultContent.innerHTML = '<div id="no-result"><i class="fa fa-frown-o fa-5x" /></div>'
+            } else {
+              resultItems.sort(function (resultLeft, resultRight) {
+                if (resultLeft.searchTextCount !== resultRight.searchTextCount) {
+                  return resultRight.searchTextCount - resultLeft.searchTextCount;
+                } else if (resultLeft.hitCount !== resultRight.hitCount) {
+                  return resultRight.hitCount - resultLeft.hitCount;
+                } else {
+                  return resultRight.id - resultLeft.id;
+                }
+              });
+              var searchResultList = '<ul class=\"search-result-list\">';
+              resultItems.forEach(function (result) {
+                searchResultList += result.item;
+              })
+              searchResultList += "</ul>";
+              resultContent.innerHTML = searchResultList;
+            }
+          }
+
+          if ('auto' === 'auto') {
+            input.addEventListener('input', inputEventFunction);
+          } else {
+            $('.search-icon').click(inputEventFunction);
+            input.addEventListener('keypress', function (event) {
+              if (event.keyCode === 13) {
+                inputEventFunction();
+              }
+            });
+          }
+
+          // remove loading animation
+          $(".local-search-pop-overlay").remove();
+          $('body').css('overflow', '');
+
+          proceedsearch();
+        }
+      });
+    }
+
+    // handle and trigger popup window;
+    $('.popup-trigger').click(function(e) {
+      e.stopPropagation();
+      if (isfetched === false) {
+        searchFunc(path, 'local-search-input', 'local-search-result');
+      } else {
+        proceedsearch();
+      };
+    });
+
+    $('.popup-btn-close').click(onPopupClose);
+    $('.popup').click(function(e){
+      e.stopPropagation();
+    });
+    $(document).on('keyup', function (event) {
+      var shouldDismissSearchPopup = event.which === 27 &&
+        $('.search-popup').is(':visible');
+      if (shouldDismissSearchPopup) {
+        onPopupClose();
+      }
+    });
+  </script>
+
+
+
+
+
+  
+
+  
+  <script>
+    
+    function addCount(Counter) {
+      var $visitors = $(".leancloud_visitors");
+      var url = $visitors.attr('id').trim();
+      var title = $visitors.attr('data-flag-title').trim();
+
+      Counter('get', '/classes/Counter', { where: JSON.stringify({ url }) })
+        .done(function ({ results }) {
+          if (results.length > 0) {
+            var counter = results[0];
+            
+            Counter('put', `/classes/Counter/${counter.objectId}`, JSON.stringify({ time: { "__op":"Increment", "amount":1 } }))
+            
+            .done(function () {
+                  var $element = $(document.getElementById(url));
+                  $element.find('.leancloud-visitors-count').text(counter.time + 1);
+            })
+            
+            .fail(function ({ responseJSON }) {
+                console.log('Failed to save Visitor num, with error message: ' + responseJSON.error);
+            })
+          } else {
+            
+              Counter('post', '/classes/Counter', JSON.stringify({ title: title, url: url, time: 1}))
+                .done(function () {
+                  var $element = $(document.getElementById(url));
+                  $element.find('.leancloud-visitors-count').text(1);
+                })
+                .fail(function () {
+                  console.log('Failed to create');
+                });
+            
+          }
+        })
+      .fail(function ({ responseJSON }) {
+        console.log('LeanCloud Counter Error:' + responseJSON.code + " " + responseJSON.error);
+      });
+    }
+    
+
+    $(function() {
+      $.get('https://app-router.leancloud.cn/2/route?appId=' + "Cz56UW3FvEkwHB689nG2jLGm-gzGzoHsz")
+        .done(function ({ api_server }) {
+          var Counter = function (method, url, data) {
+            return $.ajax({
+              method: method,
+              url: `https://${api_server}/1.1${url}`,
+              headers: {
+                'X-LC-Id': "Cz56UW3FvEkwHB689nG2jLGm-gzGzoHsz",
+                'X-LC-Key': "zuFQDzA0SxPUkEfqOisL54YJ",
+                'Content-Type': 'application/json',
+              },
+              data: data,
+            });
+          };
+          
+          addCount(Counter);
+          
+        })
+    });
+  </script>
+
+
+
+  
+
+  
+
+  
+
+  
+
+  
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+</body>
+</html>
