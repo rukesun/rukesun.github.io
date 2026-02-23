@@ -101,6 +101,381 @@
       </tags>
   </entry>
   <entry>
+    <title>Protocol Buffers 使用教程</title>
+    <url>/2017/08/05/Protocol-Buffers-%E4%BD%BF%E7%94%A8%E6%95%99%E7%A8%8B/</url>
+    <content><![CDATA[<h1 id="概述"><a href="#概述" class="headerlink" title="概述"></a>概述</h1><h2 id="什么是-protocol-buffers"><a href="#什么是-protocol-buffers" class="headerlink" title="什么是 protocol buffers?"></a>什么是 protocol buffers?</h2><p>ProtocolBuffer 是用于结构化数据串行化的灵活、高效、自动的方法，类似 XML，不 过它更小、更快、也更简单。你可以定义自己的数据结构，然后使用代码生成器生成的代码 来读写这个数据结构。你甚至可以在无需重新部署程序的情况下更新数据结构。</p>
+<h2 id="他们如何工作"><a href="#他们如何工作" class="headerlink" title="他们如何工作"></a>他们如何工作</h2><p>你首先需要在一个.proto 文件中定义你需要做串行化的数据结构信息。每个 ProtocolBuffer 信息是一小段逻辑记录，包含一系列的键值对。这里有个非常简单的.proto 文件定义了个人信息:</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">message Person &#123;</span><br><span class="line">    required string name=1;</span><br><span class="line">    required int32 id=2;</span><br><span class="line">    optional string email=3;</span><br><span class="line">    enum PhoneType &#123;</span><br><span class="line">        MOBILE=0;</span><br><span class="line">        HOME=1;</span><br><span class="line">        WORK=2;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    message PhoneNumber &#123;</span><br><span class="line">        required string number=1;</span><br><span class="line">        optional PhoneType type=2 [default=HOME];</span><br><span class="line">    &#125;</span><br><span class="line">    repeated PhoneNumber phone=4;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>如你所见，消息格式很简单，每个消息类型拥有一个或多个特定的数字字段，每个字 段拥有一个名字和一个值类型。值类型可以是数字(整数或浮点)、布尔型、字符串、原始字 节或者其他 ProtocolBuffer 类型，还允许数据结构的分级。你可以指定可选字段，必选字 段和重复字段。你可以在<a href="http://code.google.com/apis/protocolbuffers/docs/proto.html">protocolbuffers&#x2F;docs&#x2F;proto</a>找到更多关于如何 编写 .proto 文件的信息。</p>
+<p>一旦你定义了自己的报文格式(message)，你就可以运行ProtocolBuffer编译器，将你 的.proto 文件编译成特定语言的类。这些类提供了简单的方法访问每个字段(像是 query() 和 set_query() )，像是访问类的方法一样将结构串行化或反串行化。例如你可以选择 C++ 语言，运行编译如上的协议文件生成类叫做 Person 。随后你就可以在应用中使用这个类来 串行化的读取报文信息。你可以这么写代码:</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">Person person;</span><br><span class="line">person.set_name(&quot;John Doe&quot;);</span><br><span class="line">person.set_id(1234); person.set_email(&quot;jdoe@example.com&quot;);</span><br><span class="line">fstream.output(&quot;myfile&quot;,ios::out | ios::binary);</span><br><span class="line">person.SerializeToOstream(&amp;output);</span><br></pre></td></tr></table></figure>
+<p>然后，你可以读取报文中的数据:</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">fstream input(&quot;myfile&quot;,ios::in | ios:binary);</span><br><span class="line">Person person;</span><br><span class="line">person.ParseFromIstream(&amp;input);</span><br><span class="line">cout &lt;&lt; &quot;Name: &quot; &lt;&lt; person.name() &lt;&lt; endl;</span><br><span class="line">cout &lt;&lt; &quot;E-mail: &quot; &lt;&lt; person.email() &lt;&lt; endl;</span><br></pre></td></tr></table></figure>
+<p>你可以在不影响向后兼容的情况下随意给数据结构增加字段，旧有的数据会忽略新的字段。所以如果使用 ProtocolBuffer 作为通信协议，你可以无须担心破坏现有代码的情况下扩展协议。</p>
+<p>你可以在 API 参考<a href="http://code.google.com/apis/protocolbuffers/docs/reference/overview.html">overview</a>中找 到完整的参考，而关于 ProtocolBuffer 的报文格式编码则可以在<a href="http://code.google.com/apis/protocolbuffers/docs/encoding.html">encoding</a>中找到。</p>
+<h2 id="为什么不使用-xml"><a href="#为什么不使用-xml" class="headerlink" title="为什么不使用 xml?"></a>为什么不使用 xml?</h2><p>ProtocolBuffer 拥有多项比 XML 更高级的串行化结构数据的特性，ProtocolBuffer: 更简单小3-10倍快20-100倍更少的歧义可以方便的生成数据存取类<br>例如，让我们看看如何在 XML 中建模 Person 的 name 和 email 字段:</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">&lt;person&gt;</span><br><span class="line">&lt;name&gt;John Doe&lt;/name&gt;</span><br><span class="line">&lt;email&gt;jdoe@example.com&lt;/email&gt;</span><br><span class="line">&lt;/person&gt;</span><br></pre></td></tr></table></figure>
+<p>对应的 ProtocolBuffer 报文则如下:</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">person &#123;</span><br><span class="line">    name: &quot;John Doe&quot;</span><br><span class="line">    email: &quot;jdoe@example.com&quot;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>当这个报文编码<a href="http://code.google.com/apis/protocolbuffers/docs/encoding.html">encoding</a>到 ProtocolBuffer 的二进制格式时(上面的文本 仅用于调试和编辑)，它只需要28字节和100-200ns 的解析时间。而 XML 的版本需要69字节(除 去空白)和5000-10000ns 的解析时间。</p>
+<p>当然，操作 ProtocolBuffer 也很简单:</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">cout &lt;&lt; &quot;Name: &quot; &lt;&lt; person.name() &lt;&lt; endl;</span><br><span class="line">cout &lt;&lt; &quot;E-mail: &quot; &lt;&lt; person.email() &lt;&lt; endl;</span><br></pre></td></tr></table></figure>
+<p>而 XML 的你需要:</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">cout &lt;&lt; &quot;Name: &quot;</span><br><span class="line">    &lt;&lt; person.getElementsByTagName(&quot;name&quot;)-&gt;item(0)-&gt;innerText()</span><br><span class="line">    &lt;&lt; endl;</span><br><span class="line">cout &lt;&lt; &quot;E-mail: &quot;</span><br><span class="line">    &lt;&lt; person.getElementsByTagName(&quot;email&quot;)-&gt;item(0)-&gt;innerText()</span><br><span class="line">    &lt;&lt; endl;</span><br></pre></td></tr></table></figure>
+<p>当然，ProtocolBuffer 并不是在任何时候都比 XML 更合适，例如 ProtocolBuffer 无法 对一个基于标记文本的文档建模(比如 HTML)，因为你根本没法方便的在文本中插入结构。 另外，XML 是便于人类阅读和编辑的，而 ProtocolBuffer 则不是。还有 XML 是自解释的， 而 ProtocolBuffer 仅在你拥有报文格式定义的.proto 文件时才有意义。</p>
+<h2 id="如何开始"><a href="#如何开始" class="headerlink" title="如何开始?"></a>如何开始?</h2><p><a href="http://code.google.com/p/protobuf/downloads/">下载包</a>，包含了 Java、Python、 C++的 ProtocolBuffer 编译器，用于生成你需要的 IO 类。构建和安装你的编译器，跟随 README 的指令就可以做到。</p>
+<p>一旦你安装好了，就可以跟着<a href="http://code.google.com/apis/protocolbuffers/docs/tutorials.html">编程指导</a>来选择语言- 随后就是使用 ProtocolBuffer 创建一个简单的应用了。</p>
+<h2 id="一点历史"><a href="#一点历史" class="headerlink" title="一点历史"></a>一点历史</h2><p>ProtocolBuffers 最初是在 Google 开发的，用以解决索引服务器的请求、响应协议。 在使用 ProtocolBuffers 之前，有一种格式用以处理请求和响应数据的编码和解码，并且支 持多种版本的协议。而这最终导致了丑陋的代码，比如:&#96;&#96;&#96;<br>if (version&#x3D;&#x3D;3) {<br>    …<br>} else if (version&gt;4) {<br>    if (version&#x3D;&#x3D;5) {<br>        …<br>    }<br>    …<br>}</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">通信协议因此变得越来越复杂，因为开发者必须确保，发出请求的人和接受请求的人必 须同时兼容，并且在一方开始使用新协议时，另外一方也要可以接受。ProtocolBuffers 设计用于解决这一类问题:</span><br><span class="line"></span><br><span class="line">* 很方便引入新字段，而中间服务器可以忽略这些字段，直接传递过去而无需理解所有的 字段。</span><br><span class="line">* 格式可以自描述，并且可以在多种语言中使用(C++、Java 等)</span><br><span class="line">* 然而用户仍然需要手写解析代码。</span><br><span class="line"></span><br><span class="line">随着系统的演化，他需要一些其他的功能:</span><br><span class="line"></span><br><span class="line">* 自动生成编码和解码代码，而无需自己编写解析器。</span><br><span class="line">* 除了用于简短的 RPC(Remote Procedure Call)请求，人们使用 ProtocolBuffer来做数据存储格式(例如 BitTable)。</span><br><span class="line">* RPC服务器接口可以作为 .proto 文件来描述，而通过 ProtocolBuffer的编译器生成存根(stub)类供用户实现服务器接口。</span><br><span class="line"></span><br><span class="line">ProtocolBuffers 现在已经是 Google 的混合语言数据标准了，现在已经正在使用的有 超过48,162种报文格式定义和超过12,183个 .proto 文件。他们用于 RPC 系统和持续数据存 储系统。</span><br><span class="line"></span><br><span class="line"># 环境安装</span><br><span class="line">## 下载</span><br><span class="line">[官方下载网站](http://code.google.com/p/protobuf/downloads/)</span><br><span class="line">## 安装</span><br><span class="line"></span><br><span class="line">```shell</span><br><span class="line">tar -zxvf protobuf-2.5.0.tar.gz</span><br><span class="line">cd protobuf-2.5.0</span><br><span class="line">./configure --prefix=$INSTALL_DIR</span><br><span class="line">make</span><br><span class="line">make install</span><br></pre></td></tr></table></figure>
+<p>更详细的安装步骤请参考源码目录下的 README.txt。</p>
+<p>安装完后在INSTALL_DIR目录下生成三个目录:</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">bin include lib</span><br></pre></td></tr></table></figure>
+
+<p>bin目录下是protoc工具，用于将你的.proto 文件编译成相应目标语言的编解码代码。include和lib目录是protoc工具所依赖的头文件与库环境。</p>
+<h2 id="利用protoc工具编译成目标语言"><a href="#利用protoc工具编译成目标语言" class="headerlink" title="利用protoc工具编译成目标语言"></a>利用protoc工具编译成目标语言</h2><p>编译前，先准备你的.proto 文件，这里暂时以源码目录下的 examples&#x2F;addressbook.proto 文件为例。</p>
+<p>protoc 用法:</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">Usage: ./protoc [OPTION] PROTO_FILES</span><br></pre></td></tr></table></figure>
+
+<p>详情请使用</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">./protoc --help</span><br></pre></td></tr></table></figure>
+<p>开始将你的.protoc 文件编译成目标语言编解码文件:</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">mkdir c java python</span><br><span class="line">./protoc --proto_path=./ --cpp_out=c/ --java_out=java/ --python_out=python/ addressbook.proto</span><br></pre></td></tr></table></figure>
+<p>官方的 protoc 工具仅支持C++&#x2F;java&#x2F;python三种语言，如果你使用其他语言，比如 c#，php，你可以使用其他第三方工具。命令简介:</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">./protoc --proto_path=IMPORT_PATH --cpp_out=DST_DIR --java_out=DST_DIR --python_out=DST_DIR path/to/file.proto</span><br></pre></td></tr></table></figure>
+<p>其中:</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">--proto_path:.proto 所在的路径</span><br><span class="line">--cpp_out:生成 C++代码的路径</span><br><span class="line">--java_out:生成 java 代码的路径--python_out:生成 python 代码的路径</span><br></pre></td></tr></table></figure>
+
+<h2 id="Python如何使用protocol-buffers"><a href="#Python如何使用protocol-buffers" class="headerlink" title="Python如何使用protocol buffers"></a>Python如何使用protocol buffers</h2><p>安装 python 的 pb 库:在 protobuf 源码目录下可以找到一个目录python，没错，你需要进入此目录安装python的pb库。</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">cd protobuf-2.5.0/python</span><br><span class="line">$PYTHONHOME/bin/python setup.py install --prefix=$PYTHONHOME</span><br></pre></td></tr></table></figure>
+<p>使用–prefix 选项指定你 python 的安装目录，然后静待安装完成。以下是安装时常见的错误:</p>
+<ul>
+<li><p>安装提示 error: package directory ‘google&#x2F;protobuf&#x2F;compiler’ does not exist<br>  解决办法：<br>  执行mkdir google&#x2F;protobuf&#x2F;compiler<br>  创建compiler目录即可。</p>
+</li>
+<li><p>TBD</p>
+</li>
+</ul>
+<p>安装完 python 的 pb 库后，你就可以在源码的 examples 目录中，使用 add_person.py 和 list_people.py 来测试如何使用 pb 序列化与反序列化了。序列化与反序列化的相关接口 分别为 SerializeToString()和 ParseFromString()。</p>
+<p>更多 python 相关的 api 请看<a href="https://developers.google.com/protocol-buffers/docs/reference/python/index">protocol-buffers&#x2F;docs&#x2F;reference&#x2F;python&#x2F;index</a>。</p>
+<h2 id="其他语言如何使用protocol-buffers"><a href="#其他语言如何使用protocol-buffers" class="headerlink" title="其他语言如何使用protocol buffers"></a>其他语言如何使用protocol buffers</h2><p>TBD</p>
+<h1 id="语言指导"><a href="#语言指导" class="headerlink" title="语言指导"></a>语言指导</h1><h2 id="消息定义"><a href="#消息定义" class="headerlink" title="消息定义"></a>消息定义</h2><p>在.proto 文件里面用 Protocol Buffers 消息类型进行定义，每一个 Protocol Buffers消息是信息的一条小的逻辑记录，里面包含一系列名称-值对。下面是一个简单的.proto 文件:</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">message SearchRequest &#123;</span><br><span class="line">    required string query = 1;</span><br><span class="line">    optional int32 page_number = 2;</span><br><span class="line">    optional int32 result_per_page = 3;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h3 id="字段类型"><a href="#字段类型" class="headerlink" title="字段类型"></a>字段类型</h3><p>可以是基本类型，例如整形、浮点型，值类型可以是其他的 Protocol Buffers 的消息类型，这样你可以用分层的方式定义你的数据结构。</p>
+<h3 id="分配字段Tag-标记"><a href="#分配字段Tag-标记" class="headerlink" title="分配字段Tag(标记)"></a>分配字段Tag(标记)</h3><p>每个字段必须有一个唯一的标记，这个标记在序列化时会作为字段的标识出现在序 列化后的二进制数据中。一旦该消息用于生产，字段的 tag 就不能修改了。标记的值小 于15时序列化编码为一个字节，大于15会用到两个以上的字节。</p>
+<h3 id="指定字段的规则"><a href="#指定字段的规则" class="headerlink" title="指定字段的规则"></a>指定字段的规则</h3><p>消息的字段可以具有以下类型的属性:</p>
+<p>required: 消息中必须包含一个该字段的值</p>
+<p>optional: 可选字段，消息中可以有0个或一个该字段的值</p>
+<p>repeated: 重复字段，消息中可以有0个或多个该字段的值</p>
+<h3 id="选择字段规则的建议"><a href="#选择字段规则的建议" class="headerlink" title="选择字段规则的建议"></a>选择字段规则的建议</h3><p>你可以在你的消息格式里面添加新的域，而不用考虑向后兼容性，老的二进制流在 解析的时候可以简单的忽略掉新增的域。因此如果你使用 Protocol Buffers 作为你数据 格式的通信协议时，你可以扩展你的协议，而不用担心破坏现有的代码。对于 required，尽可能的少用，若一个字段开始时指定为 required，则以后就不能 修改为 optional。建议将字段设置都设置为 optional 类型，这样字段的 required 规则可以放在业务代码中进行处理。</p>
+<h3 id="增加更多的消息类型"><a href="#增加更多的消息类型" class="headerlink" title="增加更多的消息类型"></a>增加更多的消息类型</h3><p>在单个 .proto 文件里可以定义多种消息类型:</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">message SearchRequest &#123;</span><br><span class="line">    required string query = 1;</span><br><span class="line">    optional int32 page_number = 2;</span><br><span class="line">    optional int32 result_per_page = 3;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">message SearchResponse &#123;</span><br><span class="line">    ...</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h3 id="注释"><a href="#注释" class="headerlink" title="注释"></a>注释</h3><p>.proto 文件使用 C&#x2F;C++的注释风格:</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">message SearchRequest &#123;</span><br><span class="line">    required string query = 1;</span><br><span class="line">    optional int32 page_number = 2; // Which page number do we want?</span><br><span class="line">    optional int32 result_per_page = 3; // Number of results to return per page.</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h2 id="数值类型"><a href="#数值类型" class="headerlink" title="数值类型"></a>数值类型</h2><p>下表列举了 pb 协议数据类型与 C++&#x2F;Java&#x2F;Python 语言的类型对应关系:</p>
+<table>
+<thead>
+<tr>
+<th>.proto Type</th>
+<th>Notes</th>
+<th>C++ Type</th>
+<th>Java Type</th>
+<th>Python Type[2]</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>double</td>
+<td></td>
+<td>double</td>
+<td>double</td>
+<td>float</td>
+</tr>
+<tr>
+<td>float</td>
+<td></td>
+<td>float</td>
+<td>float</td>
+<td>float</td>
+</tr>
+<tr>
+<td>int32</td>
+<td>Uses variable-length encoding. Inefficient for encoding negative numbers – if your field is likely to have negative values, use sint32 instead.</td>
+<td>int32</td>
+<td>int</td>
+<td>int</td>
+</tr>
+<tr>
+<td>int64</td>
+<td>Uses variable-length encoding. Inefficient for encoding negative numbers – if your field is likely to have negative values, use sint64 instead.</td>
+<td>int64</td>
+<td>long</td>
+<td>int&#x2F;long[3]</td>
+</tr>
+<tr>
+<td>uint32</td>
+<td>Uses variable-length encoding.</td>
+<td>uint32</td>
+<td>int[1]</td>
+<td>int&#x2F;long[3]</td>
+</tr>
+<tr>
+<td>uint64</td>
+<td>Uses variable-length encoding.</td>
+<td>uint64</td>
+<td>long[1]</td>
+<td>int&#x2F;long[3]</td>
+</tr>
+<tr>
+<td>sint32</td>
+<td>Uses variable-length encoding. Signed int value. These more efficiently encode negative numbers than regular int32s.</td>
+<td>int32</td>
+<td>int</td>
+<td>int</td>
+</tr>
+<tr>
+<td>sint64</td>
+<td>Uses variable-length encoding. Signed int value. These more efficiently encode negative numbers than regular int64s.</td>
+<td>int64</td>
+<td>long</td>
+<td>int&#x2F;long[3]</td>
+</tr>
+<tr>
+<td>fixed32</td>
+<td>Always four bytes. More efficient than uint32 if values are often greater than 228.</td>
+<td>uint32</td>
+<td>int[1]</td>
+<td>int</td>
+</tr>
+<tr>
+<td>fixed64</td>
+<td>Always eight bytes. More efficient than uint64 if values are often greater than 256.</td>
+<td>uint64</td>
+<td>long[1]</td>
+<td>int&#x2F;long[3]</td>
+</tr>
+<tr>
+<td>sfixed32</td>
+<td>Always four bytes.</td>
+<td>int32</td>
+<td>int</td>
+<td>int</td>
+</tr>
+<tr>
+<td>sfixed64</td>
+<td>Always eight bytes.</td>
+<td>int64</td>
+<td>long</td>
+<td>int&#x2F;long[3]</td>
+</tr>
+<tr>
+<td>bool</td>
+<td></td>
+<td>bool</td>
+<td>boolean</td>
+<td>boolean</td>
+</tr>
+<tr>
+<td>string</td>
+<td>A string must always contain UTF-8 encoded or 7-bit ASCII text.</td>
+<td>string</td>
+<td>String</td>
+<td>str&#x2F;unicode[4]</td>
+</tr>
+<tr>
+<td>bytes</td>
+<td>May contain any arbitrary sequence of bytes.</td>
+<td>string</td>
+<td>ByteString</td>
+<td>str</td>
+</tr>
+</tbody></table>
+<p>你可以在<a href="https://developers.google.com/protocol-buffers/docs/encoding">protocol-buffers&#x2F;docs&#x2F;encoding</a>找到这些类型在 pb 序列化时是如何被编码的。</p>
+<p>[1] 在 Java, unsigned 32-bit and 64-bit integers 都是使用最高位表示符号位，而无符号位部分是一样的。</p>
+<p>[2] 所有情况下，赋值操作会触发类型检查以保证可用性。</p>
+<p>[3] 64-bit or unsigned 32-bit integers 会被解码为 long 类型，但如果在赋值时使用 int 类型的话，解码后可以是 int 类型。任何情况下，值必须与被赋值时一样。见[2]。</p>
+<p>[4] Python strings 类型在解码后是 unicode 类型，但如果原始字符串是 ASCII 编码的话也可能是 str 类型。</p>
+<h2 id="可选字段规则与默认值"><a href="#可选字段规则与默认值" class="headerlink" title="可选字段规则与默认值"></a>可选字段规则与默认值</h2><p>一个消息字段可以使用 optional 规则来限定，表示该字段是可选类型，即该消息可以 包含该字段也可以不包含该字段。当一个消息被解析时，如果序列化数据没有包含 optional 字段，则该字段会使用默认值来代替。默认值可以显式指定如下:</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">optional int32 result_per_page = 3 [default = 10];</span><br></pre></td></tr></table></figure>
+<p>如果没有显式指定默认值，则使用数据类型的默认值来代替:比如，字符串类型的默认值是空字符串，布尔类型的默认值是 false，数字类型的默认值是0，枚举类 型的默认值是第一个被定义的枚举值。</p>
+<h2 id="枚举类型"><a href="#枚举类型" class="headerlink" title="枚举类型"></a>枚举类型</h2><p>使用 enum 关键字定义枚举类型，比如你想定义一个叫 Corpus 的枚举类型:</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">message SearchRequest &#123;</span><br><span class="line">    required string query = 1;</span><br><span class="line">    optional int32 page_number = 2;</span><br><span class="line">    optional int32 result_per_page = 3 [default = 10];</span><br><span class="line">    enum Corpus &#123;</span><br><span class="line">        UNIVERSAL = 0;</span><br><span class="line">        WEB = 1;</span><br><span class="line">        IMAGES = 2;</span><br><span class="line">        LOCAL = 3;</span><br><span class="line">        NEWS = 4;</span><br><span class="line">        PRODUCTS = 5;</span><br><span class="line">        VIDEO = 6;</span><br><span class="line">    &#125;</span><br><span class="line">    optional Corpus corpus = 4 [default = UNIVERSAL];</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h2 id="使用其他消息类型"><a href="#使用其他消息类型" class="headerlink" title="使用其他消息类型"></a>使用其他消息类型</h2><p>你可以使用其他的消息类型来定义你的消息字段，以构成各种复合类型，比如 SearchResponse 消息里定义了一个 Result 消息类型的字段:</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">message SearchResponse &#123;</span><br><span class="line">    repeated Result result = 1;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">message Result &#123;</span><br><span class="line">    required string url = 1;</span><br><span class="line">    optional string title = 2;   </span><br><span class="line">    repeated string snippets = 3;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>另外，你还可以使用 import 语句导入其他.proto 文件定义的消息类型。 包含路径的 import:</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">import &quot;myproject/other_protos.proto&quot;;</span><br></pre></td></tr></table></figure>
+<p>不包含路径的 import:</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">import public &quot;new.proto&quot;;</span><br><span class="line">import &quot;other.proto&quot;;</span><br></pre></td></tr></table></figure>
+<p>当使用 public 域 import 时，编译器会去 -I&#x2F;–proto_path 标志指定的路径去查找，如果没有指定此标志，它会去编译器目录索引。通常情况下，建议你使用 –proto_path 指 定为项目的根路径，并且使用全名（包含命名空间或包名）import。</p>
+<h1 id="命名风格"><a href="#命名风格" class="headerlink" title="命名风格"></a>命名风格</h1><p>良好的命名风格让你的.proto 文件更加易读。</p>
+<h2 id="消息以及字段名称"><a href="#消息以及字段名称" class="headerlink" title="消息以及字段名称"></a>消息以及字段名称</h2><p>使用 CamelCase 方式命名消息名称，使用下划线分隔的名字来命名消息的字段，例如:</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">message SongServerRequest &#123;</span><br><span class="line">    required string song_name = 1;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h2 id="枚举类型-1"><a href="#枚举类型-1" class="headerlink" title="枚举类型"></a>枚举类型</h2><p>使用 CamelCase 方式命名消息名称，例如 PhoneType 使用大写字母+下划线来命名枚举值，例如:</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">enum PhoneType &#123;</span><br><span class="line">    TYPE_MOBILE = 0;</span><br><span class="line">    TYPE_HOME = 1;</span><br><span class="line">    TYPE_WORK = 2;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h2 id="服务"><a href="#服务" class="headerlink" title="服务"></a>服务</h2><p>如果你的.proto 文件定义了 RPC 服务，你可以使用 CamelCase 的方式命名你的服务名与RPC 方法名:</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">service FooService &#123;</span><br><span class="line">    rpc GetSomething(FooRequest) returns (FooResponse);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h1 id="编码原理"><a href="#编码原理" class="headerlink" title="编码原理"></a>编码原理</h1><p>本节主要介绍 protocol buffer 消息转换成二进制格式的原理。如果仅需要了解怎么使 用 protocol buffers，你可以无需理解这些原理，但了解这些能帮助你理解 protocol buffers 对编码后数据大小的影响。</p>
+<h2 id="一个简单的消息"><a href="#一个简单的消息" class="headerlink" title="一个简单的消息"></a>一个简单的消息</h2><p>下面是一个简单的消息定义:</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">message Test1 &#123;</span><br><span class="line">    required int32 a = 1;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>若你创建了一个 Test1的消息，然后 a 赋值为150，序列化后，你会发现消息被编码为 下面3个字节:</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">08 96 01</span><br></pre></td></tr></table></figure>
+<p>看起来非常小巧与数字化，但它代表什么意义?继续看下去，好戏还在后头……</p>
+<h2 id="变长整型-varint"><a href="#变长整型-varint" class="headerlink" title="变长整型(varint)"></a>变长整型(varint)</h2><p>为了理解 protocol buffer 的编码原理，你首先需要理解 varint 的概念。<br>Varint 是一种紧凑的表示数字的方法。它用一个或多个字节来表示一个数字，值越小 的数字使用越少的字节数。这能减少用来表示数字的字节数。比如对于 int32 类型的数字，一般需要 4 个 byte 来表示。但是采用 Varint，对于很小的 int32 类型的数字，则可以用 1 个 byte 来表示。注意，采用 Varint 表示法，大的数字则需要更多个 byte 来表示。从统计的角度来说，一般不会所有消息中的数字都是大数，因此大多数情况下，采用 Varint 后，可以用更少的字节数来表示数字信息。Varint 中的每个 byte 的最高位 most significant bit (msb) 有特殊的含义，如果 该位为 1，表示后续的 byte 也是该数字的一部分，如果该位为 0，则结束。其他的 7 个 bit 都用来表示数字。因此小于 128 的数字都可以用一个 byte 表示。大于 128 的数字，比如 300，会用两个字节来表示:1010 1100 0000 0010，以下是它的解码过程:</p>
+<p>首先按照字节分组: </p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">1010 1100 0000 0010</span><br></pre></td></tr></table></figure>
+<p>去掉 msb</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">010 1100 000 0010</span><br></pre></td></tr></table></figure>
+<p>将字节反向排列</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">000 0010 010 1100</span><br></pre></td></tr></table></figure>
+<p>重新组合成字节</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">000 001 0010 1100 → 100101100=300</span><br></pre></td></tr></table></figure>
+
+<h2 id="消息结构"><a href="#消息结构" class="headerlink" title="消息结构"></a>消息结构</h2><p>一个 protocol buffer 消息是一系列的键-值对。序列化后的二进制消息仅使用字段数字为 key。<br>当消息被编码后，键值对被组织成一个字节流。消息在解码后，解析器能够忽略不认识 的字段。按照这样的方式，旧程序能够忽略不认识的新增字段。最后，”key”实际上是由两个值组成的，其中一个是.proto 文件的字段数字标号，另外一个是 wire types，这样才 能提供足够的信息去找到接下来数据的长度。下面是可用的wire types:</p>
+<table>
+<thead>
+<tr>
+<th>Type</th>
+<th>Meaning</th>
+<th>Used For</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>0</td>
+<td>Varint</td>
+<td>int32, int64, uint32, uint64, sint32, sint64, bool, enum</td>
+</tr>
+<tr>
+<td>1</td>
+<td>64-bit</td>
+<td>fixed64, sfixed64, double</td>
+</tr>
+<tr>
+<td>2</td>
+<td>Length-delimited</td>
+<td>string, bytes, embedded messages, packed repeated fields</td>
+</tr>
+<tr>
+<td>3</td>
+<td>Start group</td>
+<td>groups (deprecated)</td>
+</tr>
+<tr>
+<td>4</td>
+<td>End group</td>
+<td>groups (deprecated)</td>
+</tr>
+<tr>
+<td>5</td>
+<td>32-bit</td>
+<td>fixed32, sfixed32, float</td>
+</tr>
+</tbody></table>
+<p>每个消息流的 key 都是一个 varint 类型，它的值为(field_number &lt;&lt; 3) | wire_type 。换句话说，最后三位用于保存 wire type 。 </p>
+<p>比如 key 是08，去掉 msb 位后如下: </p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">000 1000</span><br></pre></td></tr></table></figure>
+<p>则field_number 和 wire type 分别为:</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">field_number=0001</span><br><span class="line">wire_type=000</span><br></pre></td></tr></table></figure>
+
+<h2 id="更多的值类型"><a href="#更多的值类型" class="headerlink" title="更多的值类型"></a>更多的值类型</h2><h3 id="带符号整数"><a href="#带符号整数" class="headerlink" title="带符号整数"></a>带符号整数</h3><p>在前面的例子中，所有的 protocol buffer 类型都是 wire type 0的 varints 类型。然 而，带符号整数 (sint32 and sint64)与标准的整型(int32 and int64)在编码时有很大的 区别。如果你使用 int32 或者 int64来表示一个负数，结果需要10个字节，因为它会被认为 是一个非常大的无符号整数。为此，对带符号整数使用 ZigZag 编码会更高效。ZigZag 编码用无符号数来表示有符号数字，正数和负数交错，这就是 zigzag 这个词 的含义了。使用 zigzag 编码时，与0距离越近，编码时使用的值越小，从统计意义层面来看， 这样编码更高效，因为数据通信中绝对值小的数据交互占的比例要高。下面是 ZigZag 的编 码表:</p>
+<table>
+<thead>
+<tr>
+<th>Signed Original</th>
+<th>Encoded As</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>0</td>
+<td>0</td>
+</tr>
+<tr>
+<td>-1</td>
+<td>1</td>
+</tr>
+<tr>
+<td>1</td>
+<td>2</td>
+</tr>
+<tr>
+<td>-2</td>
+<td>3</td>
+</tr>
+<tr>
+<td>2147483647</td>
+<td>4294967294</td>
+</tr>
+<tr>
+<td>-2147483648</td>
+<td>4294967295</td>
+</tr>
+</tbody></table>
+<p>换句话说，每个值 n 都使用以下方式编码:</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">sint32:(n &lt;&lt; 1) ^ (n &gt;&gt; 31)</span><br><span class="line">sint34:(n &lt;&lt; 1) ^ (n &gt;&gt; 63)</span><br></pre></td></tr></table></figure>
+<p>注意到第二个位移部分(n &gt;&gt; 31)实际上是算术位移，所以若 n 是正数，算术位移后得到的数全部位都是0，若 n 是负数，算术位移后得到的数全部位都是1。</p>
+<p>当 sint32或 sint64被解析时，它的值会被解码回原始的带符号数。</p>
+<h3 id="非-varint-数"><a href="#非-varint-数" class="headerlink" title="非 varint 数"></a>非 varint 数</h3><p>非 varint 的数据类型就非常简单了， double 和 fixed64是 wire type 1，它会告诉解 析器期望的是一个固定的64位数据块;类似的，float 和 fixed32是 wire type 5，它会告 诉解析器期望的是一个固定的32位数据块。无论何种情况，值都是以 little-endian 小端对 齐的字节顺序方式存储。</p>
+<h3 id="字符串"><a href="#字符串" class="headerlink" title="字符串"></a>字符串</h3><p>wire type 2 (length-delimited) 意思是它的值先使用一个 varint 来表示编码后的 数据大小，而接下来就是相应长度的编码数据了。</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">message Test2 &#123;</span><br><span class="line">    required string b = 2;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>设置 b 的值为”testing”，你会得到下面编码:</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">12 07 74 65 73 74 69 6e 67</span><br></pre></td></tr></table></figure>
+
+<p>分析 key，首先第一个字节12为:</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">0001 0010</span><br></pre></td></tr></table></figure>
+<p>msb 为0，表示 key 仅用一个字节表示，去掉 msb:</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">001 0010</span><br></pre></td></tr></table></figure>
+
+<p>根据 key 的解码办法，得到:</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">field_number = 0010 = 2</span><br><span class="line">wire_type = 010 = 2</span><br></pre></td></tr></table></figure>
+
+<p>分析第二个字节07，根据 varint 编码可知数据长度为7，然后紧跟后面的7个字节则为 “testing”。</p>
+<h2 id="嵌套消息"><a href="#嵌套消息" class="headerlink" title="嵌套消息"></a>嵌套消息</h2><p>下面 Test3是一个嵌套消息:</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">message Test1 &#123;</span><br><span class="line">    required int32 a = 1;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">message Test3 &#123;</span><br><span class="line">    required Test1 c = 3;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>如果将 Test1的 a 字段赋值为150，则得到下面的编码:</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">1a 03 08 96 01</span><br></pre></td></tr></table></figure>
+<p>还记得编码原理刚开始提到的“一个简单的消息”吗?后面3个字节是否似曾相识？而Test3是嵌套消息，它的 wire type &#x3D; 2，请参照该类型的编码办法即可解码。</p>
+<h2 id="可选与重复元素"><a href="#可选与重复元素" class="headerlink" title="可选与重复元素"></a>可选与重复元素</h2><h3 id="Optional-可选字段"><a href="#Optional-可选字段" class="headerlink" title="Optional 可选字段"></a>Optional 可选字段</h3><p>optional 可选元素在消息编码时可以有0或者1个键值对。</p>
+<h3 id="Repeated-重复字段"><a href="#Repeated-重复字段" class="headerlink" title="Repeated 重复字段"></a>Repeated 重复字段</h3><p>Repeated 字段序列化时，序列化的结果中包含0个或多个 key-value，每个 key-value 都包含字段的 tag。PB2.1.0版本中提供了另外一种 Repeated 字段，即带有[packed&#x3D;true]属性的 Repeated 字段，这种字段又称为:packedrepeated field。packed repeated field 字段序列化时，有0个或多个元素，并且所有的 元素打包在一个 key-value 中，key-value 的类型采用 wire type 2 (length-delimited)，每个元素不需要提供各自的 tag。<br>下面是一个例子: </p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">message Test4 &#123;</span><br><span class="line">    repeated int32 d = 4 [packed=true];</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>序列化字节码:</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">22        // tag (field number 4, wire type 2)</span><br><span class="line">06        // payload size (6 bytes)</span><br><span class="line">03        // first element (varint 3)</span><br><span class="line">8E 02     // second element (varint 270)</span><br><span class="line">9E A7 05  // third element (varint 86942)</span><br></pre></td></tr></table></figure>
+
+<h1 id="相关序列化与反序列化技术的性能比较"><a href="#相关序列化与反序列化技术的性能比较" class="headerlink" title="相关序列化与反序列化技术的性能比较"></a>相关序列化与反序列化技术的性能比较</h1><p>本章节内容摘自<a href="http://code.google.com/p/thrift-protobuf-compare/wiki/Benchmarking#Object_Creation_Time">thrift-protobuf-compare</a>。作者提到，数值并非一切，仅供参考，实际上测试结果会受硬件，测试用例等影响。</p>
+<p>总耗时(包括对象创建，序列化与反序列化):</p>
+<p><img src="http://image.noahsun.top/pb_tutorial/total_time.png" alt="total_time"></p>
+<p>序列化时间(每次序列化的时间，包括对象创建时间):</p>
+<p><img src="http://image.noahsun.top/pb_tutorial/serialize_time.png" alt="serialize_time"></p>
+<p>反序列化时间:</p>
+<p><img src="http://image.noahsun.top/pb_tutorial/deserialize_time.png" alt="deserialize_time"></p>
+<p>序列化大小:</p>
+<p><img src="http://image.noahsun.top/pb_tutorial/serialize_size.png" alt="serialize_size"></p>
+<p>对象创建时间:</p>
+<p><img src="http://image.noahsun.top/pb_tutorial/creat_obj_time.png" alt="creat_obj_time"></p>
+<p>从上面的数据来看，protocol buffers 在序列化与反序列化性能及序列化后的数据大 小方面都不有错的表现。</p>
+<h1 id="参考资料"><a href="#参考资料" class="headerlink" title="参考资料"></a>参考资料</h1><ol>
+<li><a href="https://developers.google.com/protocol-buffers/Protocol-buffers">https://developers.google.com/protocol-buffers/Protocol-buffers</a> 的官方介绍，本教程的主要参考资料。</li>
+<li><a href="http://www.ibm.com/developerworks/cn/linux/l-cn-gpb/Protocol">http://www.ibm.com/developerworks/cn/linux/l-cn-gpb/Protocol</a> Buffers 原理的中文介绍。</li>
+<li><a href="http://code.google.com/p/thrift-protobuf-compare/wiki/Benchmarking#Object_Creation_Time">http://code.google.com/p/thrift-protobuf-compare/wiki/Benchmarking#Object_Creation_Time</a> Protocol Buffers 与其他相关技术的性能对比。</li>
+<li><a href="http://www.cppblog.com/liquidx/archive/2009/06/23/88366.html">http://www.cppblog.com/liquidx/archive/2009/06/23/88366.html</a></li>
+<li><a href="http://blog.csdn.net/hguisu/article/details/20721109">http://blog.csdn.net/hguisu/article/details/20721109</a></li>
+</ol>
+]]></content>
+      <categories>
+        <category>Technology</category>
+      </categories>
+      <tags>
+        <tag>PB</tag>
+        <tag>Protocol Buffers</tag>
+        <tag>RPC</tag>
+      </tags>
+  </entry>
+  <entry>
     <title>RTMP协议规范_1.0</title>
     <url>/2017/11/19/RTMP%E5%8D%8F%E8%AE%AE%E8%A7%84%E8%8C%83-1-0/</url>
     <content><![CDATA[<p>译注</p>
@@ -1111,381 +1486,6 @@ attachments/1114283/amf3_spec_05_05_08.pdf>.
       </tags>
   </entry>
   <entry>
-    <title>Protocol Buffers 使用教程</title>
-    <url>/2017/08/05/Protocol-Buffers-%E4%BD%BF%E7%94%A8%E6%95%99%E7%A8%8B/</url>
-    <content><![CDATA[<h1 id="概述"><a href="#概述" class="headerlink" title="概述"></a>概述</h1><h2 id="什么是-protocol-buffers"><a href="#什么是-protocol-buffers" class="headerlink" title="什么是 protocol buffers?"></a>什么是 protocol buffers?</h2><p>ProtocolBuffer 是用于结构化数据串行化的灵活、高效、自动的方法，类似 XML，不 过它更小、更快、也更简单。你可以定义自己的数据结构，然后使用代码生成器生成的代码 来读写这个数据结构。你甚至可以在无需重新部署程序的情况下更新数据结构。</p>
-<h2 id="他们如何工作"><a href="#他们如何工作" class="headerlink" title="他们如何工作"></a>他们如何工作</h2><p>你首先需要在一个.proto 文件中定义你需要做串行化的数据结构信息。每个 ProtocolBuffer 信息是一小段逻辑记录，包含一系列的键值对。这里有个非常简单的.proto 文件定义了个人信息:</p>
-<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">message Person &#123;</span><br><span class="line">    required string name=1;</span><br><span class="line">    required int32 id=2;</span><br><span class="line">    optional string email=3;</span><br><span class="line">    enum PhoneType &#123;</span><br><span class="line">        MOBILE=0;</span><br><span class="line">        HOME=1;</span><br><span class="line">        WORK=2;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    message PhoneNumber &#123;</span><br><span class="line">        required string number=1;</span><br><span class="line">        optional PhoneType type=2 [default=HOME];</span><br><span class="line">    &#125;</span><br><span class="line">    repeated PhoneNumber phone=4;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<p>如你所见，消息格式很简单，每个消息类型拥有一个或多个特定的数字字段，每个字 段拥有一个名字和一个值类型。值类型可以是数字(整数或浮点)、布尔型、字符串、原始字 节或者其他 ProtocolBuffer 类型，还允许数据结构的分级。你可以指定可选字段，必选字 段和重复字段。你可以在<a href="http://code.google.com/apis/protocolbuffers/docs/proto.html">protocolbuffers&#x2F;docs&#x2F;proto</a>找到更多关于如何 编写 .proto 文件的信息。</p>
-<p>一旦你定义了自己的报文格式(message)，你就可以运行ProtocolBuffer编译器，将你 的.proto 文件编译成特定语言的类。这些类提供了简单的方法访问每个字段(像是 query() 和 set_query() )，像是访问类的方法一样将结构串行化或反串行化。例如你可以选择 C++ 语言，运行编译如上的协议文件生成类叫做 Person 。随后你就可以在应用中使用这个类来 串行化的读取报文信息。你可以这么写代码:</p>
-<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">Person person;</span><br><span class="line">person.set_name(&quot;John Doe&quot;);</span><br><span class="line">person.set_id(1234); person.set_email(&quot;jdoe@example.com&quot;);</span><br><span class="line">fstream.output(&quot;myfile&quot;,ios::out | ios::binary);</span><br><span class="line">person.SerializeToOstream(&amp;output);</span><br></pre></td></tr></table></figure>
-<p>然后，你可以读取报文中的数据:</p>
-<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">fstream input(&quot;myfile&quot;,ios::in | ios:binary);</span><br><span class="line">Person person;</span><br><span class="line">person.ParseFromIstream(&amp;input);</span><br><span class="line">cout &lt;&lt; &quot;Name: &quot; &lt;&lt; person.name() &lt;&lt; endl;</span><br><span class="line">cout &lt;&lt; &quot;E-mail: &quot; &lt;&lt; person.email() &lt;&lt; endl;</span><br></pre></td></tr></table></figure>
-<p>你可以在不影响向后兼容的情况下随意给数据结构增加字段，旧有的数据会忽略新的字段。所以如果使用 ProtocolBuffer 作为通信协议，你可以无须担心破坏现有代码的情况下扩展协议。</p>
-<p>你可以在 API 参考<a href="http://code.google.com/apis/protocolbuffers/docs/reference/overview.html">overview</a>中找 到完整的参考，而关于 ProtocolBuffer 的报文格式编码则可以在<a href="http://code.google.com/apis/protocolbuffers/docs/encoding.html">encoding</a>中找到。</p>
-<h2 id="为什么不使用-xml"><a href="#为什么不使用-xml" class="headerlink" title="为什么不使用 xml?"></a>为什么不使用 xml?</h2><p>ProtocolBuffer 拥有多项比 XML 更高级的串行化结构数据的特性，ProtocolBuffer: 更简单小3-10倍快20-100倍更少的歧义可以方便的生成数据存取类<br>例如，让我们看看如何在 XML 中建模 Person 的 name 和 email 字段:</p>
-<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">&lt;person&gt;</span><br><span class="line">&lt;name&gt;John Doe&lt;/name&gt;</span><br><span class="line">&lt;email&gt;jdoe@example.com&lt;/email&gt;</span><br><span class="line">&lt;/person&gt;</span><br></pre></td></tr></table></figure>
-<p>对应的 ProtocolBuffer 报文则如下:</p>
-<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">person &#123;</span><br><span class="line">    name: &quot;John Doe&quot;</span><br><span class="line">    email: &quot;jdoe@example.com&quot;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<p>当这个报文编码<a href="http://code.google.com/apis/protocolbuffers/docs/encoding.html">encoding</a>到 ProtocolBuffer 的二进制格式时(上面的文本 仅用于调试和编辑)，它只需要28字节和100-200ns 的解析时间。而 XML 的版本需要69字节(除 去空白)和5000-10000ns 的解析时间。</p>
-<p>当然，操作 ProtocolBuffer 也很简单:</p>
-<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">cout &lt;&lt; &quot;Name: &quot; &lt;&lt; person.name() &lt;&lt; endl;</span><br><span class="line">cout &lt;&lt; &quot;E-mail: &quot; &lt;&lt; person.email() &lt;&lt; endl;</span><br></pre></td></tr></table></figure>
-<p>而 XML 的你需要:</p>
-<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">cout &lt;&lt; &quot;Name: &quot;</span><br><span class="line">    &lt;&lt; person.getElementsByTagName(&quot;name&quot;)-&gt;item(0)-&gt;innerText()</span><br><span class="line">    &lt;&lt; endl;</span><br><span class="line">cout &lt;&lt; &quot;E-mail: &quot;</span><br><span class="line">    &lt;&lt; person.getElementsByTagName(&quot;email&quot;)-&gt;item(0)-&gt;innerText()</span><br><span class="line">    &lt;&lt; endl;</span><br></pre></td></tr></table></figure>
-<p>当然，ProtocolBuffer 并不是在任何时候都比 XML 更合适，例如 ProtocolBuffer 无法 对一个基于标记文本的文档建模(比如 HTML)，因为你根本没法方便的在文本中插入结构。 另外，XML 是便于人类阅读和编辑的，而 ProtocolBuffer 则不是。还有 XML 是自解释的， 而 ProtocolBuffer 仅在你拥有报文格式定义的.proto 文件时才有意义。</p>
-<h2 id="如何开始"><a href="#如何开始" class="headerlink" title="如何开始?"></a>如何开始?</h2><p><a href="http://code.google.com/p/protobuf/downloads/">下载包</a>，包含了 Java、Python、 C++的 ProtocolBuffer 编译器，用于生成你需要的 IO 类。构建和安装你的编译器，跟随 README 的指令就可以做到。</p>
-<p>一旦你安装好了，就可以跟着<a href="http://code.google.com/apis/protocolbuffers/docs/tutorials.html">编程指导</a>来选择语言- 随后就是使用 ProtocolBuffer 创建一个简单的应用了。</p>
-<h2 id="一点历史"><a href="#一点历史" class="headerlink" title="一点历史"></a>一点历史</h2><p>ProtocolBuffers 最初是在 Google 开发的，用以解决索引服务器的请求、响应协议。 在使用 ProtocolBuffers 之前，有一种格式用以处理请求和响应数据的编码和解码，并且支 持多种版本的协议。而这最终导致了丑陋的代码，比如:&#96;&#96;&#96;<br>if (version&#x3D;&#x3D;3) {<br>    …<br>} else if (version&gt;4) {<br>    if (version&#x3D;&#x3D;5) {<br>        …<br>    }<br>    …<br>}</p>
-<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">通信协议因此变得越来越复杂，因为开发者必须确保，发出请求的人和接受请求的人必 须同时兼容，并且在一方开始使用新协议时，另外一方也要可以接受。ProtocolBuffers 设计用于解决这一类问题:</span><br><span class="line"></span><br><span class="line">* 很方便引入新字段，而中间服务器可以忽略这些字段，直接传递过去而无需理解所有的 字段。</span><br><span class="line">* 格式可以自描述，并且可以在多种语言中使用(C++、Java 等)</span><br><span class="line">* 然而用户仍然需要手写解析代码。</span><br><span class="line"></span><br><span class="line">随着系统的演化，他需要一些其他的功能:</span><br><span class="line"></span><br><span class="line">* 自动生成编码和解码代码，而无需自己编写解析器。</span><br><span class="line">* 除了用于简短的 RPC(Remote Procedure Call)请求，人们使用 ProtocolBuffer来做数据存储格式(例如 BitTable)。</span><br><span class="line">* RPC服务器接口可以作为 .proto 文件来描述，而通过 ProtocolBuffer的编译器生成存根(stub)类供用户实现服务器接口。</span><br><span class="line"></span><br><span class="line">ProtocolBuffers 现在已经是 Google 的混合语言数据标准了，现在已经正在使用的有 超过48,162种报文格式定义和超过12,183个 .proto 文件。他们用于 RPC 系统和持续数据存 储系统。</span><br><span class="line"></span><br><span class="line"># 环境安装</span><br><span class="line">## 下载</span><br><span class="line">[官方下载网站](http://code.google.com/p/protobuf/downloads/)</span><br><span class="line">## 安装</span><br><span class="line"></span><br><span class="line">```shell</span><br><span class="line">tar -zxvf protobuf-2.5.0.tar.gz</span><br><span class="line">cd protobuf-2.5.0</span><br><span class="line">./configure --prefix=$INSTALL_DIR</span><br><span class="line">make</span><br><span class="line">make install</span><br></pre></td></tr></table></figure>
-<p>更详细的安装步骤请参考源码目录下的 README.txt。</p>
-<p>安装完后在INSTALL_DIR目录下生成三个目录:</p>
-<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">bin include lib</span><br></pre></td></tr></table></figure>
-
-<p>bin目录下是protoc工具，用于将你的.proto 文件编译成相应目标语言的编解码代码。include和lib目录是protoc工具所依赖的头文件与库环境。</p>
-<h2 id="利用protoc工具编译成目标语言"><a href="#利用protoc工具编译成目标语言" class="headerlink" title="利用protoc工具编译成目标语言"></a>利用protoc工具编译成目标语言</h2><p>编译前，先准备你的.proto 文件，这里暂时以源码目录下的 examples&#x2F;addressbook.proto 文件为例。</p>
-<p>protoc 用法:</p>
-<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">Usage: ./protoc [OPTION] PROTO_FILES</span><br></pre></td></tr></table></figure>
-
-<p>详情请使用</p>
-<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">./protoc --help</span><br></pre></td></tr></table></figure>
-<p>开始将你的.protoc 文件编译成目标语言编解码文件:</p>
-<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">mkdir c java python</span><br><span class="line">./protoc --proto_path=./ --cpp_out=c/ --java_out=java/ --python_out=python/ addressbook.proto</span><br></pre></td></tr></table></figure>
-<p>官方的 protoc 工具仅支持C++&#x2F;java&#x2F;python三种语言，如果你使用其他语言，比如 c#，php，你可以使用其他第三方工具。命令简介:</p>
-<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">./protoc --proto_path=IMPORT_PATH --cpp_out=DST_DIR --java_out=DST_DIR --python_out=DST_DIR path/to/file.proto</span><br></pre></td></tr></table></figure>
-<p>其中:</p>
-<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">--proto_path:.proto 所在的路径</span><br><span class="line">--cpp_out:生成 C++代码的路径</span><br><span class="line">--java_out:生成 java 代码的路径--python_out:生成 python 代码的路径</span><br></pre></td></tr></table></figure>
-
-<h2 id="Python如何使用protocol-buffers"><a href="#Python如何使用protocol-buffers" class="headerlink" title="Python如何使用protocol buffers"></a>Python如何使用protocol buffers</h2><p>安装 python 的 pb 库:在 protobuf 源码目录下可以找到一个目录python，没错，你需要进入此目录安装python的pb库。</p>
-<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">cd protobuf-2.5.0/python</span><br><span class="line">$PYTHONHOME/bin/python setup.py install --prefix=$PYTHONHOME</span><br></pre></td></tr></table></figure>
-<p>使用–prefix 选项指定你 python 的安装目录，然后静待安装完成。以下是安装时常见的错误:</p>
-<ul>
-<li><p>安装提示 error: package directory ‘google&#x2F;protobuf&#x2F;compiler’ does not exist<br>  解决办法：<br>  执行mkdir google&#x2F;protobuf&#x2F;compiler<br>  创建compiler目录即可。</p>
-</li>
-<li><p>TBD</p>
-</li>
-</ul>
-<p>安装完 python 的 pb 库后，你就可以在源码的 examples 目录中，使用 add_person.py 和 list_people.py 来测试如何使用 pb 序列化与反序列化了。序列化与反序列化的相关接口 分别为 SerializeToString()和 ParseFromString()。</p>
-<p>更多 python 相关的 api 请看<a href="https://developers.google.com/protocol-buffers/docs/reference/python/index">protocol-buffers&#x2F;docs&#x2F;reference&#x2F;python&#x2F;index</a>。</p>
-<h2 id="其他语言如何使用protocol-buffers"><a href="#其他语言如何使用protocol-buffers" class="headerlink" title="其他语言如何使用protocol buffers"></a>其他语言如何使用protocol buffers</h2><p>TBD</p>
-<h1 id="语言指导"><a href="#语言指导" class="headerlink" title="语言指导"></a>语言指导</h1><h2 id="消息定义"><a href="#消息定义" class="headerlink" title="消息定义"></a>消息定义</h2><p>在.proto 文件里面用 Protocol Buffers 消息类型进行定义，每一个 Protocol Buffers消息是信息的一条小的逻辑记录，里面包含一系列名称-值对。下面是一个简单的.proto 文件:</p>
-<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">message SearchRequest &#123;</span><br><span class="line">    required string query = 1;</span><br><span class="line">    optional int32 page_number = 2;</span><br><span class="line">    optional int32 result_per_page = 3;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
-<h3 id="字段类型"><a href="#字段类型" class="headerlink" title="字段类型"></a>字段类型</h3><p>可以是基本类型，例如整形、浮点型，值类型可以是其他的 Protocol Buffers 的消息类型，这样你可以用分层的方式定义你的数据结构。</p>
-<h3 id="分配字段Tag-标记"><a href="#分配字段Tag-标记" class="headerlink" title="分配字段Tag(标记)"></a>分配字段Tag(标记)</h3><p>每个字段必须有一个唯一的标记，这个标记在序列化时会作为字段的标识出现在序 列化后的二进制数据中。一旦该消息用于生产，字段的 tag 就不能修改了。标记的值小 于15时序列化编码为一个字节，大于15会用到两个以上的字节。</p>
-<h3 id="指定字段的规则"><a href="#指定字段的规则" class="headerlink" title="指定字段的规则"></a>指定字段的规则</h3><p>消息的字段可以具有以下类型的属性:</p>
-<p>required: 消息中必须包含一个该字段的值</p>
-<p>optional: 可选字段，消息中可以有0个或一个该字段的值</p>
-<p>repeated: 重复字段，消息中可以有0个或多个该字段的值</p>
-<h3 id="选择字段规则的建议"><a href="#选择字段规则的建议" class="headerlink" title="选择字段规则的建议"></a>选择字段规则的建议</h3><p>你可以在你的消息格式里面添加新的域，而不用考虑向后兼容性，老的二进制流在 解析的时候可以简单的忽略掉新增的域。因此如果你使用 Protocol Buffers 作为你数据 格式的通信协议时，你可以扩展你的协议，而不用担心破坏现有的代码。对于 required，尽可能的少用，若一个字段开始时指定为 required，则以后就不能 修改为 optional。建议将字段设置都设置为 optional 类型，这样字段的 required 规则可以放在业务代码中进行处理。</p>
-<h3 id="增加更多的消息类型"><a href="#增加更多的消息类型" class="headerlink" title="增加更多的消息类型"></a>增加更多的消息类型</h3><p>在单个 .proto 文件里可以定义多种消息类型:</p>
-<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">message SearchRequest &#123;</span><br><span class="line">    required string query = 1;</span><br><span class="line">    optional int32 page_number = 2;</span><br><span class="line">    optional int32 result_per_page = 3;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">message SearchResponse &#123;</span><br><span class="line">    ...</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
-<h3 id="注释"><a href="#注释" class="headerlink" title="注释"></a>注释</h3><p>.proto 文件使用 C&#x2F;C++的注释风格:</p>
-<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">message SearchRequest &#123;</span><br><span class="line">    required string query = 1;</span><br><span class="line">    optional int32 page_number = 2; // Which page number do we want?</span><br><span class="line">    optional int32 result_per_page = 3; // Number of results to return per page.</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
-<h2 id="数值类型"><a href="#数值类型" class="headerlink" title="数值类型"></a>数值类型</h2><p>下表列举了 pb 协议数据类型与 C++&#x2F;Java&#x2F;Python 语言的类型对应关系:</p>
-<table>
-<thead>
-<tr>
-<th>.proto Type</th>
-<th>Notes</th>
-<th>C++ Type</th>
-<th>Java Type</th>
-<th>Python Type[2]</th>
-</tr>
-</thead>
-<tbody><tr>
-<td>double</td>
-<td></td>
-<td>double</td>
-<td>double</td>
-<td>float</td>
-</tr>
-<tr>
-<td>float</td>
-<td></td>
-<td>float</td>
-<td>float</td>
-<td>float</td>
-</tr>
-<tr>
-<td>int32</td>
-<td>Uses variable-length encoding. Inefficient for encoding negative numbers – if your field is likely to have negative values, use sint32 instead.</td>
-<td>int32</td>
-<td>int</td>
-<td>int</td>
-</tr>
-<tr>
-<td>int64</td>
-<td>Uses variable-length encoding. Inefficient for encoding negative numbers – if your field is likely to have negative values, use sint64 instead.</td>
-<td>int64</td>
-<td>long</td>
-<td>int&#x2F;long[3]</td>
-</tr>
-<tr>
-<td>uint32</td>
-<td>Uses variable-length encoding.</td>
-<td>uint32</td>
-<td>int[1]</td>
-<td>int&#x2F;long[3]</td>
-</tr>
-<tr>
-<td>uint64</td>
-<td>Uses variable-length encoding.</td>
-<td>uint64</td>
-<td>long[1]</td>
-<td>int&#x2F;long[3]</td>
-</tr>
-<tr>
-<td>sint32</td>
-<td>Uses variable-length encoding. Signed int value. These more efficiently encode negative numbers than regular int32s.</td>
-<td>int32</td>
-<td>int</td>
-<td>int</td>
-</tr>
-<tr>
-<td>sint64</td>
-<td>Uses variable-length encoding. Signed int value. These more efficiently encode negative numbers than regular int64s.</td>
-<td>int64</td>
-<td>long</td>
-<td>int&#x2F;long[3]</td>
-</tr>
-<tr>
-<td>fixed32</td>
-<td>Always four bytes. More efficient than uint32 if values are often greater than 228.</td>
-<td>uint32</td>
-<td>int[1]</td>
-<td>int</td>
-</tr>
-<tr>
-<td>fixed64</td>
-<td>Always eight bytes. More efficient than uint64 if values are often greater than 256.</td>
-<td>uint64</td>
-<td>long[1]</td>
-<td>int&#x2F;long[3]</td>
-</tr>
-<tr>
-<td>sfixed32</td>
-<td>Always four bytes.</td>
-<td>int32</td>
-<td>int</td>
-<td>int</td>
-</tr>
-<tr>
-<td>sfixed64</td>
-<td>Always eight bytes.</td>
-<td>int64</td>
-<td>long</td>
-<td>int&#x2F;long[3]</td>
-</tr>
-<tr>
-<td>bool</td>
-<td></td>
-<td>bool</td>
-<td>boolean</td>
-<td>boolean</td>
-</tr>
-<tr>
-<td>string</td>
-<td>A string must always contain UTF-8 encoded or 7-bit ASCII text.</td>
-<td>string</td>
-<td>String</td>
-<td>str&#x2F;unicode[4]</td>
-</tr>
-<tr>
-<td>bytes</td>
-<td>May contain any arbitrary sequence of bytes.</td>
-<td>string</td>
-<td>ByteString</td>
-<td>str</td>
-</tr>
-</tbody></table>
-<p>你可以在<a href="https://developers.google.com/protocol-buffers/docs/encoding">protocol-buffers&#x2F;docs&#x2F;encoding</a>找到这些类型在 pb 序列化时是如何被编码的。</p>
-<p>[1] 在 Java, unsigned 32-bit and 64-bit integers 都是使用最高位表示符号位，而无符号位部分是一样的。</p>
-<p>[2] 所有情况下，赋值操作会触发类型检查以保证可用性。</p>
-<p>[3] 64-bit or unsigned 32-bit integers 会被解码为 long 类型，但如果在赋值时使用 int 类型的话，解码后可以是 int 类型。任何情况下，值必须与被赋值时一样。见[2]。</p>
-<p>[4] Python strings 类型在解码后是 unicode 类型，但如果原始字符串是 ASCII 编码的话也可能是 str 类型。</p>
-<h2 id="可选字段规则与默认值"><a href="#可选字段规则与默认值" class="headerlink" title="可选字段规则与默认值"></a>可选字段规则与默认值</h2><p>一个消息字段可以使用 optional 规则来限定，表示该字段是可选类型，即该消息可以 包含该字段也可以不包含该字段。当一个消息被解析时，如果序列化数据没有包含 optional 字段，则该字段会使用默认值来代替。默认值可以显式指定如下:</p>
-<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">optional int32 result_per_page = 3 [default = 10];</span><br></pre></td></tr></table></figure>
-<p>如果没有显式指定默认值，则使用数据类型的默认值来代替:比如，字符串类型的默认值是空字符串，布尔类型的默认值是 false，数字类型的默认值是0，枚举类 型的默认值是第一个被定义的枚举值。</p>
-<h2 id="枚举类型"><a href="#枚举类型" class="headerlink" title="枚举类型"></a>枚举类型</h2><p>使用 enum 关键字定义枚举类型，比如你想定义一个叫 Corpus 的枚举类型:</p>
-<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">message SearchRequest &#123;</span><br><span class="line">    required string query = 1;</span><br><span class="line">    optional int32 page_number = 2;</span><br><span class="line">    optional int32 result_per_page = 3 [default = 10];</span><br><span class="line">    enum Corpus &#123;</span><br><span class="line">        UNIVERSAL = 0;</span><br><span class="line">        WEB = 1;</span><br><span class="line">        IMAGES = 2;</span><br><span class="line">        LOCAL = 3;</span><br><span class="line">        NEWS = 4;</span><br><span class="line">        PRODUCTS = 5;</span><br><span class="line">        VIDEO = 6;</span><br><span class="line">    &#125;</span><br><span class="line">    optional Corpus corpus = 4 [default = UNIVERSAL];</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
-<h2 id="使用其他消息类型"><a href="#使用其他消息类型" class="headerlink" title="使用其他消息类型"></a>使用其他消息类型</h2><p>你可以使用其他的消息类型来定义你的消息字段，以构成各种复合类型，比如 SearchResponse 消息里定义了一个 Result 消息类型的字段:</p>
-<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">message SearchResponse &#123;</span><br><span class="line">    repeated Result result = 1;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">message Result &#123;</span><br><span class="line">    required string url = 1;</span><br><span class="line">    optional string title = 2;   </span><br><span class="line">    repeated string snippets = 3;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<p>另外，你还可以使用 import 语句导入其他.proto 文件定义的消息类型。 包含路径的 import:</p>
-<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">import &quot;myproject/other_protos.proto&quot;;</span><br></pre></td></tr></table></figure>
-<p>不包含路径的 import:</p>
-<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">import public &quot;new.proto&quot;;</span><br><span class="line">import &quot;other.proto&quot;;</span><br></pre></td></tr></table></figure>
-<p>当使用 public 域 import 时，编译器会去 -I&#x2F;–proto_path 标志指定的路径去查找，如果没有指定此标志，它会去编译器目录索引。通常情况下，建议你使用 –proto_path 指 定为项目的根路径，并且使用全名（包含命名空间或包名）import。</p>
-<h1 id="命名风格"><a href="#命名风格" class="headerlink" title="命名风格"></a>命名风格</h1><p>良好的命名风格让你的.proto 文件更加易读。</p>
-<h2 id="消息以及字段名称"><a href="#消息以及字段名称" class="headerlink" title="消息以及字段名称"></a>消息以及字段名称</h2><p>使用 CamelCase 方式命名消息名称，使用下划线分隔的名字来命名消息的字段，例如:</p>
-<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">message SongServerRequest &#123;</span><br><span class="line">    required string song_name = 1;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
-<h2 id="枚举类型-1"><a href="#枚举类型-1" class="headerlink" title="枚举类型"></a>枚举类型</h2><p>使用 CamelCase 方式命名消息名称，例如 PhoneType 使用大写字母+下划线来命名枚举值，例如:</p>
-<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">enum PhoneType &#123;</span><br><span class="line">    TYPE_MOBILE = 0;</span><br><span class="line">    TYPE_HOME = 1;</span><br><span class="line">    TYPE_WORK = 2;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
-<h2 id="服务"><a href="#服务" class="headerlink" title="服务"></a>服务</h2><p>如果你的.proto 文件定义了 RPC 服务，你可以使用 CamelCase 的方式命名你的服务名与RPC 方法名:</p>
-<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">service FooService &#123;</span><br><span class="line">    rpc GetSomething(FooRequest) returns (FooResponse);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
-<h1 id="编码原理"><a href="#编码原理" class="headerlink" title="编码原理"></a>编码原理</h1><p>本节主要介绍 protocol buffer 消息转换成二进制格式的原理。如果仅需要了解怎么使 用 protocol buffers，你可以无需理解这些原理，但了解这些能帮助你理解 protocol buffers 对编码后数据大小的影响。</p>
-<h2 id="一个简单的消息"><a href="#一个简单的消息" class="headerlink" title="一个简单的消息"></a>一个简单的消息</h2><p>下面是一个简单的消息定义:</p>
-<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">message Test1 &#123;</span><br><span class="line">    required int32 a = 1;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<p>若你创建了一个 Test1的消息，然后 a 赋值为150，序列化后，你会发现消息被编码为 下面3个字节:</p>
-<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">08 96 01</span><br></pre></td></tr></table></figure>
-<p>看起来非常小巧与数字化，但它代表什么意义?继续看下去，好戏还在后头……</p>
-<h2 id="变长整型-varint"><a href="#变长整型-varint" class="headerlink" title="变长整型(varint)"></a>变长整型(varint)</h2><p>为了理解 protocol buffer 的编码原理，你首先需要理解 varint 的概念。<br>Varint 是一种紧凑的表示数字的方法。它用一个或多个字节来表示一个数字，值越小 的数字使用越少的字节数。这能减少用来表示数字的字节数。比如对于 int32 类型的数字，一般需要 4 个 byte 来表示。但是采用 Varint，对于很小的 int32 类型的数字，则可以用 1 个 byte 来表示。注意，采用 Varint 表示法，大的数字则需要更多个 byte 来表示。从统计的角度来说，一般不会所有消息中的数字都是大数，因此大多数情况下，采用 Varint 后，可以用更少的字节数来表示数字信息。Varint 中的每个 byte 的最高位 most significant bit (msb) 有特殊的含义，如果 该位为 1，表示后续的 byte 也是该数字的一部分，如果该位为 0，则结束。其他的 7 个 bit 都用来表示数字。因此小于 128 的数字都可以用一个 byte 表示。大于 128 的数字，比如 300，会用两个字节来表示:1010 1100 0000 0010，以下是它的解码过程:</p>
-<p>首先按照字节分组: </p>
-<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">1010 1100 0000 0010</span><br></pre></td></tr></table></figure>
-<p>去掉 msb</p>
-<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">010 1100 000 0010</span><br></pre></td></tr></table></figure>
-<p>将字节反向排列</p>
-<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">000 0010 010 1100</span><br></pre></td></tr></table></figure>
-<p>重新组合成字节</p>
-<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">000 001 0010 1100 → 100101100=300</span><br></pre></td></tr></table></figure>
-
-<h2 id="消息结构"><a href="#消息结构" class="headerlink" title="消息结构"></a>消息结构</h2><p>一个 protocol buffer 消息是一系列的键-值对。序列化后的二进制消息仅使用字段数字为 key。<br>当消息被编码后，键值对被组织成一个字节流。消息在解码后，解析器能够忽略不认识 的字段。按照这样的方式，旧程序能够忽略不认识的新增字段。最后，”key”实际上是由两个值组成的，其中一个是.proto 文件的字段数字标号，另外一个是 wire types，这样才 能提供足够的信息去找到接下来数据的长度。下面是可用的wire types:</p>
-<table>
-<thead>
-<tr>
-<th>Type</th>
-<th>Meaning</th>
-<th>Used For</th>
-</tr>
-</thead>
-<tbody><tr>
-<td>0</td>
-<td>Varint</td>
-<td>int32, int64, uint32, uint64, sint32, sint64, bool, enum</td>
-</tr>
-<tr>
-<td>1</td>
-<td>64-bit</td>
-<td>fixed64, sfixed64, double</td>
-</tr>
-<tr>
-<td>2</td>
-<td>Length-delimited</td>
-<td>string, bytes, embedded messages, packed repeated fields</td>
-</tr>
-<tr>
-<td>3</td>
-<td>Start group</td>
-<td>groups (deprecated)</td>
-</tr>
-<tr>
-<td>4</td>
-<td>End group</td>
-<td>groups (deprecated)</td>
-</tr>
-<tr>
-<td>5</td>
-<td>32-bit</td>
-<td>fixed32, sfixed32, float</td>
-</tr>
-</tbody></table>
-<p>每个消息流的 key 都是一个 varint 类型，它的值为(field_number &lt;&lt; 3) | wire_type 。换句话说，最后三位用于保存 wire type 。 </p>
-<p>比如 key 是08，去掉 msb 位后如下: </p>
-<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">000 1000</span><br></pre></td></tr></table></figure>
-<p>则field_number 和 wire type 分别为:</p>
-<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">field_number=0001</span><br><span class="line">wire_type=000</span><br></pre></td></tr></table></figure>
-
-<h2 id="更多的值类型"><a href="#更多的值类型" class="headerlink" title="更多的值类型"></a>更多的值类型</h2><h3 id="带符号整数"><a href="#带符号整数" class="headerlink" title="带符号整数"></a>带符号整数</h3><p>在前面的例子中，所有的 protocol buffer 类型都是 wire type 0的 varints 类型。然 而，带符号整数 (sint32 and sint64)与标准的整型(int32 and int64)在编码时有很大的 区别。如果你使用 int32 或者 int64来表示一个负数，结果需要10个字节，因为它会被认为 是一个非常大的无符号整数。为此，对带符号整数使用 ZigZag 编码会更高效。ZigZag 编码用无符号数来表示有符号数字，正数和负数交错，这就是 zigzag 这个词 的含义了。使用 zigzag 编码时，与0距离越近，编码时使用的值越小，从统计意义层面来看， 这样编码更高效，因为数据通信中绝对值小的数据交互占的比例要高。下面是 ZigZag 的编 码表:</p>
-<table>
-<thead>
-<tr>
-<th>Signed Original</th>
-<th>Encoded As</th>
-</tr>
-</thead>
-<tbody><tr>
-<td>0</td>
-<td>0</td>
-</tr>
-<tr>
-<td>-1</td>
-<td>1</td>
-</tr>
-<tr>
-<td>1</td>
-<td>2</td>
-</tr>
-<tr>
-<td>-2</td>
-<td>3</td>
-</tr>
-<tr>
-<td>2147483647</td>
-<td>4294967294</td>
-</tr>
-<tr>
-<td>-2147483648</td>
-<td>4294967295</td>
-</tr>
-</tbody></table>
-<p>换句话说，每个值 n 都使用以下方式编码:</p>
-<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">sint32:(n &lt;&lt; 1) ^ (n &gt;&gt; 31)</span><br><span class="line">sint34:(n &lt;&lt; 1) ^ (n &gt;&gt; 63)</span><br></pre></td></tr></table></figure>
-<p>注意到第二个位移部分(n &gt;&gt; 31)实际上是算术位移，所以若 n 是正数，算术位移后得到的数全部位都是0，若 n 是负数，算术位移后得到的数全部位都是1。</p>
-<p>当 sint32或 sint64被解析时，它的值会被解码回原始的带符号数。</p>
-<h3 id="非-varint-数"><a href="#非-varint-数" class="headerlink" title="非 varint 数"></a>非 varint 数</h3><p>非 varint 的数据类型就非常简单了， double 和 fixed64是 wire type 1，它会告诉解 析器期望的是一个固定的64位数据块;类似的，float 和 fixed32是 wire type 5，它会告 诉解析器期望的是一个固定的32位数据块。无论何种情况，值都是以 little-endian 小端对 齐的字节顺序方式存储。</p>
-<h3 id="字符串"><a href="#字符串" class="headerlink" title="字符串"></a>字符串</h3><p>wire type 2 (length-delimited) 意思是它的值先使用一个 varint 来表示编码后的 数据大小，而接下来就是相应长度的编码数据了。</p>
-<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">message Test2 &#123;</span><br><span class="line">    required string b = 2;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
-<p>设置 b 的值为”testing”，你会得到下面编码:</p>
-<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">12 07 74 65 73 74 69 6e 67</span><br></pre></td></tr></table></figure>
-
-<p>分析 key，首先第一个字节12为:</p>
-<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">0001 0010</span><br></pre></td></tr></table></figure>
-<p>msb 为0，表示 key 仅用一个字节表示，去掉 msb:</p>
-<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">001 0010</span><br></pre></td></tr></table></figure>
-
-<p>根据 key 的解码办法，得到:</p>
-<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">field_number = 0010 = 2</span><br><span class="line">wire_type = 010 = 2</span><br></pre></td></tr></table></figure>
-
-<p>分析第二个字节07，根据 varint 编码可知数据长度为7，然后紧跟后面的7个字节则为 “testing”。</p>
-<h2 id="嵌套消息"><a href="#嵌套消息" class="headerlink" title="嵌套消息"></a>嵌套消息</h2><p>下面 Test3是一个嵌套消息:</p>
-<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">message Test1 &#123;</span><br><span class="line">    required int32 a = 1;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">message Test3 &#123;</span><br><span class="line">    required Test1 c = 3;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
-<p>如果将 Test1的 a 字段赋值为150，则得到下面的编码:</p>
-<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">1a 03 08 96 01</span><br></pre></td></tr></table></figure>
-<p>还记得编码原理刚开始提到的“一个简单的消息”吗?后面3个字节是否似曾相识？而Test3是嵌套消息，它的 wire type &#x3D; 2，请参照该类型的编码办法即可解码。</p>
-<h2 id="可选与重复元素"><a href="#可选与重复元素" class="headerlink" title="可选与重复元素"></a>可选与重复元素</h2><h3 id="Optional-可选字段"><a href="#Optional-可选字段" class="headerlink" title="Optional 可选字段"></a>Optional 可选字段</h3><p>optional 可选元素在消息编码时可以有0或者1个键值对。</p>
-<h3 id="Repeated-重复字段"><a href="#Repeated-重复字段" class="headerlink" title="Repeated 重复字段"></a>Repeated 重复字段</h3><p>Repeated 字段序列化时，序列化的结果中包含0个或多个 key-value，每个 key-value 都包含字段的 tag。PB2.1.0版本中提供了另外一种 Repeated 字段，即带有[packed&#x3D;true]属性的 Repeated 字段，这种字段又称为:packedrepeated field。packed repeated field 字段序列化时，有0个或多个元素，并且所有的 元素打包在一个 key-value 中，key-value 的类型采用 wire type 2 (length-delimited)，每个元素不需要提供各自的 tag。<br>下面是一个例子: </p>
-<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">message Test4 &#123;</span><br><span class="line">    repeated int32 d = 4 [packed=true];</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
-<p>序列化字节码:</p>
-<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">22        // tag (field number 4, wire type 2)</span><br><span class="line">06        // payload size (6 bytes)</span><br><span class="line">03        // first element (varint 3)</span><br><span class="line">8E 02     // second element (varint 270)</span><br><span class="line">9E A7 05  // third element (varint 86942)</span><br></pre></td></tr></table></figure>
-
-<h1 id="相关序列化与反序列化技术的性能比较"><a href="#相关序列化与反序列化技术的性能比较" class="headerlink" title="相关序列化与反序列化技术的性能比较"></a>相关序列化与反序列化技术的性能比较</h1><p>本章节内容摘自<a href="http://code.google.com/p/thrift-protobuf-compare/wiki/Benchmarking#Object_Creation_Time">thrift-protobuf-compare</a>。作者提到，数值并非一切，仅供参考，实际上测试结果会受硬件，测试用例等影响。</p>
-<p>总耗时(包括对象创建，序列化与反序列化):</p>
-<p><img src="http://image.noahsun.top/pb_tutorial/total_time.png" alt="total_time"></p>
-<p>序列化时间(每次序列化的时间，包括对象创建时间):</p>
-<p><img src="http://image.noahsun.top/pb_tutorial/serialize_time.png" alt="serialize_time"></p>
-<p>反序列化时间:</p>
-<p><img src="http://image.noahsun.top/pb_tutorial/deserialize_time.png" alt="deserialize_time"></p>
-<p>序列化大小:</p>
-<p><img src="http://image.noahsun.top/pb_tutorial/serialize_size.png" alt="serialize_size"></p>
-<p>对象创建时间:</p>
-<p><img src="http://image.noahsun.top/pb_tutorial/creat_obj_time.png" alt="creat_obj_time"></p>
-<p>从上面的数据来看，protocol buffers 在序列化与反序列化性能及序列化后的数据大 小方面都不有错的表现。</p>
-<h1 id="参考资料"><a href="#参考资料" class="headerlink" title="参考资料"></a>参考资料</h1><ol>
-<li><a href="https://developers.google.com/protocol-buffers/Protocol-buffers">https://developers.google.com/protocol-buffers/Protocol-buffers</a> 的官方介绍，本教程的主要参考资料。</li>
-<li><a href="http://www.ibm.com/developerworks/cn/linux/l-cn-gpb/Protocol">http://www.ibm.com/developerworks/cn/linux/l-cn-gpb/Protocol</a> Buffers 原理的中文介绍。</li>
-<li><a href="http://code.google.com/p/thrift-protobuf-compare/wiki/Benchmarking#Object_Creation_Time">http://code.google.com/p/thrift-protobuf-compare/wiki/Benchmarking#Object_Creation_Time</a> Protocol Buffers 与其他相关技术的性能对比。</li>
-<li><a href="http://www.cppblog.com/liquidx/archive/2009/06/23/88366.html">http://www.cppblog.com/liquidx/archive/2009/06/23/88366.html</a></li>
-<li><a href="http://blog.csdn.net/hguisu/article/details/20721109">http://blog.csdn.net/hguisu/article/details/20721109</a></li>
-</ol>
-]]></content>
-      <categories>
-        <category>Technology</category>
-      </categories>
-      <tags>
-        <tag>PB</tag>
-        <tag>Protocol Buffers</tag>
-        <tag>RPC</tag>
-      </tags>
-  </entry>
-  <entry>
     <title>ctypes使用指南</title>
     <url>/2017/09/17/ctypes%E4%BD%BF%E7%94%A8%E6%8C%87%E5%8D%97/</url>
     <content><![CDATA[<h1 id="ctypes-简介"><a href="#ctypes-简介" class="headerlink" title="ctypes 简介"></a>ctypes 简介</h1><p>从Python2.5开始引入。<br>ctypes是Python的外部函数库。它提供了C兼容的数据类型，并且允许调用动态链接库&#x2F;共享库中的函数。它可以将这些库包装起来给Python使用。</p>
@@ -1911,6 +1911,104 @@ attachments/1114283/amf3_spec_05_05_08.pdf>.
       </tags>
   </entry>
   <entry>
+    <title>golang学习资料</title>
+    <url>/2018/10/27/golang%E5%AD%A6%E4%B9%A0%E8%B5%84%E6%96%99/</url>
+    <content><![CDATA[<h1 id="基础"><a href="#基础" class="headerlink" title="基础"></a>基础</h1><p><a href="https://golang.org/doc/">golang.org</a><br><a href="https://github.com/Unknwon/the-way-to-go_ZH_CN/blob/master/eBook/directory.md">the-way-to-go</a><br><a href="https://docs.hacknode.org/gopl-zh/index.html">Go语言圣经</a></p>
+<h1 id="规范与习惯"><a href="#规范与习惯" class="headerlink" title="规范与习惯"></a>规范与习惯</h1><p><a href="https://github.com/golang-standards/project-layout">project-layout</a><br><a href="https://github.com/golang/go/wiki/CodeReviewComments">CodeReviewComments</a><br><a href="https://golang.org/doc/effective_go.html">Effective Go</a><br><a href="https://www.kancloud.cn/kancloud/effective/72199">Effective Go中文版</a></p>
+<h1 id="API"><a href="#API" class="headerlink" title="API"></a>API</h1><p><a href="https://golang.org/pkg/">Go Packages</a><br><a href="https://cloud.tencent.com/developer/doc/1101">Tencent developer doc for Go</a></p>
+<h1 id="资源"><a href="#资源" class="headerlink" title="资源"></a>资源</h1><p><a href="https://github.com/golang/go/wiki/Projects">Go Projects</a><br><a href="https://github.com/Unknwon/go-study-index">go-study-index</a></p>
+]]></content>
+      <categories>
+        <category>Technology</category>
+      </categories>
+      <tags>
+        <tag>programing</tag>
+        <tag>golang</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>Hello World</title>
+    <url>/2017/06/18/hello-world/</url>
+    <content><![CDATA[<p>Welcome to <a href="https://hexo.io/">Hexo</a>! This is your very first post. Check <a href="https://hexo.io/docs/">documentation</a> for more info. If you get any problems when using Hexo, you can find the answer in <a href="https://hexo.io/docs/troubleshooting.html">troubleshooting</a> or you can ask me on <a href="https://github.com/hexojs/hexo/issues">GitHub</a>.</p>
+<h2 id="Quick-Start"><a href="#Quick-Start" class="headerlink" title="Quick Start"></a>Quick Start</h2><h3 id="Create-a-new-post"><a href="#Create-a-new-post" class="headerlink" title="Create a new post"></a>Create a new post</h3><figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">$ hexo new <span class="string">&quot;My New Post&quot;</span></span><br></pre></td></tr></table></figure>
+
+<p>More info: <a href="https://hexo.io/docs/writing.html">Writing</a></p>
+<h3 id="Run-server"><a href="#Run-server" class="headerlink" title="Run server"></a>Run server</h3><figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">$ hexo server</span><br></pre></td></tr></table></figure>
+
+<p>More info: <a href="https://hexo.io/docs/server.html">Server</a></p>
+<h3 id="Generate-static-files"><a href="#Generate-static-files" class="headerlink" title="Generate static files"></a>Generate static files</h3><figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">$ hexo generate</span><br></pre></td></tr></table></figure>
+
+<p>More info: <a href="https://hexo.io/docs/generating.html">Generating</a></p>
+<h3 id="Deploy-to-remote-sites"><a href="#Deploy-to-remote-sites" class="headerlink" title="Deploy to remote sites"></a>Deploy to remote sites</h3><figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">$ hexo deploy</span><br></pre></td></tr></table></figure>
+
+<p>More info: <a href="https://hexo.io/docs/deployment.html">Deployment</a></p>
+]]></content>
+      <categories>
+        <category>Technology</category>
+      </categories>
+      <tags>
+        <tag>Blog</tag>
+        <tag>Hello World</tag>
+        <tag>hexo</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>Git开发规范参考</title>
+    <url>/2020/03/22/one-git-flow/</url>
+    <content><![CDATA[<h1 id="分支管理"><a href="#分支管理" class="headerlink" title="分支管理"></a>分支管理</h1><p>git 的分支管理功能非常强大，为了提高效率、避免分支混乱，我们参考git flow的开发流程规范或者可以直接使用git flow工具。</p>
+<h2 id="分支构成"><a href="#分支构成" class="headerlink" title="分支构成"></a>分支构成</h2><h3 id="主要分支"><a href="#主要分支" class="headerlink" title="主要分支"></a>主要分支</h3><p>master分支：永远处在即将发布（production-ready）状态；<br>develop分支：为开发分支，始终保持最新完成以及bug修复后的代码。</p>
+<h3 id="辅助分支"><a href="#辅助分支" class="headerlink" title="辅助分支"></a>辅助分支</h3><p>feature分支：开发新功能的分支，基于develop，开发完成后merge回develop；<br>release分支：准备要发布版本的分支（测试环境用的），用来修复SIT（System Integration Testing） bug；基于develop分支，完成后merge回develop和master分支；<br>hotfix分支：修复线上（master）紧急bug，等不及release分支就必须马上上线；基于master分支，完成后merge回master和develop分支。   </p>
+<p>命名规范约定如下：</p>
+<ul>
+<li>feature分支命名：feature&#x2F;name</li>
+<li>release分支命名：release&#x2F;name</li>
+<li>hotfix分支命名：hotfix&#x2F;name</li>
+</ul>
+<h2 id="常见的开发流程"><a href="#常见的开发流程" class="headerlink" title="常见的开发流程"></a>常见的开发流程</h2><h3 id="增加新功能"><a href="#增加新功能" class="headerlink" title="增加新功能"></a>增加新功能</h3><figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">(develop)$: git checkout -b feature/xxx            # 从develop建立功能分支</span><br><span class="line">(feature/xxx)$: blabla                             # 开发</span><br><span class="line">(feature/xxx)$: git add xxx</span><br><span class="line">(feature/xxx)$: git commit -m &#x27;commit comment&#x27;</span><br><span class="line">(develop)$: git merge feature/xxx --no-ff          # 把功能分支合并到develop</span><br></pre></td></tr></table></figure>
+
+<h3 id="修复紧急bug"><a href="#修复紧急bug" class="headerlink" title="修复紧急bug"></a>修复紧急bug</h3><figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">(master)$: git checkout -b hotfix/xxx         # 从master建立hotfix分支</span><br><span class="line">(hotfix/xxx)$: blabla                         # 开发</span><br><span class="line">(hotfix/xxx)$: git add xxx</span><br><span class="line">(hotfix/xxx)$: git commit -m &#x27;commit comment&#x27;</span><br><span class="line">(master)$: git merge hotfix/xxx --no-ff       # 把hotfix分支合并到master，并上线到生产环境；注意，非管理员请用Merge Request；</span><br><span class="line">(develop)$: git merge hotfix/xxx --no-ff      # 把hotfix分支合并到develop，同步代码</span><br></pre></td></tr></table></figure>
+
+<h3 id="测试环境发布测试"><a href="#测试环境发布测试" class="headerlink" title="测试环境发布测试"></a>测试环境发布测试</h3><figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">(develop)$: git checkout -b release/x.y.z           # 从develop建立预发布分支</span><br><span class="line">(release/x.y.z)$: blabla                            # 开发或者从其他feature分支合并代码</span><br><span class="line">(release/x.y.z)$: git merge develop --no-ff         # 把develop分支合并到release/x.y.z，然后在测试环境拉取并测试</span><br></pre></td></tr></table></figure>
+
+<h3 id="生产环境上线"><a href="#生产环境上线" class="headerlink" title="生产环境上线"></a>生产环境上线</h3><figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">(master)$: git merge release/x.y.z --no-ff          # 把release/x.y.z或者develop测试好的代码合并到master</span><br><span class="line">(master)$: git tag -a 0.1.0 -m &#x27;xxx&#x27;                # 给版本命名，打Tag</span><br></pre></td></tr></table></figure>
+<p>注意：这一步由master管理员做，普通开发人员合并代码请用Merge Request。</p>
+<h1 id="Tag管理"><a href="#Tag管理" class="headerlink" title="Tag管理"></a>Tag管理</h1><h2 id="Tag生成时间"><a href="#Tag生成时间" class="headerlink" title="Tag生成时间"></a>Tag生成时间</h2><p>master分支每次发布时，必须打tag。</p>
+<h2 id="Tag命名规范"><a href="#Tag命名规范" class="headerlink" title="Tag命名规范"></a>Tag命名规范</h2><p>版本格式：主版本号.次版本号.修订号，如：1.0.1。</p>
+<p>版本号递增规则如下：</p>
+<ul>
+<li>主版本号：当你做了不兼容的 API 修改；项目架构发生巨大变化；</li>
+<li>次版本号：当你做了向下兼容的功能性新增；</li>
+<li>修订号：当你做了向下兼容的问题修正；小的修改，如代码格式修正等。</li>
+</ul>
+<h1 id="参考"><a href="#参考" class="headerlink" title="参考"></a>参考</h1><p><a href="https://juejin.im/post/5b4328bbf265da0fa21a6820">您必须知道的 Git 分支开发规范</a><br><a href="https://albertlin1102.gitbooks.io/sc_git_guide/0-%E5%88%86%E6%94%AF%E7%AE%A1%E7%90%86%E8%A7%84%E8%8C%83.html">分支管理规范</a><br><a href="https://juejin.im/post/5aa7e8a6f265da239f070d82">git分支管理和工作流规范：具体规范</a></p>
+]]></content>
+      <categories>
+        <category>Technology</category>
+      </categories>
+      <tags>
+        <tag>Git</tag>
+        <tag>Manual</tag>
+        <tag>GitFlow</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>推荐的学习资源</title>
+    <url>/2019/12/01/recommended-study-resources/</url>
+    <content><![CDATA[<h1 id="推荐的学习资源列表"><a href="#推荐的学习资源列表" class="headerlink" title="推荐的学习资源列表"></a>推荐的学习资源列表</h1><h2 id="Golang语言"><a href="#Golang语言" class="headerlink" title="Golang语言"></a>Golang语言</h2><p><a href="https://github.com/Unknwon/the-way-to-go_ZH_CN/blob/master/eBook/directory.md">the-way-to-go</a> (recommend)<br><a href="https://golang.org/doc/">golang.org</a> (official)  </p>
+<h2 id="数据库"><a href="#数据库" class="headerlink" title="数据库"></a>数据库</h2><h3 id="Mongodb"><a href="#Mongodb" class="headerlink" title="Mongodb"></a>Mongodb</h3><p><a href="https://www.runoob.com/mongodb/mongodb-tutorial.html">mongodb-tutorial</a> (recommend)<br><a href="https://docs.mongodb.com/manual/">docs.mongodb.com</a> (official)  </p>
+<h3 id="Redis"><a href="#Redis" class="headerlink" title="Redis"></a>Redis</h3><p><a href="https://www.runoob.com/redis/redis-tutorial.html">redis-tutorial</a> (recommend)<br><a href="http://redisdoc.com/index.html">redisdoc</a><br><a href="https://redis.io/documentation">redis.io</a>  (official)  </p>
+<h3 id="SQL"><a href="#SQL" class="headerlink" title="SQL"></a>SQL</h3><p><a href="https://www.runoob.com/sql/sql-tutorial.html">sql-tutorial</a><br><a href="https://www.runoob.com/mysql/mysql-tutorial.html">mysql-tutorial</a><br><a href="https://dev.mysql.com/doc/">dev.mysql.com</a> (official)  </p>
+<h3 id="Nginx"><a href="#Nginx" class="headerlink" title="Nginx"></a>Nginx</h3><p><a href="http://nginx.org/en/docs/">nginx.org</a> (official)<br><a href="https://www.runoob.com/w3cnote/nginx-setup-intro.html">Nginx 配置详解</a><br><a href="https://www.runoob.com/w3cnote/nginx-proxy-balancing.html">Nginx 反向代理与负载均衡详解</a><br><a href="https://moonbingbing.gitbooks.io/openresty-best-practices/ngx/nginx.html">OpenResty最佳实践-Nginx</a><br><a href="http://tengine.taobao.org/book/index.html">Nginx开发从入门到精通</a>  </p>
+]]></content>
+      <categories>
+        <category>Technology</category>
+      </categories>
+      <tags>
+        <tag>Study</tag>
+        <tag>Resource</tag>
+      </tags>
+  </entry>
+  <entry>
     <title>golang 调试分析方法</title>
     <url>/2022/04/10/golang-debug-and-profile/</url>
     <content><![CDATA[<h1 id="断点调试"><a href="#断点调试" class="headerlink" title="断点调试"></a>断点调试</h1><h2 id="Visual-Studio-Code"><a href="#Visual-Studio-Code" class="headerlink" title="Visual Studio Code"></a>Visual Studio Code</h2><h3 id="创建配置"><a href="#创建配置" class="headerlink" title="创建配置"></a>创建配置</h3><p>VSCode IDE要运行或者调试golang程序之前，需要创建运行配置 launch.json ，方法如下：<br><img src="http://image.noahsun.top/golang_debug_and_profile/vscode_config_add.png" alt="vscode_config_add"></p>
@@ -2034,104 +2132,6 @@ attachments/1114283/amf3_spec_05_05_08.pdf>.
         <tag>pprof</tag>
         <tag>vscode</tag>
         <tag>goland</tag>
-      </tags>
-  </entry>
-  <entry>
-    <title>golang学习资料</title>
-    <url>/2018/10/27/golang%E5%AD%A6%E4%B9%A0%E8%B5%84%E6%96%99/</url>
-    <content><![CDATA[<h1 id="基础"><a href="#基础" class="headerlink" title="基础"></a>基础</h1><p><a href="https://golang.org/doc/">golang.org</a><br><a href="https://github.com/Unknwon/the-way-to-go_ZH_CN/blob/master/eBook/directory.md">the-way-to-go</a><br><a href="https://docs.hacknode.org/gopl-zh/index.html">Go语言圣经</a></p>
-<h1 id="规范与习惯"><a href="#规范与习惯" class="headerlink" title="规范与习惯"></a>规范与习惯</h1><p><a href="https://github.com/golang-standards/project-layout">project-layout</a><br><a href="https://github.com/golang/go/wiki/CodeReviewComments">CodeReviewComments</a><br><a href="https://golang.org/doc/effective_go.html">Effective Go</a><br><a href="https://www.kancloud.cn/kancloud/effective/72199">Effective Go中文版</a></p>
-<h1 id="API"><a href="#API" class="headerlink" title="API"></a>API</h1><p><a href="https://golang.org/pkg/">Go Packages</a><br><a href="https://cloud.tencent.com/developer/doc/1101">Tencent developer doc for Go</a></p>
-<h1 id="资源"><a href="#资源" class="headerlink" title="资源"></a>资源</h1><p><a href="https://github.com/golang/go/wiki/Projects">Go Projects</a><br><a href="https://github.com/Unknwon/go-study-index">go-study-index</a></p>
-]]></content>
-      <categories>
-        <category>Technology</category>
-      </categories>
-      <tags>
-        <tag>programing</tag>
-        <tag>golang</tag>
-      </tags>
-  </entry>
-  <entry>
-    <title>Hello World</title>
-    <url>/2017/06/18/hello-world/</url>
-    <content><![CDATA[<p>Welcome to <a href="https://hexo.io/">Hexo</a>! This is your very first post. Check <a href="https://hexo.io/docs/">documentation</a> for more info. If you get any problems when using Hexo, you can find the answer in <a href="https://hexo.io/docs/troubleshooting.html">troubleshooting</a> or you can ask me on <a href="https://github.com/hexojs/hexo/issues">GitHub</a>.</p>
-<h2 id="Quick-Start"><a href="#Quick-Start" class="headerlink" title="Quick Start"></a>Quick Start</h2><h3 id="Create-a-new-post"><a href="#Create-a-new-post" class="headerlink" title="Create a new post"></a>Create a new post</h3><figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">$ hexo new <span class="string">&quot;My New Post&quot;</span></span><br></pre></td></tr></table></figure>
-
-<p>More info: <a href="https://hexo.io/docs/writing.html">Writing</a></p>
-<h3 id="Run-server"><a href="#Run-server" class="headerlink" title="Run server"></a>Run server</h3><figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">$ hexo server</span><br></pre></td></tr></table></figure>
-
-<p>More info: <a href="https://hexo.io/docs/server.html">Server</a></p>
-<h3 id="Generate-static-files"><a href="#Generate-static-files" class="headerlink" title="Generate static files"></a>Generate static files</h3><figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">$ hexo generate</span><br></pre></td></tr></table></figure>
-
-<p>More info: <a href="https://hexo.io/docs/generating.html">Generating</a></p>
-<h3 id="Deploy-to-remote-sites"><a href="#Deploy-to-remote-sites" class="headerlink" title="Deploy to remote sites"></a>Deploy to remote sites</h3><figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">$ hexo deploy</span><br></pre></td></tr></table></figure>
-
-<p>More info: <a href="https://hexo.io/docs/deployment.html">Deployment</a></p>
-]]></content>
-      <categories>
-        <category>Technology</category>
-      </categories>
-      <tags>
-        <tag>Blog</tag>
-        <tag>Hello World</tag>
-        <tag>hexo</tag>
-      </tags>
-  </entry>
-  <entry>
-    <title>Git开发规范参考</title>
-    <url>/2020/03/22/one-git-flow/</url>
-    <content><![CDATA[<h1 id="分支管理"><a href="#分支管理" class="headerlink" title="分支管理"></a>分支管理</h1><p>git 的分支管理功能非常强大，为了提高效率、避免分支混乱，我们参考git flow的开发流程规范或者可以直接使用git flow工具。</p>
-<h2 id="分支构成"><a href="#分支构成" class="headerlink" title="分支构成"></a>分支构成</h2><h3 id="主要分支"><a href="#主要分支" class="headerlink" title="主要分支"></a>主要分支</h3><p>master分支：永远处在即将发布（production-ready）状态；<br>develop分支：为开发分支，始终保持最新完成以及bug修复后的代码。</p>
-<h3 id="辅助分支"><a href="#辅助分支" class="headerlink" title="辅助分支"></a>辅助分支</h3><p>feature分支：开发新功能的分支，基于develop，开发完成后merge回develop；<br>release分支：准备要发布版本的分支（测试环境用的），用来修复SIT（System Integration Testing） bug；基于develop分支，完成后merge回develop和master分支；<br>hotfix分支：修复线上（master）紧急bug，等不及release分支就必须马上上线；基于master分支，完成后merge回master和develop分支。   </p>
-<p>命名规范约定如下：</p>
-<ul>
-<li>feature分支命名：feature&#x2F;name</li>
-<li>release分支命名：release&#x2F;name</li>
-<li>hotfix分支命名：hotfix&#x2F;name</li>
-</ul>
-<h2 id="常见的开发流程"><a href="#常见的开发流程" class="headerlink" title="常见的开发流程"></a>常见的开发流程</h2><h3 id="增加新功能"><a href="#增加新功能" class="headerlink" title="增加新功能"></a>增加新功能</h3><figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">(develop)$: git checkout -b feature/xxx            # 从develop建立功能分支</span><br><span class="line">(feature/xxx)$: blabla                             # 开发</span><br><span class="line">(feature/xxx)$: git add xxx</span><br><span class="line">(feature/xxx)$: git commit -m &#x27;commit comment&#x27;</span><br><span class="line">(develop)$: git merge feature/xxx --no-ff          # 把功能分支合并到develop</span><br></pre></td></tr></table></figure>
-
-<h3 id="修复紧急bug"><a href="#修复紧急bug" class="headerlink" title="修复紧急bug"></a>修复紧急bug</h3><figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">(master)$: git checkout -b hotfix/xxx         # 从master建立hotfix分支</span><br><span class="line">(hotfix/xxx)$: blabla                         # 开发</span><br><span class="line">(hotfix/xxx)$: git add xxx</span><br><span class="line">(hotfix/xxx)$: git commit -m &#x27;commit comment&#x27;</span><br><span class="line">(master)$: git merge hotfix/xxx --no-ff       # 把hotfix分支合并到master，并上线到生产环境；注意，非管理员请用Merge Request；</span><br><span class="line">(develop)$: git merge hotfix/xxx --no-ff      # 把hotfix分支合并到develop，同步代码</span><br></pre></td></tr></table></figure>
-
-<h3 id="测试环境发布测试"><a href="#测试环境发布测试" class="headerlink" title="测试环境发布测试"></a>测试环境发布测试</h3><figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">(develop)$: git checkout -b release/x.y.z           # 从develop建立预发布分支</span><br><span class="line">(release/x.y.z)$: blabla                            # 开发或者从其他feature分支合并代码</span><br><span class="line">(release/x.y.z)$: git merge develop --no-ff         # 把develop分支合并到release/x.y.z，然后在测试环境拉取并测试</span><br></pre></td></tr></table></figure>
-
-<h3 id="生产环境上线"><a href="#生产环境上线" class="headerlink" title="生产环境上线"></a>生产环境上线</h3><figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">(master)$: git merge release/x.y.z --no-ff          # 把release/x.y.z或者develop测试好的代码合并到master</span><br><span class="line">(master)$: git tag -a 0.1.0 -m &#x27;xxx&#x27;                # 给版本命名，打Tag</span><br></pre></td></tr></table></figure>
-<p>注意：这一步由master管理员做，普通开发人员合并代码请用Merge Request。</p>
-<h1 id="Tag管理"><a href="#Tag管理" class="headerlink" title="Tag管理"></a>Tag管理</h1><h2 id="Tag生成时间"><a href="#Tag生成时间" class="headerlink" title="Tag生成时间"></a>Tag生成时间</h2><p>master分支每次发布时，必须打tag。</p>
-<h2 id="Tag命名规范"><a href="#Tag命名规范" class="headerlink" title="Tag命名规范"></a>Tag命名规范</h2><p>版本格式：主版本号.次版本号.修订号，如：1.0.1。</p>
-<p>版本号递增规则如下：</p>
-<ul>
-<li>主版本号：当你做了不兼容的 API 修改；项目架构发生巨大变化；</li>
-<li>次版本号：当你做了向下兼容的功能性新增；</li>
-<li>修订号：当你做了向下兼容的问题修正；小的修改，如代码格式修正等。</li>
-</ul>
-<h1 id="参考"><a href="#参考" class="headerlink" title="参考"></a>参考</h1><p><a href="https://juejin.im/post/5b4328bbf265da0fa21a6820">您必须知道的 Git 分支开发规范</a><br><a href="https://albertlin1102.gitbooks.io/sc_git_guide/0-%E5%88%86%E6%94%AF%E7%AE%A1%E7%90%86%E8%A7%84%E8%8C%83.html">分支管理规范</a><br><a href="https://juejin.im/post/5aa7e8a6f265da239f070d82">git分支管理和工作流规范：具体规范</a></p>
-]]></content>
-      <categories>
-        <category>Technology</category>
-      </categories>
-      <tags>
-        <tag>Git</tag>
-        <tag>Manual</tag>
-        <tag>GitFlow</tag>
-      </tags>
-  </entry>
-  <entry>
-    <title>推荐的学习资源</title>
-    <url>/2019/12/01/recommended-study-resources/</url>
-    <content><![CDATA[<h1 id="推荐的学习资源列表"><a href="#推荐的学习资源列表" class="headerlink" title="推荐的学习资源列表"></a>推荐的学习资源列表</h1><h2 id="Golang语言"><a href="#Golang语言" class="headerlink" title="Golang语言"></a>Golang语言</h2><p><a href="https://github.com/Unknwon/the-way-to-go_ZH_CN/blob/master/eBook/directory.md">the-way-to-go</a> (recommend)<br><a href="https://golang.org/doc/">golang.org</a> (official)  </p>
-<h2 id="数据库"><a href="#数据库" class="headerlink" title="数据库"></a>数据库</h2><h3 id="Mongodb"><a href="#Mongodb" class="headerlink" title="Mongodb"></a>Mongodb</h3><p><a href="https://www.runoob.com/mongodb/mongodb-tutorial.html">mongodb-tutorial</a> (recommend)<br><a href="https://docs.mongodb.com/manual/">docs.mongodb.com</a> (official)  </p>
-<h3 id="Redis"><a href="#Redis" class="headerlink" title="Redis"></a>Redis</h3><p><a href="https://www.runoob.com/redis/redis-tutorial.html">redis-tutorial</a> (recommend)<br><a href="http://redisdoc.com/index.html">redisdoc</a><br><a href="https://redis.io/documentation">redis.io</a>  (official)  </p>
-<h3 id="SQL"><a href="#SQL" class="headerlink" title="SQL"></a>SQL</h3><p><a href="https://www.runoob.com/sql/sql-tutorial.html">sql-tutorial</a><br><a href="https://www.runoob.com/mysql/mysql-tutorial.html">mysql-tutorial</a><br><a href="https://dev.mysql.com/doc/">dev.mysql.com</a> (official)  </p>
-<h3 id="Nginx"><a href="#Nginx" class="headerlink" title="Nginx"></a>Nginx</h3><p><a href="http://nginx.org/en/docs/">nginx.org</a> (official)<br><a href="https://www.runoob.com/w3cnote/nginx-setup-intro.html">Nginx 配置详解</a><br><a href="https://www.runoob.com/w3cnote/nginx-proxy-balancing.html">Nginx 反向代理与负载均衡详解</a><br><a href="https://moonbingbing.gitbooks.io/openresty-best-practices/ngx/nginx.html">OpenResty最佳实践-Nginx</a><br><a href="http://tengine.taobao.org/book/index.html">Nginx开发从入门到精通</a>  </p>
-]]></content>
-      <categories>
-        <category>Technology</category>
-      </categories>
-      <tags>
-        <tag>Study</tag>
-        <tag>Resource</tag>
       </tags>
   </entry>
   <entry>
@@ -2406,39 +2406,6 @@ attachments/1114283/amf3_spec_05_05_08.pdf>.
       </tags>
   </entry>
   <entry>
-    <title>如何搭建个人私有云盘</title>
-    <url>/2019/01/06/%E5%A6%82%E4%BD%95%E6%90%AD%E5%BB%BA%E4%B8%AA%E4%BA%BA%E7%A7%81%E6%9C%89%E4%BA%91%E7%9B%98/</url>
-    <content><![CDATA[<h1 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h1><p>市场上有很多云盘的产品，比如百度云盘，不过本教程主要目的是要搭建个人私有云盘。查了网上很多资料，个人云盘也有很多，比如nextcloud，owncloud，seafile等。这里选择nextcloud，优势就不用说了，网上一搜一大把。</p>
-<h1 id="Nextcloud搭建办法"><a href="#Nextcloud搭建办法" class="headerlink" title="Nextcloud搭建办法"></a>Nextcloud搭建办法</h1><p>主要的搭建办法有两个：</p>
-<ul>
-<li>通过VPS一键安装</li>
-<li>手动安装</li>
-</ul>
-<h2 id="通过VPS一键安装"><a href="#通过VPS一键安装" class="headerlink" title="通过VPS一键安装"></a>通过VPS一键安装</h2><p><a href="https://www.vultr.com/?ref=8443595-6G">Vultr</a>有一键安装Nextcloud的功能，非常方便。<br>主要步骤如下：</p>
-<ul>
-<li>注册vps</li>
-<li>创建vps实例</li>
-<li>Server Location -&gt; 选择一个好的机房，比如洛杉矶，日本和新加坡等。</li>
-<li>Server Type -&gt; 选Application，选中Nextcloud</li>
-<li>Server Size -&gt; 根据自己需要选择</li>
-<li>剩下的配置使用默认即可</li>
-</ul>
-<p>首先，登陆<a href="https://www.vultr.com/?ref=8443595-6G">Vultr官网</a>，点击Create Account注册。<br>选择一个好的机房，当然是自己测过才放心。这里推荐使用<a href="http://www.nirsoft.net/utils/pinginfoview.zip">PingInfoView</a>来测试。以下是vultr的机房：<br><img src="http://image.noahsun.top/vps/vultr_area.jpeg" alt="vultr_area"></p>
-<p>列表如下，贴到PingInfoView上即可。</p>
-<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">sgp-ping.vultr.com</span><br><span class="line">hnd-jp-ping.vultr.com</span><br><span class="line">syd-au-ping.vultr.com</span><br><span class="line">fra-de-ping.vultr.com</span><br><span class="line">ams-nl-ping.vultr.com</span><br><span class="line">lon-gb-ping.vultr.com</span><br><span class="line">par-fr-ping.vultr.com</span><br><span class="line">wa-us-ping.vultr.com</span><br><span class="line">sjo-ca-us-ping.vultr.com</span><br><span class="line">lax-ca-us-ping.vultr.com</span><br><span class="line">il-us-ping.vultr.com</span><br><span class="line">nj-us-ping.vultr.com</span><br><span class="line">tx-us-ping.vultr.com</span><br><span class="line">ga-us-ping.vultr.com</span><br><span class="line">fl-us-ping.vultr.com</span><br></pre></td></tr></table></figure>
-<p>linux&#x2F;mac用户可以使用我写的脚本<a href="https://github.com/rukesun/vultr_test.git">vultr_test</a>来测试。<br>以下是我的测试结果：<br><img src="http://image.noahsun.top/vps/my_ping_test.png"><br>选择的原则是，ping值最小，丢包率最小。比如我的测试结果中，较不错的是sjo、wa和lax，都是美国机房。</p>
-<p>接下来Server Type选Application，选中Nextcloud，如下所示<br><img src="http://image.noahsun.top/nextcloud/vultr_nextcloud_app.jpg" alt="nextcloud_app"><br>根据自己的需要选择Server Size，剩下的配置使用默认即可。<br>点击Deploy Now，然后静静地等待1~2分钟。<br>部署完成后，查看实例详情，可以看到Nextcloud的地址，登陆账号和密码。<br><img src="http://image.noahsun.top/nextcloud/vultr_nextcloud_info.jpg" alt="nextcloud_info"><br>打开你的Nextcloud地址，会提示不安全，这个是ssl证书问题，你可以直接忽略。<br>下面是打开后的界面<br><img src="http://image.noahsun.top/nextcloud/nextcloud_login.jpg" alt="nextcloud_login"><br>怎么样，是不是很期待？<br>输入账号和密码，点击登录，网盘就可以使用了<br><img src="http://image.noahsun.top/nextcloud/nextcloud_main.jpg" alt="nextcloud_main"><br>可以传视频，文档，可以自定义目录，更多的功能等待你去探索！好了，是不是有点小激动？麻麻再也不用担心我的小电影没地方放了。</p>
-<hr>
-]]></content>
-      <categories>
-        <category>Tools</category>
-      </categories>
-      <tags>
-        <tag>nextcloud</tag>
-        <tag>vps</tag>
-      </tags>
-  </entry>
-  <entry>
     <title>搭建自己专属的vpn——Centos搭建vpn的几种办法</title>
     <url>/2018/04/07/%E6%90%AD%E5%BB%BA%E8%87%AA%E5%B7%B1%E4%B8%93%E5%B1%9E%E7%9A%84vpn%E2%80%94%E2%80%94Centos%E6%90%AD%E5%BB%BAvpn%E7%9A%84%E5%87%A0%E7%A7%8D%E5%8A%9E%E6%B3%95/</url>
     <content><![CDATA[<h1 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h1><p>上一篇《搭建自己专属的vpn——选择一个vps》提到如何选择一个vps，这一篇就淡淡如何利用<a href="https://www.vultr.com/?ref=8443595-6G">vultr</a>的vps搭建一个vpn。</p>
@@ -2584,8 +2551,8 @@ attachments/1114283/amf3_spec_05_05_08.pdf>.
         <category>Tools</category>
       </categories>
       <tags>
-        <tag>vps</tag>
         <tag>vpn</tag>
+        <tag>vps</tag>
       </tags>
   </entry>
   <entry>
@@ -2611,8 +2578,41 @@ attachments/1114283/amf3_spec_05_05_08.pdf>.
         <category>Tools</category>
       </categories>
       <tags>
-        <tag>vps</tag>
         <tag>vpn</tag>
+        <tag>vps</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>如何搭建个人私有云盘</title>
+    <url>/2019/01/06/%E5%A6%82%E4%BD%95%E6%90%AD%E5%BB%BA%E4%B8%AA%E4%BA%BA%E7%A7%81%E6%9C%89%E4%BA%91%E7%9B%98/</url>
+    <content><![CDATA[<h1 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h1><p>市场上有很多云盘的产品，比如百度云盘，不过本教程主要目的是要搭建个人私有云盘。查了网上很多资料，个人云盘也有很多，比如nextcloud，owncloud，seafile等。这里选择nextcloud，优势就不用说了，网上一搜一大把。</p>
+<h1 id="Nextcloud搭建办法"><a href="#Nextcloud搭建办法" class="headerlink" title="Nextcloud搭建办法"></a>Nextcloud搭建办法</h1><p>主要的搭建办法有两个：</p>
+<ul>
+<li>通过VPS一键安装</li>
+<li>手动安装</li>
+</ul>
+<h2 id="通过VPS一键安装"><a href="#通过VPS一键安装" class="headerlink" title="通过VPS一键安装"></a>通过VPS一键安装</h2><p><a href="https://www.vultr.com/?ref=8443595-6G">Vultr</a>有一键安装Nextcloud的功能，非常方便。<br>主要步骤如下：</p>
+<ul>
+<li>注册vps</li>
+<li>创建vps实例</li>
+<li>Server Location -&gt; 选择一个好的机房，比如洛杉矶，日本和新加坡等。</li>
+<li>Server Type -&gt; 选Application，选中Nextcloud</li>
+<li>Server Size -&gt; 根据自己需要选择</li>
+<li>剩下的配置使用默认即可</li>
+</ul>
+<p>首先，登陆<a href="https://www.vultr.com/?ref=8443595-6G">Vultr官网</a>，点击Create Account注册。<br>选择一个好的机房，当然是自己测过才放心。这里推荐使用<a href="http://www.nirsoft.net/utils/pinginfoview.zip">PingInfoView</a>来测试。以下是vultr的机房：<br><img src="http://image.noahsun.top/vps/vultr_area.jpeg" alt="vultr_area"></p>
+<p>列表如下，贴到PingInfoView上即可。</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">sgp-ping.vultr.com</span><br><span class="line">hnd-jp-ping.vultr.com</span><br><span class="line">syd-au-ping.vultr.com</span><br><span class="line">fra-de-ping.vultr.com</span><br><span class="line">ams-nl-ping.vultr.com</span><br><span class="line">lon-gb-ping.vultr.com</span><br><span class="line">par-fr-ping.vultr.com</span><br><span class="line">wa-us-ping.vultr.com</span><br><span class="line">sjo-ca-us-ping.vultr.com</span><br><span class="line">lax-ca-us-ping.vultr.com</span><br><span class="line">il-us-ping.vultr.com</span><br><span class="line">nj-us-ping.vultr.com</span><br><span class="line">tx-us-ping.vultr.com</span><br><span class="line">ga-us-ping.vultr.com</span><br><span class="line">fl-us-ping.vultr.com</span><br></pre></td></tr></table></figure>
+<p>linux&#x2F;mac用户可以使用我写的脚本<a href="https://github.com/rukesun/vultr_test.git">vultr_test</a>来测试。<br>以下是我的测试结果：<br><img src="http://image.noahsun.top/vps/my_ping_test.png"><br>选择的原则是，ping值最小，丢包率最小。比如我的测试结果中，较不错的是sjo、wa和lax，都是美国机房。</p>
+<p>接下来Server Type选Application，选中Nextcloud，如下所示<br><img src="http://image.noahsun.top/nextcloud/vultr_nextcloud_app.jpg" alt="nextcloud_app"><br>根据自己的需要选择Server Size，剩下的配置使用默认即可。<br>点击Deploy Now，然后静静地等待1~2分钟。<br>部署完成后，查看实例详情，可以看到Nextcloud的地址，登陆账号和密码。<br><img src="http://image.noahsun.top/nextcloud/vultr_nextcloud_info.jpg" alt="nextcloud_info"><br>打开你的Nextcloud地址，会提示不安全，这个是ssl证书问题，你可以直接忽略。<br>下面是打开后的界面<br><img src="http://image.noahsun.top/nextcloud/nextcloud_login.jpg" alt="nextcloud_login"><br>怎么样，是不是很期待？<br>输入账号和密码，点击登录，网盘就可以使用了<br><img src="http://image.noahsun.top/nextcloud/nextcloud_main.jpg" alt="nextcloud_main"><br>可以传视频，文档，可以自定义目录，更多的功能等待你去探索！好了，是不是有点小激动？麻麻再也不用担心我的小电影没地方放了。</p>
+<hr>
+]]></content>
+      <categories>
+        <category>Tools</category>
+      </categories>
+      <tags>
+        <tag>vps</tag>
+        <tag>nextcloud</tag>
       </tags>
   </entry>
   <entry>
