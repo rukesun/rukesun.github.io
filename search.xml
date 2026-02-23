@@ -23,84 +23,6 @@
       </tags>
   </entry>
   <entry>
-    <title>Kurento Media Server源码编译</title>
-    <url>/2018/05/27/Kurento-Media-Server%E6%BA%90%E7%A0%81%E7%BC%96%E8%AF%91/</url>
-    <content><![CDATA[<h1 id="Build-dependency"><a href="#Build-dependency" class="headerlink" title="Build dependency"></a>Build dependency</h1><h2 id="Module-dependency-graph"><a href="#Module-dependency-graph" class="headerlink" title="Module dependency graph"></a>Module dependency graph</h2><p>Kurento模块的依赖关系如下图所示<br><img src="http://image.noahsun.top/kms_build/kms_module_dependency_graph.png" alt="kms_module_dependency_graph"></p>
-<h2 id="Module-dependency-list"><a href="#Module-dependency-list" class="headerlink" title="Module dependency list"></a>Module dependency list</h2><p>Kurento模块依赖关系并不是严格的线性关系，所以编译顺序可以有多种组合，以下是其中一种可能的编译顺序：</p>
-<p>Externals：</p>
-<ul>
-<li>gstreamer</li>
-<li>libsrtp</li>
-<li>openh264</li>
-<li>usrsctp</li>
-<li>jsoncpp</li>
-<li>gst-plugins-base</li>
-<li>gst-plugins-good</li>
-<li>gst-plugins-ugly</li>
-<li>gst-plugins-bad</li>
-<li>gst-libav</li>
-<li>openwebrtc-gst-plugins</li>
-<li>libnice</li>
-</ul>
-<p>KMS Main + Extra:</p>
-<ul>
-<li>kurento-module-creator</li>
-<li>kms-cmake-utils</li>
-<li>kms-jsonrpc</li>
-<li>kms-core</li>
-<li>kms-elements</li>
-<li>kms-filters</li>
-<li>kurento-media-server</li>
-<li>kms-chroma</li>
-<li>kms-crowddetector</li>
-<li>kms-datachannelexample</li>
-<li>kms-platedetector</li>
-<li>kms-pointerdetector</li>
-</ul>
-<h1 id="Build"><a href="#Build" class="headerlink" title="Build"></a>Build</h1><p>Note: </p>
-<ol>
-<li>适用于Ubuntu和Centos</li>
-<li>如果在Centos下编译，还需要升级glib，autotools等</li>
-</ol>
-<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line"># KMS源码目录</span><br><span class="line">KMS_HOME=$HOME/kms_source</span><br><span class="line"># KMS编译目录</span><br><span class="line">KMS_BUILD_HOME=$KMS_HOME/build/kms</span><br><span class="line"></span><br><span class="line">CMAKE_MODULES_PATH=$&#123;KMS_BUILD_HOME&#125;/share/cmake-3.5/Modules</span><br><span class="line"></span><br><span class="line"># 导入编译所需的环境变量</span><br><span class="line">export CMAKE_OPTS=&quot;-DCMAKE_INSTALL_LIBDIR=lib -DCMAKE_MODULE_PATH:STRING=$&#123;CMAKE_MODULES_PATH&#125; -DKURENTO_MODULES_DIR:STRING=$&#123;KMS_BUILD_HOME&#125;/share/kurento/modules&quot;</span><br><span class="line">export PKG_CONFIG_PATH=$PKG_CONFIG_PATH:$KMS_BUILD_HOME/lib/pkgconfig</span><br><span class="line">export LIBRARY_PATH=$LIBRARY_PATH:$KMS_BUILD_HOME/lib</span><br><span class="line">export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$KMS_BUILD_HOME/lib</span><br><span class="line">export CPATH=$CPATH:$KMS_BUILD_HOME/include:$KMS_BUILD_HOME/include/gstreamer-1.5</span><br><span class="line">export PATH=$PATH:$KMS_BUILD_HOME/bin</span><br><span class="line">JAVA_CMD=$(which java)</span><br><span class="line"></span><br><span class="line"># 创建所需目录</span><br><span class="line">mkdir -p $&#123;KMS_HOME&#125;</span><br><span class="line">mkdir -p $&#123;KMS_BUILD_HOME&#125;</span><br><span class="line">mkdir -p $&#123;KMS_BUILD_HOME&#125;/bin</span><br><span class="line"></span><br><span class="line"># ---- build externals ----</span><br><span class="line"># gstreamer</span><br><span class="line">cd $&#123;KMS_HOME&#125;</span><br><span class="line">git clone https://github.com/Kurento/gstreamer.git</span><br><span class="line">cd gstreamer</span><br><span class="line">git checkout kms6.6.0</span><br><span class="line">./autogen.sh</span><br><span class="line"># introspection requires python &gt;= 2.7</span><br><span class="line">./configure --enable-introspection=no --prefix=$KMS_BUILD_HOME &amp;&amp; make &amp;&amp; make install</span><br><span class="line">if [ $? -ne 0 ]; then exit -1; fi</span><br><span class="line"></span><br><span class="line"># build openssl</span><br><span class="line">cd $&#123;KMS_HOME&#125;</span><br><span class="line">wget https://www.openssl.org/source/old/1.0.2/openssl-1.0.2g.tar.gz</span><br><span class="line">tar -zxvf openssl-1.0.2g.tar.gz</span><br><span class="line">cd openssl-1.0.2g</span><br><span class="line">./config shared --prefix=$KMS_BUILD_HOME &amp;&amp; make &amp;&amp; make install</span><br><span class="line">if [ $? -ne 0 ]; then exit -1; fi</span><br><span class="line"></span><br><span class="line"># build libsrtp</span><br><span class="line">cd $&#123;KMS_HOME&#125;</span><br><span class="line">git clone https://github.com/Kurento/libsrtp.git</span><br><span class="line">cd libsrtp</span><br><span class="line">git checkout kms6.6.0</span><br><span class="line">./configure --prefix=$KMS_BUILD_HOME &amp;&amp; make &amp;&amp; make install</span><br><span class="line">if [ $? -ne 0 ]; then exit -1; fi</span><br><span class="line"></span><br><span class="line"># build nasm</span><br><span class="line"># required by openh264</span><br><span class="line">cd $&#123;KMS_HOME&#125;</span><br><span class="line">wget https://www.nasm.us/pub/nasm/releasebuilds/2.13.02/nasm-2.13.02.tar.gz</span><br><span class="line">tar -xzvf nasm-2.13.02.tar.gz</span><br><span class="line">cd nasm-2.13.02</span><br><span class="line">./configure --prefix=$KMS_BUILD_HOME &amp;&amp; make &amp;&amp; make install</span><br><span class="line">if [ $? -ne 0 ]; then exit -1; fi</span><br><span class="line"></span><br><span class="line"># build openh264</span><br><span class="line">cd $&#123;KMS_HOME&#125;</span><br><span class="line">git clone https://github.com/cisco/openh264.git</span><br><span class="line">cd openh264</span><br><span class="line">git checkout v1.4.0</span><br><span class="line">make &amp;&amp; make install PREFIX=$KMS_BUILD_HOME</span><br><span class="line">if [ $? -ne 0 ]; then exit -1; fi</span><br><span class="line"></span><br><span class="line"># build usrsctp</span><br><span class="line">cd $&#123;KMS_HOME&#125;</span><br><span class="line">git clone https://github.com/Kurento/usrsctp.git</span><br><span class="line">cd usrsctp</span><br><span class="line">git checkout kms6.6.0</span><br><span class="line">./bootstrap</span><br><span class="line">./configure --prefix=$KMS_BUILD_HOME</span><br><span class="line">make &amp;&amp; make install</span><br><span class="line">if [ $? -ne 0 ]; then exit -1; fi</span><br><span class="line"></span><br><span class="line"># build opus</span><br><span class="line">cd $&#123;KMS_HOME&#125;</span><br><span class="line">wget https://archive.mozilla.org/pub/opus/opus-1.2.1.tar.gz</span><br><span class="line">tar -zxvf opus-1.2.1.tar.gz</span><br><span class="line">cd opus-1.2.1</span><br><span class="line">./configure --prefix=$KMS_BUILD_HOME &amp;&amp; make &amp;&amp; make install</span><br><span class="line">if [ $? -ne 0 ]; then exit -1; fi</span><br><span class="line"></span><br><span class="line"># build orc</span><br><span class="line">cd $&#123;KMS_HOME&#125;</span><br><span class="line">wget https://gstreamer.freedesktop.org/src/orc/orc-0.4.28.tar.xz</span><br><span class="line">tar -Jxvf orc-0.4.28.tar.xz</span><br><span class="line">cd orc-0.4.28</span><br><span class="line">./configure --prefix=$KMS_BUILD_HOME &amp;&amp; make &amp;&amp; make install</span><br><span class="line">if [ $? -ne 0 ]; then exit -1; fi</span><br><span class="line"></span><br><span class="line"># build jsoncpp</span><br><span class="line">cd $&#123;KMS_HOME&#125;</span><br><span class="line">git clone https://github.com/Kurento/jsoncpp.git</span><br><span class="line">cd jsoncpp</span><br><span class="line">git checkout kms6.6.0</span><br><span class="line">mkdir -p build &amp;&amp; cd build</span><br><span class="line">cmake -DCMAKE_INSTALL_PREFIX=$KMS_BUILD_HOME $CMAKE_OPTS ..</span><br><span class="line">make &amp;&amp; make install</span><br><span class="line">if [ $? -ne 0 ]; then exit -1; fi</span><br><span class="line"># 否则编译kms-jsonrpc会报错 fatal error: json/json.h: No such file or directory</span><br><span class="line">sed -i &#x27;s/\/kmsjsoncpp//g&#x27; $KMS_BUILD_HOME/lib/pkgconfig/kmsjsoncpp.pc</span><br><span class="line"></span><br><span class="line"># gst-plugins-base</span><br><span class="line">cd $&#123;KMS_HOME&#125;</span><br><span class="line">git clone https://github.com/Kurento/gst-plugins-base.git</span><br><span class="line">cd gst-plugins-base</span><br><span class="line">git checkout kms6.6.0</span><br><span class="line">./autogen.sh</span><br><span class="line">./configure --enable-introspection=no --prefix=$KMS_BUILD_HOME &amp;&amp; make &amp;&amp; make install</span><br><span class="line">if [ $? -ne 0 ]; then exit -1; fi</span><br><span class="line"></span><br><span class="line"># gst-plugins-good</span><br><span class="line"># for rtp </span><br><span class="line">cd $&#123;KMS_HOME&#125;</span><br><span class="line">git clone https://github.com/Kurento/gst-plugins-good.git</span><br><span class="line">cd gst-plugins-good</span><br><span class="line">git checkout kms6.6.0</span><br><span class="line">./autogen.sh</span><br><span class="line">./configure --enable-introspection=no --prefix=$KMS_BUILD_HOME &amp;&amp; make &amp;&amp; make install</span><br><span class="line">if [ $? -ne 0 ]; then exit -1; fi</span><br><span class="line"></span><br><span class="line"># gst-plugins-ugly</span><br><span class="line">cd $&#123;KMS_HOME&#125;</span><br><span class="line">git clone https://github.com/Kurento/gst-plugins-ugly.git</span><br><span class="line">cd gst-plugins-ugly</span><br><span class="line">git checkout kms6.6.0</span><br><span class="line">./autogen.sh</span><br><span class="line">./configure --enable-introspection=no --prefix=$KMS_BUILD_HOME &amp;&amp; make &amp;&amp; make install</span><br><span class="line">if [ $? -ne 0 ]; then exit -1; fi</span><br><span class="line"></span><br><span class="line"># gst-plugins-bad</span><br><span class="line"># for openh264+libsrtp</span><br><span class="line">cd $&#123;KMS_HOME&#125;</span><br><span class="line">git clone https://github.com/Kurento/gst-plugins-bad.git</span><br><span class="line">cd gst-plugins-bad</span><br><span class="line">git checkout kms6.6.0</span><br><span class="line">./autogen.sh</span><br><span class="line">./configure --enable-introspection=no --prefix=$KMS_BUILD_HOME &amp;&amp; make &amp;&amp; make install</span><br><span class="line">if [ $? -ne 0 ]; then exit -1; fi</span><br><span class="line"></span><br><span class="line"># gst-libav</span><br><span class="line">cd $&#123;KMS_HOME&#125;</span><br><span class="line">git clone https://github.com/Kurento/gst-libav.git</span><br><span class="line">cd gst-libav</span><br><span class="line">git checkout kms6.6.0</span><br><span class="line">./autogen.sh</span><br><span class="line">./configure --enable-introspection=no --prefix=$KMS_BUILD_HOME &amp;&amp; make &amp;&amp; make install</span><br><span class="line">if [ $? -ne 0 ]; then exit -1; fi</span><br><span class="line"></span><br><span class="line"># build openwebrtc-gst-plugins</span><br><span class="line">cd $&#123;KMS_HOME&#125;</span><br><span class="line">git clone https://github.com/Kurento/openwebrtc-gst-plugins.git</span><br><span class="line">cd openwebrtc-gst-plugins</span><br><span class="line">git checkout kms6.6.0</span><br><span class="line">./autogen.sh</span><br><span class="line">./configure --prefix=$KMS_BUILD_HOME &amp;&amp; make &amp;&amp; make install</span><br><span class="line">if [ $? -ne 0 ]; then exit -1; fi</span><br><span class="line"></span><br><span class="line"># build libnice</span><br><span class="line">cd $&#123;KMS_HOME&#125;</span><br><span class="line">git clone https://github.com/Kurento/libnice.git</span><br><span class="line">cd libnice</span><br><span class="line">git checkout kms6.6.1</span><br><span class="line">./autogen.sh</span><br><span class="line">./configure --enable-introspection=no --prefix=$KMS_BUILD_HOME &amp;&amp; make &amp;&amp; make install</span><br><span class="line">if [ $? -ne 0 ]; then exit -1; fi</span><br><span class="line"></span><br><span class="line"># build libevent</span><br><span class="line"># required by kurento-media-server</span><br><span class="line">cd $&#123;KMS_HOME&#125;</span><br><span class="line">wget https://github.com/libevent/libevent/releases/download/release-2.0.22-stable/libevent-2.0.22-stable.tar.gz</span><br><span class="line">tar -xzvf libevent-2.0.22-stable.tar.gz</span><br><span class="line">cd libevent-2.0.22-stable</span><br><span class="line">./configure --prefix=$KMS_BUILD_HOME &amp;&amp; make &amp;&amp; make install</span><br><span class="line">if [ $? -ne 0 ]; then exit -1; fi</span><br><span class="line"></span><br><span class="line"># build boost</span><br><span class="line">cd $&#123;KMS_HOME&#125;</span><br><span class="line"># boost&gt;1.58.0不支持json配置注释</span><br><span class="line">wget &quot;https://sourceforge.net/projects/boost/files/boost/1.58.0/boost_1_58_0.tar.gz/download&quot; -O boost_1_58_0.tar.gz</span><br><span class="line">tar -zxvf boost_1_58_0.tar.gz</span><br><span class="line">cd boost_1_58_0</span><br><span class="line">./bootstrap.sh</span><br><span class="line">./b2 install --prefix=$KMS_BUILD_HOME</span><br><span class="line">#if [ $? -ne 0 ]; then exit -1; fi</span><br><span class="line"></span><br><span class="line"># ---- build kms main ----</span><br><span class="line"># build kms-cmake-utils</span><br><span class="line">cd $&#123;KMS_HOME&#125;</span><br><span class="line">git clone https://github.com/Kurento/kms-cmake-utils.git</span><br><span class="line">cd kms-cmake-utils</span><br><span class="line">git checkout 6.7.0</span><br><span class="line">mkdir -p build &amp;&amp; cd build &amp;&amp; cmake -DCMAKE_INSTALL_PREFIX=$KMS_BUILD_HOME $CMAKE_OPTS .. &amp;&amp; make &amp;&amp; make install</span><br><span class="line">if [ $? -ne 0 ]; then exit -1; fi</span><br><span class="line"></span><br><span class="line"># build kurento-module-creator</span><br><span class="line">cd $&#123;KMS_HOME&#125;</span><br><span class="line">git clone https://github.com/Kurento/kurento-module-creator.git</span><br><span class="line">cd kurento-module-creator</span><br><span class="line">git checkout 6.7.0</span><br><span class="line">mvn package</span><br><span class="line">cp target/classes/FindKurentoModuleCreator.cmake $&#123;CMAKE_MODULES_PATH&#125;</span><br><span class="line">cp target/kurento-module-creator-jar-with-dependencies.jar $&#123;KMS_BUILD_HOME&#125;/bin</span><br><span class="line">cp scripts/kurento-module-creator $&#123;KMS_BUILD_HOME&#125;/bin</span><br><span class="line">sed -i &quot;s|JAVA_CMD=.*|JAVA_CMD=$&#123;JAVA_CMD&#125;|g&quot; $KMS_BUILD_HOME/bin/kurento-module-creator</span><br><span class="line">if [ $? -ne 0 ]; then exit -1; fi</span><br><span class="line"></span><br><span class="line"># build kms-jsonrpc</span><br><span class="line">cd $&#123;KMS_HOME&#125;</span><br><span class="line">git clone https://github.com/Kurento/kms-jsonrpc.git</span><br><span class="line">cd kms-jsonrpc </span><br><span class="line">git checkout 6.7.0</span><br><span class="line">rm -rf build &amp;&amp; mkdir -p build &amp;&amp; cd build</span><br><span class="line">cmake -DCMAKE_INSTALL_PREFIX=$KMS_BUILD_HOME $CMAKE_OPTS ..</span><br><span class="line">make &amp;&amp; make install</span><br><span class="line">if [ $? -ne 0 ]; then exit -1; fi</span><br><span class="line"></span><br><span class="line"># build kms-core</span><br><span class="line">cd $&#123;KMS_HOME&#125;</span><br><span class="line">git clone https://github.com/Kurento/kms-core.git</span><br><span class="line">cd kms-core</span><br><span class="line">git checkout 6.7.1</span><br><span class="line">rm -rf build &amp;&amp; mkdir -p build &amp;&amp; cd build</span><br><span class="line">cmake -DCMAKE_INSTALL_PREFIX=$KMS_BUILD_HOME $CMAKE_OPTS .. &amp;&amp; make &amp;&amp; make install</span><br><span class="line">if [ $? -ne 0 ]; then exit -1; fi</span><br><span class="line"></span><br><span class="line"># build kms-elements</span><br><span class="line">cd $&#123;KMS_HOME&#125;</span><br><span class="line">git clone https://github.com/Kurento/kms-elements.git</span><br><span class="line">cd kms-elements</span><br><span class="line">git checkout 6.7.1</span><br><span class="line">rm -rf build &amp;&amp; mkdir -p build &amp;&amp; cd build</span><br><span class="line">cmake -DCMAKE_INSTALL_PREFIX=$KMS_BUILD_HOME $CMAKE_OPTS .. &amp;&amp; make &amp;&amp; make install</span><br><span class="line">if [ $? -ne 0 ]; then exit -1; fi</span><br><span class="line"></span><br><span class="line"># build kurento-media-server</span><br><span class="line">cd $&#123;KMS_HOME&#125;</span><br><span class="line">git clone https://github.com/Kurento/kurento-media-server.git</span><br><span class="line">cd kurento-media-server </span><br><span class="line">git checkout 6.7.1</span><br><span class="line">rm -rf build &amp;&amp; mkdir -p build &amp;&amp; cd build</span><br><span class="line">cmake -DCMAKE_INSTALL_PREFIX=$KMS_BUILD_HOME $CMAKE_OPTS .. </span><br><span class="line">make &amp;&amp; make install</span><br><span class="line">if [ $? -ne 0 ]; then exit -1; fi</span><br><span class="line"></span><br></pre></td></tr></table></figure>
-
-<h1 id="Run"><a href="#Run" class="headerlink" title="Run"></a>Run</h1><figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">KMS_HOME=$HOME/kms_source</span><br><span class="line">KMS_BUILD_HOME=$KMS_HOME/build/kms</span><br><span class="line">export LD_LIBRARY_PATH=$KMS_BUILD_HOME/lib:$LD_LIBRARY_PATH</span><br><span class="line"></span><br><span class="line">$KMS_BUILD_HOME/bin/kurento-media-server -f $KMS_BUILD_HOME/etc/kurento/kurento.conf.json -c $KMS_BUILD_HOME/etc/kurento/modules/kurento</span><br></pre></td></tr></table></figure>
-<h1 id="Reference"><a href="#Reference" class="headerlink" title="Reference"></a>Reference</h1><ol>
-<li><a href="http://doc-kurento.readthedocs.io/en/stable/dev/dev_guide.html">Kurento Developer Guide</a></li>
-</ol>
-]]></content>
-      <categories>
-        <category>Technology</category>
-      </categories>
-      <tags>
-        <tag>KMS</tag>
-        <tag>Kurento</tag>
-        <tag>WebRTC</tag>
-      </tags>
-  </entry>
-  <entry>
-    <title>FFmpeg的那些坑-Too many packets buffered for output stream</title>
-    <url>/2018/07/01/FFmpeg%E7%9A%84%E9%82%A3%E4%BA%9B%E5%9D%91-Too-many-packets-buffered-for-output-stream/</url>
-    <content><![CDATA[<h1 id="FFmpeg使用场景"><a href="#FFmpeg使用场景" class="headerlink" title="FFmpeg使用场景"></a>FFmpeg使用场景</h1><p>使用FFmpeg给视频打水印</p>
-<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">ffmpeg -i test.mp4 -i watermark.png -acodec copy -preset veryfast -filter_complex &quot;overlay=x=20:y=20&quot; -y wm_test.mp4</span><br></pre></td></tr></table></figure>
-<h1 id="问题"><a href="#问题" class="headerlink" title="问题"></a>问题</h1><p>报错Too many packets buffered for output stream 0:1.</p>
-<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">ffmpeg version 3.3-static http://johnvansickle.com/ffmpeg/  Copyright (c) 2000-2017 the FFmpeg developers</span><br><span class="line">  built with gcc 5.4.1 (Debian 5.4.1-8) 20170304</span><br><span class="line">  configuration: --enable-gpl --enable-version3 --enable-static --disable-debug --disable-ffplay --disable-indev=sndio --disable-outdev=sndio --cc=gcc-5 --enable-fontconfig --enable-frei0r --enable-gnutls --enable-gray --enable-libass --enable-libfreetype --enable-libfribidi --enable-libmp3lame --enable-libopencore-amrnb --enable-libopencore-amrwb --enable-libopenjpeg --enable-libopus --enable-librtmp --enable-libsoxr --enable-libspeex --enable-libtheora --enable-libvidstab --enable-libvo-amrwbenc --enable-libvorbis --enable-libvpx --enable-libwebp --enable-libx264 --enable-libx265 --enable-libxvid --enable-libzimg</span><br><span class="line">  libavutil      55. 58.100 / 55. 58.100</span><br><span class="line">  libavcodec     57. 89.100 / 57. 89.100</span><br><span class="line">  libavformat    57. 71.100 / 57. 71.100</span><br><span class="line">  libavdevice    57.  6.100 / 57.  6.100</span><br><span class="line">  libavfilter     6. 82.100 /  6. 82.100</span><br><span class="line">  libswscale      4.  6.100 /  4.  6.100</span><br><span class="line">  libswresample   2.  7.100 /  2.  7.100</span><br><span class="line">  libpostproc    54.  5.100 / 54.  5.100</span><br><span class="line">Input #0, mov,mp4,m4a,3gp,3g2,mj2, from &#x27;test.mp4&#x27;:</span><br><span class="line">  Metadata:</span><br><span class="line">    major_brand     : isom</span><br><span class="line">    minor_version   : 512</span><br><span class="line">    compatible_brands: isomiso2avc1mp41</span><br><span class="line">    encoder         : Lavf57.56.100</span><br><span class="line">  Duration: 00:00:26.94, start: 0.000000, bitrate: 434 kb/s</span><br><span class="line">    Stream #0:0(und): Video: h264 (High) (avc1 / 0x31637661), yuv420p, 360x640, 367 kb/s, 6.16 fps, 14 tbr, 14336 tbn, 28 tbc (default)</span><br><span class="line">    Metadata:</span><br><span class="line">      handler_name    : VideoHandler</span><br><span class="line">    Stream #0:1(und): Audio: aac (LC) (mp4a / 0x6134706D), 44100 Hz, mono, fltp, 63 kb/s (default)</span><br><span class="line">    Metadata:</span><br><span class="line">      handler_name    : SoundHandler</span><br><span class="line">Input #1, png_pipe, from &#x27;watermark.png&#x27;:</span><br><span class="line">  Duration: N/A, bitrate: N/A</span><br><span class="line">    Stream #1:0: Video: png, pal8(pc), 205x39, 25 tbr, 25 tbn, 25 tbc</span><br><span class="line">Stream mapping:</span><br><span class="line">  Stream #0:0 (h264) -&gt; overlay:main</span><br><span class="line">  Stream #1:0 (png) -&gt; overlay:overlay</span><br><span class="line">  overlay -&gt; Stream #0:0 (libx264)</span><br><span class="line">  Stream #0:1 -&gt; #0:1 (copy)</span><br><span class="line">Press [q] to stop, [?] for help</span><br><span class="line">Too many packets buffered for output stream 0:1.</span><br><span class="line">Conversion failed!</span><br><span class="line"></span><br></pre></td></tr></table></figure>
-
-<h1 id="原因"><a href="#原因" class="headerlink" title="原因"></a>原因</h1><p>原因是有些视频数据有问题，导致视频处理过快，容器封装时队列溢出。</p>
-<h1 id="解决办法"><a href="#解决办法" class="headerlink" title="解决办法"></a>解决办法</h1><p>增大容器封装队列大小，比如</p>
-<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">-max_muxing_queue_size 1024</span><br></pre></td></tr></table></figure>
-
-<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">ffmpeg -i test.mp4 -i watermark.png -max_muxing_queue_size 1024 -acodec copy -preset veryfast -filter_complex &quot;overlay=x=20:y=20&quot; -y wm_test.mp4</span><br></pre></td></tr></table></figure>
-]]></content>
-      <categories>
-        <category>Technology</category>
-      </categories>
-      <tags>
-        <tag>FFmpeg</tag>
-        <tag>av</tag>
-      </tags>
-  </entry>
-  <entry>
     <title>Protocol Buffers 使用教程</title>
     <url>/2017/08/05/Protocol-Buffers-%E4%BD%BF%E7%94%A8%E6%95%99%E7%A8%8B/</url>
     <content><![CDATA[<h1 id="概述"><a href="#概述" class="headerlink" title="概述"></a>概述</h1><h2 id="什么是-protocol-buffers"><a href="#什么是-protocol-buffers" class="headerlink" title="什么是 protocol buffers?"></a>什么是 protocol buffers?</h2><p>ProtocolBuffer 是用于结构化数据串行化的灵活、高效、自动的方法，类似 XML，不 过它更小、更快、也更简单。你可以定义自己的数据结构，然后使用代码生成器生成的代码 来读写这个数据结构。你甚至可以在无需重新部署程序的情况下更新数据结构。</p>
@@ -473,6 +395,84 @@
         <tag>PB</tag>
         <tag>Protocol Buffers</tag>
         <tag>RPC</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>FFmpeg的那些坑-Too many packets buffered for output stream</title>
+    <url>/2018/07/01/FFmpeg%E7%9A%84%E9%82%A3%E4%BA%9B%E5%9D%91-Too-many-packets-buffered-for-output-stream/</url>
+    <content><![CDATA[<h1 id="FFmpeg使用场景"><a href="#FFmpeg使用场景" class="headerlink" title="FFmpeg使用场景"></a>FFmpeg使用场景</h1><p>使用FFmpeg给视频打水印</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">ffmpeg -i test.mp4 -i watermark.png -acodec copy -preset veryfast -filter_complex &quot;overlay=x=20:y=20&quot; -y wm_test.mp4</span><br></pre></td></tr></table></figure>
+<h1 id="问题"><a href="#问题" class="headerlink" title="问题"></a>问题</h1><p>报错Too many packets buffered for output stream 0:1.</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">ffmpeg version 3.3-static http://johnvansickle.com/ffmpeg/  Copyright (c) 2000-2017 the FFmpeg developers</span><br><span class="line">  built with gcc 5.4.1 (Debian 5.4.1-8) 20170304</span><br><span class="line">  configuration: --enable-gpl --enable-version3 --enable-static --disable-debug --disable-ffplay --disable-indev=sndio --disable-outdev=sndio --cc=gcc-5 --enable-fontconfig --enable-frei0r --enable-gnutls --enable-gray --enable-libass --enable-libfreetype --enable-libfribidi --enable-libmp3lame --enable-libopencore-amrnb --enable-libopencore-amrwb --enable-libopenjpeg --enable-libopus --enable-librtmp --enable-libsoxr --enable-libspeex --enable-libtheora --enable-libvidstab --enable-libvo-amrwbenc --enable-libvorbis --enable-libvpx --enable-libwebp --enable-libx264 --enable-libx265 --enable-libxvid --enable-libzimg</span><br><span class="line">  libavutil      55. 58.100 / 55. 58.100</span><br><span class="line">  libavcodec     57. 89.100 / 57. 89.100</span><br><span class="line">  libavformat    57. 71.100 / 57. 71.100</span><br><span class="line">  libavdevice    57.  6.100 / 57.  6.100</span><br><span class="line">  libavfilter     6. 82.100 /  6. 82.100</span><br><span class="line">  libswscale      4.  6.100 /  4.  6.100</span><br><span class="line">  libswresample   2.  7.100 /  2.  7.100</span><br><span class="line">  libpostproc    54.  5.100 / 54.  5.100</span><br><span class="line">Input #0, mov,mp4,m4a,3gp,3g2,mj2, from &#x27;test.mp4&#x27;:</span><br><span class="line">  Metadata:</span><br><span class="line">    major_brand     : isom</span><br><span class="line">    minor_version   : 512</span><br><span class="line">    compatible_brands: isomiso2avc1mp41</span><br><span class="line">    encoder         : Lavf57.56.100</span><br><span class="line">  Duration: 00:00:26.94, start: 0.000000, bitrate: 434 kb/s</span><br><span class="line">    Stream #0:0(und): Video: h264 (High) (avc1 / 0x31637661), yuv420p, 360x640, 367 kb/s, 6.16 fps, 14 tbr, 14336 tbn, 28 tbc (default)</span><br><span class="line">    Metadata:</span><br><span class="line">      handler_name    : VideoHandler</span><br><span class="line">    Stream #0:1(und): Audio: aac (LC) (mp4a / 0x6134706D), 44100 Hz, mono, fltp, 63 kb/s (default)</span><br><span class="line">    Metadata:</span><br><span class="line">      handler_name    : SoundHandler</span><br><span class="line">Input #1, png_pipe, from &#x27;watermark.png&#x27;:</span><br><span class="line">  Duration: N/A, bitrate: N/A</span><br><span class="line">    Stream #1:0: Video: png, pal8(pc), 205x39, 25 tbr, 25 tbn, 25 tbc</span><br><span class="line">Stream mapping:</span><br><span class="line">  Stream #0:0 (h264) -&gt; overlay:main</span><br><span class="line">  Stream #1:0 (png) -&gt; overlay:overlay</span><br><span class="line">  overlay -&gt; Stream #0:0 (libx264)</span><br><span class="line">  Stream #0:1 -&gt; #0:1 (copy)</span><br><span class="line">Press [q] to stop, [?] for help</span><br><span class="line">Too many packets buffered for output stream 0:1.</span><br><span class="line">Conversion failed!</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+
+<h1 id="原因"><a href="#原因" class="headerlink" title="原因"></a>原因</h1><p>原因是有些视频数据有问题，导致视频处理过快，容器封装时队列溢出。</p>
+<h1 id="解决办法"><a href="#解决办法" class="headerlink" title="解决办法"></a>解决办法</h1><p>增大容器封装队列大小，比如</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">-max_muxing_queue_size 1024</span><br></pre></td></tr></table></figure>
+
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">ffmpeg -i test.mp4 -i watermark.png -max_muxing_queue_size 1024 -acodec copy -preset veryfast -filter_complex &quot;overlay=x=20:y=20&quot; -y wm_test.mp4</span><br></pre></td></tr></table></figure>
+]]></content>
+      <categories>
+        <category>Technology</category>
+      </categories>
+      <tags>
+        <tag>FFmpeg</tag>
+        <tag>av</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>Kurento Media Server源码编译</title>
+    <url>/2018/05/27/Kurento-Media-Server%E6%BA%90%E7%A0%81%E7%BC%96%E8%AF%91/</url>
+    <content><![CDATA[<h1 id="Build-dependency"><a href="#Build-dependency" class="headerlink" title="Build dependency"></a>Build dependency</h1><h2 id="Module-dependency-graph"><a href="#Module-dependency-graph" class="headerlink" title="Module dependency graph"></a>Module dependency graph</h2><p>Kurento模块的依赖关系如下图所示<br><img src="http://image.noahsun.top/kms_build/kms_module_dependency_graph.png" alt="kms_module_dependency_graph"></p>
+<h2 id="Module-dependency-list"><a href="#Module-dependency-list" class="headerlink" title="Module dependency list"></a>Module dependency list</h2><p>Kurento模块依赖关系并不是严格的线性关系，所以编译顺序可以有多种组合，以下是其中一种可能的编译顺序：</p>
+<p>Externals：</p>
+<ul>
+<li>gstreamer</li>
+<li>libsrtp</li>
+<li>openh264</li>
+<li>usrsctp</li>
+<li>jsoncpp</li>
+<li>gst-plugins-base</li>
+<li>gst-plugins-good</li>
+<li>gst-plugins-ugly</li>
+<li>gst-plugins-bad</li>
+<li>gst-libav</li>
+<li>openwebrtc-gst-plugins</li>
+<li>libnice</li>
+</ul>
+<p>KMS Main + Extra:</p>
+<ul>
+<li>kurento-module-creator</li>
+<li>kms-cmake-utils</li>
+<li>kms-jsonrpc</li>
+<li>kms-core</li>
+<li>kms-elements</li>
+<li>kms-filters</li>
+<li>kurento-media-server</li>
+<li>kms-chroma</li>
+<li>kms-crowddetector</li>
+<li>kms-datachannelexample</li>
+<li>kms-platedetector</li>
+<li>kms-pointerdetector</li>
+</ul>
+<h1 id="Build"><a href="#Build" class="headerlink" title="Build"></a>Build</h1><p>Note: </p>
+<ol>
+<li>适用于Ubuntu和Centos</li>
+<li>如果在Centos下编译，还需要升级glib，autotools等</li>
+</ol>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line"># KMS源码目录</span><br><span class="line">KMS_HOME=$HOME/kms_source</span><br><span class="line"># KMS编译目录</span><br><span class="line">KMS_BUILD_HOME=$KMS_HOME/build/kms</span><br><span class="line"></span><br><span class="line">CMAKE_MODULES_PATH=$&#123;KMS_BUILD_HOME&#125;/share/cmake-3.5/Modules</span><br><span class="line"></span><br><span class="line"># 导入编译所需的环境变量</span><br><span class="line">export CMAKE_OPTS=&quot;-DCMAKE_INSTALL_LIBDIR=lib -DCMAKE_MODULE_PATH:STRING=$&#123;CMAKE_MODULES_PATH&#125; -DKURENTO_MODULES_DIR:STRING=$&#123;KMS_BUILD_HOME&#125;/share/kurento/modules&quot;</span><br><span class="line">export PKG_CONFIG_PATH=$PKG_CONFIG_PATH:$KMS_BUILD_HOME/lib/pkgconfig</span><br><span class="line">export LIBRARY_PATH=$LIBRARY_PATH:$KMS_BUILD_HOME/lib</span><br><span class="line">export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$KMS_BUILD_HOME/lib</span><br><span class="line">export CPATH=$CPATH:$KMS_BUILD_HOME/include:$KMS_BUILD_HOME/include/gstreamer-1.5</span><br><span class="line">export PATH=$PATH:$KMS_BUILD_HOME/bin</span><br><span class="line">JAVA_CMD=$(which java)</span><br><span class="line"></span><br><span class="line"># 创建所需目录</span><br><span class="line">mkdir -p $&#123;KMS_HOME&#125;</span><br><span class="line">mkdir -p $&#123;KMS_BUILD_HOME&#125;</span><br><span class="line">mkdir -p $&#123;KMS_BUILD_HOME&#125;/bin</span><br><span class="line"></span><br><span class="line"># ---- build externals ----</span><br><span class="line"># gstreamer</span><br><span class="line">cd $&#123;KMS_HOME&#125;</span><br><span class="line">git clone https://github.com/Kurento/gstreamer.git</span><br><span class="line">cd gstreamer</span><br><span class="line">git checkout kms6.6.0</span><br><span class="line">./autogen.sh</span><br><span class="line"># introspection requires python &gt;= 2.7</span><br><span class="line">./configure --enable-introspection=no --prefix=$KMS_BUILD_HOME &amp;&amp; make &amp;&amp; make install</span><br><span class="line">if [ $? -ne 0 ]; then exit -1; fi</span><br><span class="line"></span><br><span class="line"># build openssl</span><br><span class="line">cd $&#123;KMS_HOME&#125;</span><br><span class="line">wget https://www.openssl.org/source/old/1.0.2/openssl-1.0.2g.tar.gz</span><br><span class="line">tar -zxvf openssl-1.0.2g.tar.gz</span><br><span class="line">cd openssl-1.0.2g</span><br><span class="line">./config shared --prefix=$KMS_BUILD_HOME &amp;&amp; make &amp;&amp; make install</span><br><span class="line">if [ $? -ne 0 ]; then exit -1; fi</span><br><span class="line"></span><br><span class="line"># build libsrtp</span><br><span class="line">cd $&#123;KMS_HOME&#125;</span><br><span class="line">git clone https://github.com/Kurento/libsrtp.git</span><br><span class="line">cd libsrtp</span><br><span class="line">git checkout kms6.6.0</span><br><span class="line">./configure --prefix=$KMS_BUILD_HOME &amp;&amp; make &amp;&amp; make install</span><br><span class="line">if [ $? -ne 0 ]; then exit -1; fi</span><br><span class="line"></span><br><span class="line"># build nasm</span><br><span class="line"># required by openh264</span><br><span class="line">cd $&#123;KMS_HOME&#125;</span><br><span class="line">wget https://www.nasm.us/pub/nasm/releasebuilds/2.13.02/nasm-2.13.02.tar.gz</span><br><span class="line">tar -xzvf nasm-2.13.02.tar.gz</span><br><span class="line">cd nasm-2.13.02</span><br><span class="line">./configure --prefix=$KMS_BUILD_HOME &amp;&amp; make &amp;&amp; make install</span><br><span class="line">if [ $? -ne 0 ]; then exit -1; fi</span><br><span class="line"></span><br><span class="line"># build openh264</span><br><span class="line">cd $&#123;KMS_HOME&#125;</span><br><span class="line">git clone https://github.com/cisco/openh264.git</span><br><span class="line">cd openh264</span><br><span class="line">git checkout v1.4.0</span><br><span class="line">make &amp;&amp; make install PREFIX=$KMS_BUILD_HOME</span><br><span class="line">if [ $? -ne 0 ]; then exit -1; fi</span><br><span class="line"></span><br><span class="line"># build usrsctp</span><br><span class="line">cd $&#123;KMS_HOME&#125;</span><br><span class="line">git clone https://github.com/Kurento/usrsctp.git</span><br><span class="line">cd usrsctp</span><br><span class="line">git checkout kms6.6.0</span><br><span class="line">./bootstrap</span><br><span class="line">./configure --prefix=$KMS_BUILD_HOME</span><br><span class="line">make &amp;&amp; make install</span><br><span class="line">if [ $? -ne 0 ]; then exit -1; fi</span><br><span class="line"></span><br><span class="line"># build opus</span><br><span class="line">cd $&#123;KMS_HOME&#125;</span><br><span class="line">wget https://archive.mozilla.org/pub/opus/opus-1.2.1.tar.gz</span><br><span class="line">tar -zxvf opus-1.2.1.tar.gz</span><br><span class="line">cd opus-1.2.1</span><br><span class="line">./configure --prefix=$KMS_BUILD_HOME &amp;&amp; make &amp;&amp; make install</span><br><span class="line">if [ $? -ne 0 ]; then exit -1; fi</span><br><span class="line"></span><br><span class="line"># build orc</span><br><span class="line">cd $&#123;KMS_HOME&#125;</span><br><span class="line">wget https://gstreamer.freedesktop.org/src/orc/orc-0.4.28.tar.xz</span><br><span class="line">tar -Jxvf orc-0.4.28.tar.xz</span><br><span class="line">cd orc-0.4.28</span><br><span class="line">./configure --prefix=$KMS_BUILD_HOME &amp;&amp; make &amp;&amp; make install</span><br><span class="line">if [ $? -ne 0 ]; then exit -1; fi</span><br><span class="line"></span><br><span class="line"># build jsoncpp</span><br><span class="line">cd $&#123;KMS_HOME&#125;</span><br><span class="line">git clone https://github.com/Kurento/jsoncpp.git</span><br><span class="line">cd jsoncpp</span><br><span class="line">git checkout kms6.6.0</span><br><span class="line">mkdir -p build &amp;&amp; cd build</span><br><span class="line">cmake -DCMAKE_INSTALL_PREFIX=$KMS_BUILD_HOME $CMAKE_OPTS ..</span><br><span class="line">make &amp;&amp; make install</span><br><span class="line">if [ $? -ne 0 ]; then exit -1; fi</span><br><span class="line"># 否则编译kms-jsonrpc会报错 fatal error: json/json.h: No such file or directory</span><br><span class="line">sed -i &#x27;s/\/kmsjsoncpp//g&#x27; $KMS_BUILD_HOME/lib/pkgconfig/kmsjsoncpp.pc</span><br><span class="line"></span><br><span class="line"># gst-plugins-base</span><br><span class="line">cd $&#123;KMS_HOME&#125;</span><br><span class="line">git clone https://github.com/Kurento/gst-plugins-base.git</span><br><span class="line">cd gst-plugins-base</span><br><span class="line">git checkout kms6.6.0</span><br><span class="line">./autogen.sh</span><br><span class="line">./configure --enable-introspection=no --prefix=$KMS_BUILD_HOME &amp;&amp; make &amp;&amp; make install</span><br><span class="line">if [ $? -ne 0 ]; then exit -1; fi</span><br><span class="line"></span><br><span class="line"># gst-plugins-good</span><br><span class="line"># for rtp </span><br><span class="line">cd $&#123;KMS_HOME&#125;</span><br><span class="line">git clone https://github.com/Kurento/gst-plugins-good.git</span><br><span class="line">cd gst-plugins-good</span><br><span class="line">git checkout kms6.6.0</span><br><span class="line">./autogen.sh</span><br><span class="line">./configure --enable-introspection=no --prefix=$KMS_BUILD_HOME &amp;&amp; make &amp;&amp; make install</span><br><span class="line">if [ $? -ne 0 ]; then exit -1; fi</span><br><span class="line"></span><br><span class="line"># gst-plugins-ugly</span><br><span class="line">cd $&#123;KMS_HOME&#125;</span><br><span class="line">git clone https://github.com/Kurento/gst-plugins-ugly.git</span><br><span class="line">cd gst-plugins-ugly</span><br><span class="line">git checkout kms6.6.0</span><br><span class="line">./autogen.sh</span><br><span class="line">./configure --enable-introspection=no --prefix=$KMS_BUILD_HOME &amp;&amp; make &amp;&amp; make install</span><br><span class="line">if [ $? -ne 0 ]; then exit -1; fi</span><br><span class="line"></span><br><span class="line"># gst-plugins-bad</span><br><span class="line"># for openh264+libsrtp</span><br><span class="line">cd $&#123;KMS_HOME&#125;</span><br><span class="line">git clone https://github.com/Kurento/gst-plugins-bad.git</span><br><span class="line">cd gst-plugins-bad</span><br><span class="line">git checkout kms6.6.0</span><br><span class="line">./autogen.sh</span><br><span class="line">./configure --enable-introspection=no --prefix=$KMS_BUILD_HOME &amp;&amp; make &amp;&amp; make install</span><br><span class="line">if [ $? -ne 0 ]; then exit -1; fi</span><br><span class="line"></span><br><span class="line"># gst-libav</span><br><span class="line">cd $&#123;KMS_HOME&#125;</span><br><span class="line">git clone https://github.com/Kurento/gst-libav.git</span><br><span class="line">cd gst-libav</span><br><span class="line">git checkout kms6.6.0</span><br><span class="line">./autogen.sh</span><br><span class="line">./configure --enable-introspection=no --prefix=$KMS_BUILD_HOME &amp;&amp; make &amp;&amp; make install</span><br><span class="line">if [ $? -ne 0 ]; then exit -1; fi</span><br><span class="line"></span><br><span class="line"># build openwebrtc-gst-plugins</span><br><span class="line">cd $&#123;KMS_HOME&#125;</span><br><span class="line">git clone https://github.com/Kurento/openwebrtc-gst-plugins.git</span><br><span class="line">cd openwebrtc-gst-plugins</span><br><span class="line">git checkout kms6.6.0</span><br><span class="line">./autogen.sh</span><br><span class="line">./configure --prefix=$KMS_BUILD_HOME &amp;&amp; make &amp;&amp; make install</span><br><span class="line">if [ $? -ne 0 ]; then exit -1; fi</span><br><span class="line"></span><br><span class="line"># build libnice</span><br><span class="line">cd $&#123;KMS_HOME&#125;</span><br><span class="line">git clone https://github.com/Kurento/libnice.git</span><br><span class="line">cd libnice</span><br><span class="line">git checkout kms6.6.1</span><br><span class="line">./autogen.sh</span><br><span class="line">./configure --enable-introspection=no --prefix=$KMS_BUILD_HOME &amp;&amp; make &amp;&amp; make install</span><br><span class="line">if [ $? -ne 0 ]; then exit -1; fi</span><br><span class="line"></span><br><span class="line"># build libevent</span><br><span class="line"># required by kurento-media-server</span><br><span class="line">cd $&#123;KMS_HOME&#125;</span><br><span class="line">wget https://github.com/libevent/libevent/releases/download/release-2.0.22-stable/libevent-2.0.22-stable.tar.gz</span><br><span class="line">tar -xzvf libevent-2.0.22-stable.tar.gz</span><br><span class="line">cd libevent-2.0.22-stable</span><br><span class="line">./configure --prefix=$KMS_BUILD_HOME &amp;&amp; make &amp;&amp; make install</span><br><span class="line">if [ $? -ne 0 ]; then exit -1; fi</span><br><span class="line"></span><br><span class="line"># build boost</span><br><span class="line">cd $&#123;KMS_HOME&#125;</span><br><span class="line"># boost&gt;1.58.0不支持json配置注释</span><br><span class="line">wget &quot;https://sourceforge.net/projects/boost/files/boost/1.58.0/boost_1_58_0.tar.gz/download&quot; -O boost_1_58_0.tar.gz</span><br><span class="line">tar -zxvf boost_1_58_0.tar.gz</span><br><span class="line">cd boost_1_58_0</span><br><span class="line">./bootstrap.sh</span><br><span class="line">./b2 install --prefix=$KMS_BUILD_HOME</span><br><span class="line">#if [ $? -ne 0 ]; then exit -1; fi</span><br><span class="line"></span><br><span class="line"># ---- build kms main ----</span><br><span class="line"># build kms-cmake-utils</span><br><span class="line">cd $&#123;KMS_HOME&#125;</span><br><span class="line">git clone https://github.com/Kurento/kms-cmake-utils.git</span><br><span class="line">cd kms-cmake-utils</span><br><span class="line">git checkout 6.7.0</span><br><span class="line">mkdir -p build &amp;&amp; cd build &amp;&amp; cmake -DCMAKE_INSTALL_PREFIX=$KMS_BUILD_HOME $CMAKE_OPTS .. &amp;&amp; make &amp;&amp; make install</span><br><span class="line">if [ $? -ne 0 ]; then exit -1; fi</span><br><span class="line"></span><br><span class="line"># build kurento-module-creator</span><br><span class="line">cd $&#123;KMS_HOME&#125;</span><br><span class="line">git clone https://github.com/Kurento/kurento-module-creator.git</span><br><span class="line">cd kurento-module-creator</span><br><span class="line">git checkout 6.7.0</span><br><span class="line">mvn package</span><br><span class="line">cp target/classes/FindKurentoModuleCreator.cmake $&#123;CMAKE_MODULES_PATH&#125;</span><br><span class="line">cp target/kurento-module-creator-jar-with-dependencies.jar $&#123;KMS_BUILD_HOME&#125;/bin</span><br><span class="line">cp scripts/kurento-module-creator $&#123;KMS_BUILD_HOME&#125;/bin</span><br><span class="line">sed -i &quot;s|JAVA_CMD=.*|JAVA_CMD=$&#123;JAVA_CMD&#125;|g&quot; $KMS_BUILD_HOME/bin/kurento-module-creator</span><br><span class="line">if [ $? -ne 0 ]; then exit -1; fi</span><br><span class="line"></span><br><span class="line"># build kms-jsonrpc</span><br><span class="line">cd $&#123;KMS_HOME&#125;</span><br><span class="line">git clone https://github.com/Kurento/kms-jsonrpc.git</span><br><span class="line">cd kms-jsonrpc </span><br><span class="line">git checkout 6.7.0</span><br><span class="line">rm -rf build &amp;&amp; mkdir -p build &amp;&amp; cd build</span><br><span class="line">cmake -DCMAKE_INSTALL_PREFIX=$KMS_BUILD_HOME $CMAKE_OPTS ..</span><br><span class="line">make &amp;&amp; make install</span><br><span class="line">if [ $? -ne 0 ]; then exit -1; fi</span><br><span class="line"></span><br><span class="line"># build kms-core</span><br><span class="line">cd $&#123;KMS_HOME&#125;</span><br><span class="line">git clone https://github.com/Kurento/kms-core.git</span><br><span class="line">cd kms-core</span><br><span class="line">git checkout 6.7.1</span><br><span class="line">rm -rf build &amp;&amp; mkdir -p build &amp;&amp; cd build</span><br><span class="line">cmake -DCMAKE_INSTALL_PREFIX=$KMS_BUILD_HOME $CMAKE_OPTS .. &amp;&amp; make &amp;&amp; make install</span><br><span class="line">if [ $? -ne 0 ]; then exit -1; fi</span><br><span class="line"></span><br><span class="line"># build kms-elements</span><br><span class="line">cd $&#123;KMS_HOME&#125;</span><br><span class="line">git clone https://github.com/Kurento/kms-elements.git</span><br><span class="line">cd kms-elements</span><br><span class="line">git checkout 6.7.1</span><br><span class="line">rm -rf build &amp;&amp; mkdir -p build &amp;&amp; cd build</span><br><span class="line">cmake -DCMAKE_INSTALL_PREFIX=$KMS_BUILD_HOME $CMAKE_OPTS .. &amp;&amp; make &amp;&amp; make install</span><br><span class="line">if [ $? -ne 0 ]; then exit -1; fi</span><br><span class="line"></span><br><span class="line"># build kurento-media-server</span><br><span class="line">cd $&#123;KMS_HOME&#125;</span><br><span class="line">git clone https://github.com/Kurento/kurento-media-server.git</span><br><span class="line">cd kurento-media-server </span><br><span class="line">git checkout 6.7.1</span><br><span class="line">rm -rf build &amp;&amp; mkdir -p build &amp;&amp; cd build</span><br><span class="line">cmake -DCMAKE_INSTALL_PREFIX=$KMS_BUILD_HOME $CMAKE_OPTS .. </span><br><span class="line">make &amp;&amp; make install</span><br><span class="line">if [ $? -ne 0 ]; then exit -1; fi</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+
+<h1 id="Run"><a href="#Run" class="headerlink" title="Run"></a>Run</h1><figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">KMS_HOME=$HOME/kms_source</span><br><span class="line">KMS_BUILD_HOME=$KMS_HOME/build/kms</span><br><span class="line">export LD_LIBRARY_PATH=$KMS_BUILD_HOME/lib:$LD_LIBRARY_PATH</span><br><span class="line"></span><br><span class="line">$KMS_BUILD_HOME/bin/kurento-media-server -f $KMS_BUILD_HOME/etc/kurento/kurento.conf.json -c $KMS_BUILD_HOME/etc/kurento/modules/kurento</span><br></pre></td></tr></table></figure>
+<h1 id="Reference"><a href="#Reference" class="headerlink" title="Reference"></a>Reference</h1><ol>
+<li><a href="http://doc-kurento.readthedocs.io/en/stable/dev/dev_guide.html">Kurento Developer Guide</a></li>
+</ol>
+]]></content>
+      <categories>
+        <category>Technology</category>
+      </categories>
+      <tags>
+        <tag>KMS</tag>
+        <tag>Kurento</tag>
+        <tag>WebRTC</tag>
       </tags>
   </entry>
   <entry>
@@ -1486,73 +1486,6 @@ attachments/1114283/amf3_spec_05_05_08.pdf>.
       </tags>
   </entry>
   <entry>
-    <title>Git commit格式参考</title>
-    <url>/2020/03/22/git-commit-guidelines/</url>
-    <content><![CDATA[<h1 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h1><p>编写良好的Commit messages可以达到以下几个重要的目的</p>
-<ul>
-<li>加快review的流程</li>
-<li>帮助我们编写良好的版本发布日志</li>
-<li>让之后的维护者了解代码里出现特定变化和feature被添加的原因</li>
-</ul>
-<p>目前，社区有多种 Commit message 的写法规范。来自Angular 规范是目前使用最广的写法，比较合理和系统化。如下图：<br><img src="http://image.noahsun.top/git_commit_guidelines/angular_commit_example.jpg" alt="angular_commit_example"></p>
-<h1 id="Commit-messages格式"><a href="#Commit-messages格式" class="headerlink" title="Commit messages格式"></a>Commit messages格式</h1><p>当前业界应用的比较广泛的是 <a href="https://github.com/angular/angular.js/blob/master/DEVELOPERS.md#-git-commit-guidelines">Angular Git Commit Guidelines</a></p>
-<p>具体格式为:</p>
-<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">&lt;type&gt;: &lt;subject&gt;</span><br><span class="line">&lt;BLANK LINE&gt;</span><br><span class="line">&lt;body&gt;</span><br><span class="line">&lt;BLANK LINE&gt;</span><br><span class="line">&lt;footer&gt;</span><br></pre></td></tr></table></figure>
-
-<p>每个commit message一般包含header、body和footer，header是必须的，body和footer不做强制要求，所以一般可以简化为</p>
-<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">&lt;type&gt;(&lt;scope&gt;): &lt;subject&gt;</span><br></pre></td></tr></table></figure>
-
-<p>或者省略scope</p>
-<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">&lt;type&gt;: &lt;subject&gt;</span><br></pre></td></tr></table></figure>
-
-<p>说明</p>
-<ul>
-<li>type: 本次 commit 的类型，诸如 bugfix docs style 等</li>
-<li>scope: 本次 commit 波及的范围</li>
-<li>subject: 简明扼要的阐述下本次 commit 的主旨</li>
-<li>body: 同样使用祈使句，在主体内容中我们需要把本次 commit 详细的描述一下，比如此次变更的动机</li>
-<li>footer: 描述下与之关联的 issue 或 break change，详见案例</li>
-</ul>
-<p>例子</p>
-<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">feat(jqLite): add prop() support</span><br><span class="line">fix(ngStyle): correctly remove old style when new style value is invalid</span><br><span class="line">docs(developers): commit message format typo</span><br><span class="line">style(animator): style cleanup</span><br><span class="line">refactor(filter): filters are now injectable and services</span><br><span class="line">perf(*): don&#x27;t trigger digests after enter/leave of structural directives</span><br><span class="line">test(mocks): test mocks with compiled angular</span><br><span class="line">chore(release): preparing release notes for 0.10.3</span><br></pre></td></tr></table></figure>
-
-<h2 id="Type"><a href="#Type" class="headerlink" title="Type"></a>Type</h2><p>类型必须是以下其中一种</p>
-<ul>
-<li>feat: 新功能</li>
-<li>fix: bug fix</li>
-<li>docs: 只改了文档</li>
-<li>style: 代码格式修改，不影响代码的逻辑性，比如空格，格式化，缺失分号等</li>
-<li>refactor: 代码重构，既不是bug fix也不是新功能</li>
-<li>perf: 性能优化</li>
-<li>test: 补充或修改测试代码</li>
-<li>chore: 改变构建流程，或者增加依赖库和工具等，比如增加文档生成工具</li>
-</ul>
-<h2 id="Scope"><a href="#Scope" class="headerlink" title="Scope"></a>Scope</h2><p>范围可以是指定提交更改位置的任何内容，比如search, location, browser, compile等</p>
-<p>你可以使用*来代替多个范围</p>
-<h2 id="Subject"><a href="#Subject" class="headerlink" title="Subject"></a>Subject</h2><p>主题包含对变更的简洁描述，有几个要求</p>
-<ul>
-<li>使用祈使句和现代时，比如使用change而不是changed或者changes</li>
-<li>首字母不要大写</li>
-<li>句末无需使用句号</li>
-</ul>
-<h2 id="Body"><a href="#Body" class="headerlink" title="Body"></a>Body</h2><p>主体与主题一样，应使用祈使句和现代时，应包括改变的动机，并将其与以前的行为进行对比。</p>
-<h2 id="Footer"><a href="#Footer" class="headerlink" title="Footer"></a>Footer</h2><p>描述一些重大的修改和相关的问题，详情参考 <a href="https://docs.google.com/document/d/1QrDFcIiPjSLDn3EL15IJygNPiHORgU1_OOAqWjiDU5Y/edit#heading=h.j8e4paqkfz0q">AngularJS Message footer</a></p>
-<h2 id="Revert"><a href="#Revert" class="headerlink" title="Revert"></a>Revert</h2><p>当回滚提交时，必须以 revert: 作为开头然后紧跟着该提交的header。</p>
-<p>body部分可以这样描述</p>
-<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line"></span><br><span class="line">This reverts commit &lt;hash&gt;.</span><br><span class="line"></span><br></pre></td></tr></table></figure>
-<p>hash是将要被回滚的那个提交的SHA码。</p>
-<h1 id="参考"><a href="#参考" class="headerlink" title="参考"></a>参考</h1><p><a href="https://juejin.im/post/5b4328bbf265da0fa21a6820">您必须知道的 Git 分支开发规范</a><br><a href="https://github.com/angular/angular.js/blob/master/DEVELOPERS.md#-git-commit-guidelines">angular.js-git-commit-guidelines</a><br><a href="https://docs.google.com/document/d/1QrDFcIiPjSLDn3EL15IJygNPiHORgU1_OOAqWjiDU5Y/edit">AngularJS Git Commit Message Conventions</a></p>
-]]></content>
-      <categories>
-        <category>Technology</category>
-      </categories>
-      <tags>
-        <tag>Git Commit</tag>
-        <tag>Git</tag>
-        <tag>Manual</tag>
-      </tags>
-  </entry>
-  <entry>
     <title>ctypes使用指南</title>
     <url>/2017/09/17/ctypes%E4%BD%BF%E7%94%A8%E6%8C%87%E5%8D%97/</url>
     <content><![CDATA[<h1 id="ctypes-简介"><a href="#ctypes-简介" class="headerlink" title="ctypes 简介"></a>ctypes 简介</h1><p>从Python2.5开始引入。<br>ctypes是Python的外部函数库。它提供了C兼容的数据类型，并且允许调用动态链接库&#x2F;共享库中的函数。它可以将这些库包装起来给Python使用。</p>
@@ -1911,6 +1844,171 @@ attachments/1114283/amf3_spec_05_05_08.pdf>.
       </tags>
   </entry>
   <entry>
+    <title>Git commit格式参考</title>
+    <url>/2020/03/22/git-commit-guidelines/</url>
+    <content><![CDATA[<h1 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h1><p>编写良好的Commit messages可以达到以下几个重要的目的</p>
+<ul>
+<li>加快review的流程</li>
+<li>帮助我们编写良好的版本发布日志</li>
+<li>让之后的维护者了解代码里出现特定变化和feature被添加的原因</li>
+</ul>
+<p>目前，社区有多种 Commit message 的写法规范。来自Angular 规范是目前使用最广的写法，比较合理和系统化。如下图：<br><img src="http://image.noahsun.top/git_commit_guidelines/angular_commit_example.jpg" alt="angular_commit_example"></p>
+<h1 id="Commit-messages格式"><a href="#Commit-messages格式" class="headerlink" title="Commit messages格式"></a>Commit messages格式</h1><p>当前业界应用的比较广泛的是 <a href="https://github.com/angular/angular.js/blob/master/DEVELOPERS.md#-git-commit-guidelines">Angular Git Commit Guidelines</a></p>
+<p>具体格式为:</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">&lt;type&gt;: &lt;subject&gt;</span><br><span class="line">&lt;BLANK LINE&gt;</span><br><span class="line">&lt;body&gt;</span><br><span class="line">&lt;BLANK LINE&gt;</span><br><span class="line">&lt;footer&gt;</span><br></pre></td></tr></table></figure>
+
+<p>每个commit message一般包含header、body和footer，header是必须的，body和footer不做强制要求，所以一般可以简化为</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">&lt;type&gt;(&lt;scope&gt;): &lt;subject&gt;</span><br></pre></td></tr></table></figure>
+
+<p>或者省略scope</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">&lt;type&gt;: &lt;subject&gt;</span><br></pre></td></tr></table></figure>
+
+<p>说明</p>
+<ul>
+<li>type: 本次 commit 的类型，诸如 bugfix docs style 等</li>
+<li>scope: 本次 commit 波及的范围</li>
+<li>subject: 简明扼要的阐述下本次 commit 的主旨</li>
+<li>body: 同样使用祈使句，在主体内容中我们需要把本次 commit 详细的描述一下，比如此次变更的动机</li>
+<li>footer: 描述下与之关联的 issue 或 break change，详见案例</li>
+</ul>
+<p>例子</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">feat(jqLite): add prop() support</span><br><span class="line">fix(ngStyle): correctly remove old style when new style value is invalid</span><br><span class="line">docs(developers): commit message format typo</span><br><span class="line">style(animator): style cleanup</span><br><span class="line">refactor(filter): filters are now injectable and services</span><br><span class="line">perf(*): don&#x27;t trigger digests after enter/leave of structural directives</span><br><span class="line">test(mocks): test mocks with compiled angular</span><br><span class="line">chore(release): preparing release notes for 0.10.3</span><br></pre></td></tr></table></figure>
+
+<h2 id="Type"><a href="#Type" class="headerlink" title="Type"></a>Type</h2><p>类型必须是以下其中一种</p>
+<ul>
+<li>feat: 新功能</li>
+<li>fix: bug fix</li>
+<li>docs: 只改了文档</li>
+<li>style: 代码格式修改，不影响代码的逻辑性，比如空格，格式化，缺失分号等</li>
+<li>refactor: 代码重构，既不是bug fix也不是新功能</li>
+<li>perf: 性能优化</li>
+<li>test: 补充或修改测试代码</li>
+<li>chore: 改变构建流程，或者增加依赖库和工具等，比如增加文档生成工具</li>
+</ul>
+<h2 id="Scope"><a href="#Scope" class="headerlink" title="Scope"></a>Scope</h2><p>范围可以是指定提交更改位置的任何内容，比如search, location, browser, compile等</p>
+<p>你可以使用*来代替多个范围</p>
+<h2 id="Subject"><a href="#Subject" class="headerlink" title="Subject"></a>Subject</h2><p>主题包含对变更的简洁描述，有几个要求</p>
+<ul>
+<li>使用祈使句和现代时，比如使用change而不是changed或者changes</li>
+<li>首字母不要大写</li>
+<li>句末无需使用句号</li>
+</ul>
+<h2 id="Body"><a href="#Body" class="headerlink" title="Body"></a>Body</h2><p>主体与主题一样，应使用祈使句和现代时，应包括改变的动机，并将其与以前的行为进行对比。</p>
+<h2 id="Footer"><a href="#Footer" class="headerlink" title="Footer"></a>Footer</h2><p>描述一些重大的修改和相关的问题，详情参考 <a href="https://docs.google.com/document/d/1QrDFcIiPjSLDn3EL15IJygNPiHORgU1_OOAqWjiDU5Y/edit#heading=h.j8e4paqkfz0q">AngularJS Message footer</a></p>
+<h2 id="Revert"><a href="#Revert" class="headerlink" title="Revert"></a>Revert</h2><p>当回滚提交时，必须以 revert: 作为开头然后紧跟着该提交的header。</p>
+<p>body部分可以这样描述</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line"></span><br><span class="line">This reverts commit &lt;hash&gt;.</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+<p>hash是将要被回滚的那个提交的SHA码。</p>
+<h1 id="参考"><a href="#参考" class="headerlink" title="参考"></a>参考</h1><p><a href="https://juejin.im/post/5b4328bbf265da0fa21a6820">您必须知道的 Git 分支开发规范</a><br><a href="https://github.com/angular/angular.js/blob/master/DEVELOPERS.md#-git-commit-guidelines">angular.js-git-commit-guidelines</a><br><a href="https://docs.google.com/document/d/1QrDFcIiPjSLDn3EL15IJygNPiHORgU1_OOAqWjiDU5Y/edit">AngularJS Git Commit Message Conventions</a></p>
+]]></content>
+      <categories>
+        <category>Technology</category>
+      </categories>
+      <tags>
+        <tag>Git Commit</tag>
+        <tag>Git</tag>
+        <tag>Manual</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>Hello World</title>
+    <url>/2017/06/18/hello-world/</url>
+    <content><![CDATA[<p>Welcome to <a href="https://hexo.io/">Hexo</a>! This is your very first post. Check <a href="https://hexo.io/docs/">documentation</a> for more info. If you get any problems when using Hexo, you can find the answer in <a href="https://hexo.io/docs/troubleshooting.html">troubleshooting</a> or you can ask me on <a href="https://github.com/hexojs/hexo/issues">GitHub</a>.</p>
+<h2 id="Quick-Start"><a href="#Quick-Start" class="headerlink" title="Quick Start"></a>Quick Start</h2><h3 id="Create-a-new-post"><a href="#Create-a-new-post" class="headerlink" title="Create a new post"></a>Create a new post</h3><figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">$ hexo new <span class="string">&quot;My New Post&quot;</span></span><br></pre></td></tr></table></figure>
+
+<p>More info: <a href="https://hexo.io/docs/writing.html">Writing</a></p>
+<h3 id="Run-server"><a href="#Run-server" class="headerlink" title="Run server"></a>Run server</h3><figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">$ hexo server</span><br></pre></td></tr></table></figure>
+
+<p>More info: <a href="https://hexo.io/docs/server.html">Server</a></p>
+<h3 id="Generate-static-files"><a href="#Generate-static-files" class="headerlink" title="Generate static files"></a>Generate static files</h3><figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">$ hexo generate</span><br></pre></td></tr></table></figure>
+
+<p>More info: <a href="https://hexo.io/docs/generating.html">Generating</a></p>
+<h3 id="Deploy-to-remote-sites"><a href="#Deploy-to-remote-sites" class="headerlink" title="Deploy to remote sites"></a>Deploy to remote sites</h3><figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">$ hexo deploy</span><br></pre></td></tr></table></figure>
+
+<p>More info: <a href="https://hexo.io/docs/deployment.html">Deployment</a></p>
+]]></content>
+      <categories>
+        <category>Technology</category>
+      </categories>
+      <tags>
+        <tag>Blog</tag>
+        <tag>Hello World</tag>
+        <tag>hexo</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>推荐的学习资源</title>
+    <url>/2019/12/01/recommended-study-resources/</url>
+    <content><![CDATA[<h1 id="推荐的学习资源列表"><a href="#推荐的学习资源列表" class="headerlink" title="推荐的学习资源列表"></a>推荐的学习资源列表</h1><h2 id="Golang语言"><a href="#Golang语言" class="headerlink" title="Golang语言"></a>Golang语言</h2><p><a href="https://github.com/Unknwon/the-way-to-go_ZH_CN/blob/master/eBook/directory.md">the-way-to-go</a> (recommend)<br><a href="https://golang.org/doc/">golang.org</a> (official)  </p>
+<h2 id="数据库"><a href="#数据库" class="headerlink" title="数据库"></a>数据库</h2><h3 id="Mongodb"><a href="#Mongodb" class="headerlink" title="Mongodb"></a>Mongodb</h3><p><a href="https://www.runoob.com/mongodb/mongodb-tutorial.html">mongodb-tutorial</a> (recommend)<br><a href="https://docs.mongodb.com/manual/">docs.mongodb.com</a> (official)  </p>
+<h3 id="Redis"><a href="#Redis" class="headerlink" title="Redis"></a>Redis</h3><p><a href="https://www.runoob.com/redis/redis-tutorial.html">redis-tutorial</a> (recommend)<br><a href="http://redisdoc.com/index.html">redisdoc</a><br><a href="https://redis.io/documentation">redis.io</a>  (official)  </p>
+<h3 id="SQL"><a href="#SQL" class="headerlink" title="SQL"></a>SQL</h3><p><a href="https://www.runoob.com/sql/sql-tutorial.html">sql-tutorial</a><br><a href="https://www.runoob.com/mysql/mysql-tutorial.html">mysql-tutorial</a><br><a href="https://dev.mysql.com/doc/">dev.mysql.com</a> (official)  </p>
+<h3 id="Nginx"><a href="#Nginx" class="headerlink" title="Nginx"></a>Nginx</h3><p><a href="http://nginx.org/en/docs/">nginx.org</a> (official)<br><a href="https://www.runoob.com/w3cnote/nginx-setup-intro.html">Nginx 配置详解</a><br><a href="https://www.runoob.com/w3cnote/nginx-proxy-balancing.html">Nginx 反向代理与负载均衡详解</a><br><a href="https://moonbingbing.gitbooks.io/openresty-best-practices/ngx/nginx.html">OpenResty最佳实践-Nginx</a><br><a href="http://tengine.taobao.org/book/index.html">Nginx开发从入门到精通</a>  </p>
+]]></content>
+      <categories>
+        <category>Technology</category>
+      </categories>
+      <tags>
+        <tag>Study</tag>
+        <tag>Resource</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>Git开发规范参考</title>
+    <url>/2020/03/22/one-git-flow/</url>
+    <content><![CDATA[<h1 id="分支管理"><a href="#分支管理" class="headerlink" title="分支管理"></a>分支管理</h1><p>git 的分支管理功能非常强大，为了提高效率、避免分支混乱，我们参考git flow的开发流程规范或者可以直接使用git flow工具。</p>
+<h2 id="分支构成"><a href="#分支构成" class="headerlink" title="分支构成"></a>分支构成</h2><h3 id="主要分支"><a href="#主要分支" class="headerlink" title="主要分支"></a>主要分支</h3><p>master分支：永远处在即将发布（production-ready）状态；<br>develop分支：为开发分支，始终保持最新完成以及bug修复后的代码。</p>
+<h3 id="辅助分支"><a href="#辅助分支" class="headerlink" title="辅助分支"></a>辅助分支</h3><p>feature分支：开发新功能的分支，基于develop，开发完成后merge回develop；<br>release分支：准备要发布版本的分支（测试环境用的），用来修复SIT（System Integration Testing） bug；基于develop分支，完成后merge回develop和master分支；<br>hotfix分支：修复线上（master）紧急bug，等不及release分支就必须马上上线；基于master分支，完成后merge回master和develop分支。   </p>
+<p>命名规范约定如下：</p>
+<ul>
+<li>feature分支命名：feature&#x2F;name</li>
+<li>release分支命名：release&#x2F;name</li>
+<li>hotfix分支命名：hotfix&#x2F;name</li>
+</ul>
+<h2 id="常见的开发流程"><a href="#常见的开发流程" class="headerlink" title="常见的开发流程"></a>常见的开发流程</h2><h3 id="增加新功能"><a href="#增加新功能" class="headerlink" title="增加新功能"></a>增加新功能</h3><figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">(develop)$: git checkout -b feature/xxx            # 从develop建立功能分支</span><br><span class="line">(feature/xxx)$: blabla                             # 开发</span><br><span class="line">(feature/xxx)$: git add xxx</span><br><span class="line">(feature/xxx)$: git commit -m &#x27;commit comment&#x27;</span><br><span class="line">(develop)$: git merge feature/xxx --no-ff          # 把功能分支合并到develop</span><br></pre></td></tr></table></figure>
+
+<h3 id="修复紧急bug"><a href="#修复紧急bug" class="headerlink" title="修复紧急bug"></a>修复紧急bug</h3><figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">(master)$: git checkout -b hotfix/xxx         # 从master建立hotfix分支</span><br><span class="line">(hotfix/xxx)$: blabla                         # 开发</span><br><span class="line">(hotfix/xxx)$: git add xxx</span><br><span class="line">(hotfix/xxx)$: git commit -m &#x27;commit comment&#x27;</span><br><span class="line">(master)$: git merge hotfix/xxx --no-ff       # 把hotfix分支合并到master，并上线到生产环境；注意，非管理员请用Merge Request；</span><br><span class="line">(develop)$: git merge hotfix/xxx --no-ff      # 把hotfix分支合并到develop，同步代码</span><br></pre></td></tr></table></figure>
+
+<h3 id="测试环境发布测试"><a href="#测试环境发布测试" class="headerlink" title="测试环境发布测试"></a>测试环境发布测试</h3><figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">(develop)$: git checkout -b release/x.y.z           # 从develop建立预发布分支</span><br><span class="line">(release/x.y.z)$: blabla                            # 开发或者从其他feature分支合并代码</span><br><span class="line">(release/x.y.z)$: git merge develop --no-ff         # 把develop分支合并到release/x.y.z，然后在测试环境拉取并测试</span><br></pre></td></tr></table></figure>
+
+<h3 id="生产环境上线"><a href="#生产环境上线" class="headerlink" title="生产环境上线"></a>生产环境上线</h3><figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">(master)$: git merge release/x.y.z --no-ff          # 把release/x.y.z或者develop测试好的代码合并到master</span><br><span class="line">(master)$: git tag -a 0.1.0 -m &#x27;xxx&#x27;                # 给版本命名，打Tag</span><br></pre></td></tr></table></figure>
+<p>注意：这一步由master管理员做，普通开发人员合并代码请用Merge Request。</p>
+<h1 id="Tag管理"><a href="#Tag管理" class="headerlink" title="Tag管理"></a>Tag管理</h1><h2 id="Tag生成时间"><a href="#Tag生成时间" class="headerlink" title="Tag生成时间"></a>Tag生成时间</h2><p>master分支每次发布时，必须打tag。</p>
+<h2 id="Tag命名规范"><a href="#Tag命名规范" class="headerlink" title="Tag命名规范"></a>Tag命名规范</h2><p>版本格式：主版本号.次版本号.修订号，如：1.0.1。</p>
+<p>版本号递增规则如下：</p>
+<ul>
+<li>主版本号：当你做了不兼容的 API 修改；项目架构发生巨大变化；</li>
+<li>次版本号：当你做了向下兼容的功能性新增；</li>
+<li>修订号：当你做了向下兼容的问题修正；小的修改，如代码格式修正等。</li>
+</ul>
+<h1 id="参考"><a href="#参考" class="headerlink" title="参考"></a>参考</h1><p><a href="https://juejin.im/post/5b4328bbf265da0fa21a6820">您必须知道的 Git 分支开发规范</a><br><a href="https://albertlin1102.gitbooks.io/sc_git_guide/0-%E5%88%86%E6%94%AF%E7%AE%A1%E7%90%86%E8%A7%84%E8%8C%83.html">分支管理规范</a><br><a href="https://juejin.im/post/5aa7e8a6f265da239f070d82">git分支管理和工作流规范：具体规范</a></p>
+]]></content>
+      <categories>
+        <category>Technology</category>
+      </categories>
+      <tags>
+        <tag>Git</tag>
+        <tag>Manual</tag>
+        <tag>GitFlow</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>golang学习资料</title>
+    <url>/2018/10/27/golang%E5%AD%A6%E4%B9%A0%E8%B5%84%E6%96%99/</url>
+    <content><![CDATA[<h1 id="基础"><a href="#基础" class="headerlink" title="基础"></a>基础</h1><p><a href="https://golang.org/doc/">golang.org</a><br><a href="https://github.com/Unknwon/the-way-to-go_ZH_CN/blob/master/eBook/directory.md">the-way-to-go</a><br><a href="https://docs.hacknode.org/gopl-zh/index.html">Go语言圣经</a></p>
+<h1 id="规范与习惯"><a href="#规范与习惯" class="headerlink" title="规范与习惯"></a>规范与习惯</h1><p><a href="https://github.com/golang-standards/project-layout">project-layout</a><br><a href="https://github.com/golang/go/wiki/CodeReviewComments">CodeReviewComments</a><br><a href="https://golang.org/doc/effective_go.html">Effective Go</a><br><a href="https://www.kancloud.cn/kancloud/effective/72199">Effective Go中文版</a></p>
+<h1 id="API"><a href="#API" class="headerlink" title="API"></a>API</h1><p><a href="https://golang.org/pkg/">Go Packages</a><br><a href="https://cloud.tencent.com/developer/doc/1101">Tencent developer doc for Go</a></p>
+<h1 id="资源"><a href="#资源" class="headerlink" title="资源"></a>资源</h1><p><a href="https://github.com/golang/go/wiki/Projects">Go Projects</a><br><a href="https://github.com/Unknwon/go-study-index">go-study-index</a></p>
+]]></content>
+      <categories>
+        <category>Technology</category>
+      </categories>
+      <tags>
+        <tag>programing</tag>
+        <tag>golang</tag>
+      </tags>
+  </entry>
+  <entry>
     <title>golang 调试分析方法</title>
     <url>/2022/04/10/golang-debug-and-profile/</url>
     <content><![CDATA[<h1 id="断点调试"><a href="#断点调试" class="headerlink" title="断点调试"></a>断点调试</h1><h2 id="Visual-Studio-Code"><a href="#Visual-Studio-Code" class="headerlink" title="Visual Studio Code"></a>Visual Studio Code</h2><h3 id="创建配置"><a href="#创建配置" class="headerlink" title="创建配置"></a>创建配置</h3><p>VSCode IDE要运行或者调试golang程序之前，需要创建运行配置 launch.json ，方法如下：<br><img src="http://image.noahsun.top/golang_debug_and_profile/vscode_config_add.png" alt="vscode_config_add"></p>
@@ -2037,223 +2135,36 @@ attachments/1114283/amf3_spec_05_05_08.pdf>.
       </tags>
   </entry>
   <entry>
-    <title>golang学习资料</title>
-    <url>/2018/10/27/golang%E5%AD%A6%E4%B9%A0%E8%B5%84%E6%96%99/</url>
-    <content><![CDATA[<h1 id="基础"><a href="#基础" class="headerlink" title="基础"></a>基础</h1><p><a href="https://golang.org/doc/">golang.org</a><br><a href="https://github.com/Unknwon/the-way-to-go_ZH_CN/blob/master/eBook/directory.md">the-way-to-go</a><br><a href="https://docs.hacknode.org/gopl-zh/index.html">Go语言圣经</a></p>
-<h1 id="规范与习惯"><a href="#规范与习惯" class="headerlink" title="规范与习惯"></a>规范与习惯</h1><p><a href="https://github.com/golang-standards/project-layout">project-layout</a><br><a href="https://github.com/golang/go/wiki/CodeReviewComments">CodeReviewComments</a><br><a href="https://golang.org/doc/effective_go.html">Effective Go</a><br><a href="https://www.kancloud.cn/kancloud/effective/72199">Effective Go中文版</a></p>
-<h1 id="API"><a href="#API" class="headerlink" title="API"></a>API</h1><p><a href="https://golang.org/pkg/">Go Packages</a><br><a href="https://cloud.tencent.com/developer/doc/1101">Tencent developer doc for Go</a></p>
-<h1 id="资源"><a href="#资源" class="headerlink" title="资源"></a>资源</h1><p><a href="https://github.com/golang/go/wiki/Projects">Go Projects</a><br><a href="https://github.com/Unknwon/go-study-index">go-study-index</a></p>
-]]></content>
-      <categories>
-        <category>Technology</category>
-      </categories>
-      <tags>
-        <tag>programing</tag>
-        <tag>golang</tag>
-      </tags>
-  </entry>
-  <entry>
-    <title>Hello World</title>
-    <url>/2017/06/18/hello-world/</url>
-    <content><![CDATA[<p>Welcome to <a href="https://hexo.io/">Hexo</a>! This is your very first post. Check <a href="https://hexo.io/docs/">documentation</a> for more info. If you get any problems when using Hexo, you can find the answer in <a href="https://hexo.io/docs/troubleshooting.html">troubleshooting</a> or you can ask me on <a href="https://github.com/hexojs/hexo/issues">GitHub</a>.</p>
-<h2 id="Quick-Start"><a href="#Quick-Start" class="headerlink" title="Quick Start"></a>Quick Start</h2><h3 id="Create-a-new-post"><a href="#Create-a-new-post" class="headerlink" title="Create a new post"></a>Create a new post</h3><figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">$ hexo new <span class="string">&quot;My New Post&quot;</span></span><br></pre></td></tr></table></figure>
-
-<p>More info: <a href="https://hexo.io/docs/writing.html">Writing</a></p>
-<h3 id="Run-server"><a href="#Run-server" class="headerlink" title="Run server"></a>Run server</h3><figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">$ hexo server</span><br></pre></td></tr></table></figure>
-
-<p>More info: <a href="https://hexo.io/docs/server.html">Server</a></p>
-<h3 id="Generate-static-files"><a href="#Generate-static-files" class="headerlink" title="Generate static files"></a>Generate static files</h3><figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">$ hexo generate</span><br></pre></td></tr></table></figure>
-
-<p>More info: <a href="https://hexo.io/docs/generating.html">Generating</a></p>
-<h3 id="Deploy-to-remote-sites"><a href="#Deploy-to-remote-sites" class="headerlink" title="Deploy to remote sites"></a>Deploy to remote sites</h3><figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">$ hexo deploy</span><br></pre></td></tr></table></figure>
-
-<p>More info: <a href="https://hexo.io/docs/deployment.html">Deployment</a></p>
-]]></content>
-      <categories>
-        <category>Technology</category>
-      </categories>
-      <tags>
-        <tag>Blog</tag>
-        <tag>Hello World</tag>
-        <tag>hexo</tag>
-      </tags>
-  </entry>
-  <entry>
-    <title>Git开发规范参考</title>
-    <url>/2020/03/22/one-git-flow/</url>
-    <content><![CDATA[<h1 id="分支管理"><a href="#分支管理" class="headerlink" title="分支管理"></a>分支管理</h1><p>git 的分支管理功能非常强大，为了提高效率、避免分支混乱，我们参考git flow的开发流程规范或者可以直接使用git flow工具。</p>
-<h2 id="分支构成"><a href="#分支构成" class="headerlink" title="分支构成"></a>分支构成</h2><h3 id="主要分支"><a href="#主要分支" class="headerlink" title="主要分支"></a>主要分支</h3><p>master分支：永远处在即将发布（production-ready）状态；<br>develop分支：为开发分支，始终保持最新完成以及bug修复后的代码。</p>
-<h3 id="辅助分支"><a href="#辅助分支" class="headerlink" title="辅助分支"></a>辅助分支</h3><p>feature分支：开发新功能的分支，基于develop，开发完成后merge回develop；<br>release分支：准备要发布版本的分支（测试环境用的），用来修复SIT（System Integration Testing） bug；基于develop分支，完成后merge回develop和master分支；<br>hotfix分支：修复线上（master）紧急bug，等不及release分支就必须马上上线；基于master分支，完成后merge回master和develop分支。   </p>
-<p>命名规范约定如下：</p>
+    <title>如何搭建个人私有云盘</title>
+    <url>/2019/01/06/%E5%A6%82%E4%BD%95%E6%90%AD%E5%BB%BA%E4%B8%AA%E4%BA%BA%E7%A7%81%E6%9C%89%E4%BA%91%E7%9B%98/</url>
+    <content><![CDATA[<h1 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h1><p>市场上有很多云盘的产品，比如百度云盘，不过本教程主要目的是要搭建个人私有云盘。查了网上很多资料，个人云盘也有很多，比如nextcloud，owncloud，seafile等。这里选择nextcloud，优势就不用说了，网上一搜一大把。</p>
+<h1 id="Nextcloud搭建办法"><a href="#Nextcloud搭建办法" class="headerlink" title="Nextcloud搭建办法"></a>Nextcloud搭建办法</h1><p>主要的搭建办法有两个：</p>
 <ul>
-<li>feature分支命名：feature&#x2F;name</li>
-<li>release分支命名：release&#x2F;name</li>
-<li>hotfix分支命名：hotfix&#x2F;name</li>
+<li>通过VPS一键安装</li>
+<li>手动安装</li>
 </ul>
-<h2 id="常见的开发流程"><a href="#常见的开发流程" class="headerlink" title="常见的开发流程"></a>常见的开发流程</h2><h3 id="增加新功能"><a href="#增加新功能" class="headerlink" title="增加新功能"></a>增加新功能</h3><figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">(develop)$: git checkout -b feature/xxx            # 从develop建立功能分支</span><br><span class="line">(feature/xxx)$: blabla                             # 开发</span><br><span class="line">(feature/xxx)$: git add xxx</span><br><span class="line">(feature/xxx)$: git commit -m &#x27;commit comment&#x27;</span><br><span class="line">(develop)$: git merge feature/xxx --no-ff          # 把功能分支合并到develop</span><br></pre></td></tr></table></figure>
-
-<h3 id="修复紧急bug"><a href="#修复紧急bug" class="headerlink" title="修复紧急bug"></a>修复紧急bug</h3><figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">(master)$: git checkout -b hotfix/xxx         # 从master建立hotfix分支</span><br><span class="line">(hotfix/xxx)$: blabla                         # 开发</span><br><span class="line">(hotfix/xxx)$: git add xxx</span><br><span class="line">(hotfix/xxx)$: git commit -m &#x27;commit comment&#x27;</span><br><span class="line">(master)$: git merge hotfix/xxx --no-ff       # 把hotfix分支合并到master，并上线到生产环境；注意，非管理员请用Merge Request；</span><br><span class="line">(develop)$: git merge hotfix/xxx --no-ff      # 把hotfix分支合并到develop，同步代码</span><br></pre></td></tr></table></figure>
-
-<h3 id="测试环境发布测试"><a href="#测试环境发布测试" class="headerlink" title="测试环境发布测试"></a>测试环境发布测试</h3><figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">(develop)$: git checkout -b release/x.y.z           # 从develop建立预发布分支</span><br><span class="line">(release/x.y.z)$: blabla                            # 开发或者从其他feature分支合并代码</span><br><span class="line">(release/x.y.z)$: git merge develop --no-ff         # 把develop分支合并到release/x.y.z，然后在测试环境拉取并测试</span><br></pre></td></tr></table></figure>
-
-<h3 id="生产环境上线"><a href="#生产环境上线" class="headerlink" title="生产环境上线"></a>生产环境上线</h3><figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">(master)$: git merge release/x.y.z --no-ff          # 把release/x.y.z或者develop测试好的代码合并到master</span><br><span class="line">(master)$: git tag -a 0.1.0 -m &#x27;xxx&#x27;                # 给版本命名，打Tag</span><br></pre></td></tr></table></figure>
-<p>注意：这一步由master管理员做，普通开发人员合并代码请用Merge Request。</p>
-<h1 id="Tag管理"><a href="#Tag管理" class="headerlink" title="Tag管理"></a>Tag管理</h1><h2 id="Tag生成时间"><a href="#Tag生成时间" class="headerlink" title="Tag生成时间"></a>Tag生成时间</h2><p>master分支每次发布时，必须打tag。</p>
-<h2 id="Tag命名规范"><a href="#Tag命名规范" class="headerlink" title="Tag命名规范"></a>Tag命名规范</h2><p>版本格式：主版本号.次版本号.修订号，如：1.0.1。</p>
-<p>版本号递增规则如下：</p>
+<h2 id="通过VPS一键安装"><a href="#通过VPS一键安装" class="headerlink" title="通过VPS一键安装"></a>通过VPS一键安装</h2><p><a href="https://www.vultr.com/?ref=8443595-6G">Vultr</a>有一键安装Nextcloud的功能，非常方便。<br>主要步骤如下：</p>
 <ul>
-<li>主版本号：当你做了不兼容的 API 修改；项目架构发生巨大变化；</li>
-<li>次版本号：当你做了向下兼容的功能性新增；</li>
-<li>修订号：当你做了向下兼容的问题修正；小的修改，如代码格式修正等。</li>
+<li>注册vps</li>
+<li>创建vps实例</li>
+<li>Server Location -&gt; 选择一个好的机房，比如洛杉矶，日本和新加坡等。</li>
+<li>Server Type -&gt; 选Application，选中Nextcloud</li>
+<li>Server Size -&gt; 根据自己需要选择</li>
+<li>剩下的配置使用默认即可</li>
 </ul>
-<h1 id="参考"><a href="#参考" class="headerlink" title="参考"></a>参考</h1><p><a href="https://juejin.im/post/5b4328bbf265da0fa21a6820">您必须知道的 Git 分支开发规范</a><br><a href="https://albertlin1102.gitbooks.io/sc_git_guide/0-%E5%88%86%E6%94%AF%E7%AE%A1%E7%90%86%E8%A7%84%E8%8C%83.html">分支管理规范</a><br><a href="https://juejin.im/post/5aa7e8a6f265da239f070d82">git分支管理和工作流规范：具体规范</a></p>
+<p>首先，登陆<a href="https://www.vultr.com/?ref=8443595-6G">Vultr官网</a>，点击Create Account注册。<br>选择一个好的机房，当然是自己测过才放心。这里推荐使用<a href="http://www.nirsoft.net/utils/pinginfoview.zip">PingInfoView</a>来测试。以下是vultr的机房：<br><img src="http://image.noahsun.top/vps/vultr_area.jpeg" alt="vultr_area"></p>
+<p>列表如下，贴到PingInfoView上即可。</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">sgp-ping.vultr.com</span><br><span class="line">hnd-jp-ping.vultr.com</span><br><span class="line">syd-au-ping.vultr.com</span><br><span class="line">fra-de-ping.vultr.com</span><br><span class="line">ams-nl-ping.vultr.com</span><br><span class="line">lon-gb-ping.vultr.com</span><br><span class="line">par-fr-ping.vultr.com</span><br><span class="line">wa-us-ping.vultr.com</span><br><span class="line">sjo-ca-us-ping.vultr.com</span><br><span class="line">lax-ca-us-ping.vultr.com</span><br><span class="line">il-us-ping.vultr.com</span><br><span class="line">nj-us-ping.vultr.com</span><br><span class="line">tx-us-ping.vultr.com</span><br><span class="line">ga-us-ping.vultr.com</span><br><span class="line">fl-us-ping.vultr.com</span><br></pre></td></tr></table></figure>
+<p>linux&#x2F;mac用户可以使用我写的脚本<a href="https://github.com/rukesun/vultr_test.git">vultr_test</a>来测试。<br>以下是我的测试结果：<br><img src="http://image.noahsun.top/vps/my_ping_test.png"><br>选择的原则是，ping值最小，丢包率最小。比如我的测试结果中，较不错的是sjo、wa和lax，都是美国机房。</p>
+<p>接下来Server Type选Application，选中Nextcloud，如下所示<br><img src="http://image.noahsun.top/nextcloud/vultr_nextcloud_app.jpg" alt="nextcloud_app"><br>根据自己的需要选择Server Size，剩下的配置使用默认即可。<br>点击Deploy Now，然后静静地等待1~2分钟。<br>部署完成后，查看实例详情，可以看到Nextcloud的地址，登陆账号和密码。<br><img src="http://image.noahsun.top/nextcloud/vultr_nextcloud_info.jpg" alt="nextcloud_info"><br>打开你的Nextcloud地址，会提示不安全，这个是ssl证书问题，你可以直接忽略。<br>下面是打开后的界面<br><img src="http://image.noahsun.top/nextcloud/nextcloud_login.jpg" alt="nextcloud_login"><br>怎么样，是不是很期待？<br>输入账号和密码，点击登录，网盘就可以使用了<br><img src="http://image.noahsun.top/nextcloud/nextcloud_main.jpg" alt="nextcloud_main"><br>可以传视频，文档，可以自定义目录，更多的功能等待你去探索！好了，是不是有点小激动？麻麻再也不用担心我的小电影没地方放了。</p>
+<hr>
 ]]></content>
       <categories>
-        <category>Technology</category>
+        <category>Tools</category>
       </categories>
       <tags>
-        <tag>Git</tag>
-        <tag>Manual</tag>
-        <tag>GitFlow</tag>
-      </tags>
-  </entry>
-  <entry>
-    <title>推荐的学习资源</title>
-    <url>/2019/12/01/recommended-study-resources/</url>
-    <content><![CDATA[<h1 id="推荐的学习资源列表"><a href="#推荐的学习资源列表" class="headerlink" title="推荐的学习资源列表"></a>推荐的学习资源列表</h1><h2 id="Golang语言"><a href="#Golang语言" class="headerlink" title="Golang语言"></a>Golang语言</h2><p><a href="https://github.com/Unknwon/the-way-to-go_ZH_CN/blob/master/eBook/directory.md">the-way-to-go</a> (recommend)<br><a href="https://golang.org/doc/">golang.org</a> (official)  </p>
-<h2 id="数据库"><a href="#数据库" class="headerlink" title="数据库"></a>数据库</h2><h3 id="Mongodb"><a href="#Mongodb" class="headerlink" title="Mongodb"></a>Mongodb</h3><p><a href="https://www.runoob.com/mongodb/mongodb-tutorial.html">mongodb-tutorial</a> (recommend)<br><a href="https://docs.mongodb.com/manual/">docs.mongodb.com</a> (official)  </p>
-<h3 id="Redis"><a href="#Redis" class="headerlink" title="Redis"></a>Redis</h3><p><a href="https://www.runoob.com/redis/redis-tutorial.html">redis-tutorial</a> (recommend)<br><a href="http://redisdoc.com/index.html">redisdoc</a><br><a href="https://redis.io/documentation">redis.io</a>  (official)  </p>
-<h3 id="SQL"><a href="#SQL" class="headerlink" title="SQL"></a>SQL</h3><p><a href="https://www.runoob.com/sql/sql-tutorial.html">sql-tutorial</a><br><a href="https://www.runoob.com/mysql/mysql-tutorial.html">mysql-tutorial</a><br><a href="https://dev.mysql.com/doc/">dev.mysql.com</a> (official)  </p>
-<h3 id="Nginx"><a href="#Nginx" class="headerlink" title="Nginx"></a>Nginx</h3><p><a href="http://nginx.org/en/docs/">nginx.org</a> (official)<br><a href="https://www.runoob.com/w3cnote/nginx-setup-intro.html">Nginx 配置详解</a><br><a href="https://www.runoob.com/w3cnote/nginx-proxy-balancing.html">Nginx 反向代理与负载均衡详解</a><br><a href="https://moonbingbing.gitbooks.io/openresty-best-practices/ngx/nginx.html">OpenResty最佳实践-Nginx</a><br><a href="http://tengine.taobao.org/book/index.html">Nginx开发从入门到精通</a>  </p>
-]]></content>
-      <categories>
-        <category>Technology</category>
-      </categories>
-      <tags>
-        <tag>Study</tag>
-        <tag>Resource</tag>
-      </tags>
-  </entry>
-  <entry>
-    <title>TensorFlow安装教程</title>
-    <url>/2020/03/01/tensorflow-install/</url>
-    <content><![CDATA[<h1 id="TensorFlow-安装环境要求"><a href="#TensorFlow-安装环境要求" class="headerlink" title="TensorFlow 安装环境要求"></a>TensorFlow 安装环境要求</h1><p>TensorFlow在以下64位系统环境下经过测试和支持</p>
-<ul>
-<li>Python 3.5–3.7</li>
-<li>macOS 10.12.6 (Sierra) or later (no GPU support)</li>
-<li>Ubuntu 16.04 or later</li>
-<li>Raspbian 9.0 or later</li>
-<li>Windows 7 or later</li>
-</ul>
-<h1 id="在mac-OS上安装"><a href="#在mac-OS上安装" class="headerlink" title="在mac OS上安装"></a>在mac OS上安装</h1><p>在mac OS上通常有两种安装方法virtualenv+pip和docker。</p>
-<h2 id="通过virtualenv-pip"><a href="#通过virtualenv-pip" class="headerlink" title="通过virtualenv + pip"></a>通过virtualenv + pip</h2><p>Python 3 要求  </p>
-<blockquote>
-<p>Python 3.5–3.7<br>pip &gt;&#x3D; 19.0</p>
-</blockquote>
-<p>Python 2.7 要求</p>
-<blockquote>
-<p>Python &#x3D;&#x3D; 2.7<br>pip &gt;&#x3D; 19.0</p>
-</blockquote>
-<h3 id="安装Pthon开发环境"><a href="#安装Pthon开发环境" class="headerlink" title="安装Pthon开发环境"></a>安装Pthon开发环境</h3><p>这里以Python 3 为例，如果你没有安装<a href="https://www.python.org/">Python</a>，<a href="https://pip.pypa.io/en/stable/installing/">pip</a>和<a href="https://virtualenv.pypa.io/en/stable/">Virtualenv</a>，请参考下面的方法，否则跳过这一步</p>
-<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">/usr/bin/ruby -e &quot;$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install)&quot;</span><br><span class="line">export PATH=&quot;/usr/local/bin:/usr/local/sbin:$PATH&quot;</span><br><span class="line">brew update</span><br><span class="line">brew install python  # Python 3</span><br><span class="line">sudo pip3 install -U virtualenv  # system-wide install</span><br></pre></td></tr></table></figure>
-
-<h3 id="创建一个Virtualenv"><a href="#创建一个Virtualenv" class="headerlink" title="创建一个Virtualenv"></a>创建一个Virtualenv</h3><p>Virtualenv 可以做到与其他 Python 开发隔离的虚拟环境。下面是在 .&#x2F;py3x 目录下创建一个Python 3 的虚拟环境  </p>
-<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">virtualenv --system-site-packages -p python3 ./py3x</span><br></pre></td></tr></table></figure>
-
-<p>激活虚拟环境  </p>
-<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">source ./py3x/bin/activate  # sh, bash, ksh, or zsh</span><br></pre></td></tr></table></figure>
-
-<p>在虚拟环境中升级pip  </p>
-<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">pip install --upgrade pip</span><br></pre></td></tr></table></figure>
-
-<p>如果不想使用虚拟环境，可以使用下面的命令退出  </p>
-<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">deactivate  # don&#x27;t exit until you&#x27;re done using TensorFlow</span><br></pre></td></tr></table></figure>
-
-<h3 id="通过pip安装TensorFlow"><a href="#通过pip安装TensorFlow" class="headerlink" title="通过pip安装TensorFlow"></a>通过pip安装TensorFlow</h3><p>pip有下面三种不同的TensorFlow包：</p>
-<ul>
-<li>tensorflow：最新稳定发布版</li>
-<li>tf-nightly：预览版，可能不稳定</li>
-<li>tensorflow&#x3D;&#x3D;1.15：TensorFlow 1.x 的最后一个版本</li>
-</ul>
-<p>安装示例  </p>
-<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">pip install --upgrade tensorflow</span><br></pre></td></tr></table></figure>
-
-<p>校验是否安装成功  </p>
-<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">python -c &quot;import tensorflow as tf;print(tf.reduce_sum(tf.random.normal([1000, 1000])))&quot;</span><br></pre></td></tr></table></figure>
-
-
-<h2 id="通过docker"><a href="#通过docker" class="headerlink" title="通过docker"></a>通过docker</h2><p><a href="https://docs.docker.com/install/">Docker</a> 使用容器创建虚拟环境，以便将 TensorFlow 安装与系统的其余部分隔离开来。</p>
-<p>官方 TensorFlow Docker 的镜像位于 <a href="https://hub.docker.com/r/tensorflow/tensorflow/">tensorflow&#x2F;tensorflow</a>。下面是各标签的说明</p>
-<table>
-<thead>
-<tr>
-<th>标签</th>
-<th>说明</th>
-</tr>
-</thead>
-<tbody><tr>
-<td>latest</td>
-<td>TensorFlow 最新稳定版。</td>
-</tr>
-<tr>
-<td>nightly</td>
-<td>TensorFlow 预览版（不稳定）。</td>
-</tr>
-<tr>
-<td>version</td>
-<td>TensorFlow 指定版本，如1.15.0。</td>
-</tr>
-<tr>
-<td>devel</td>
-<td>TensorFlow开发版，包含源码。</td>
-</tr>
-</tbody></table>
-<p>上面的标签也有一些变体，下面是相关的说明</p>
-<table>
-<thead>
-<tr>
-<th>标签变体</th>
-<th>说明</th>
-</tr>
-</thead>
-<tbody><tr>
-<td>tag-gpu</td>
-<td>支持 GPU 的指定标签版本。</td>
-</tr>
-<tr>
-<td>tag-py3</td>
-<td>支持 Python 3 的指定标签版本。</td>
-</tr>
-<tr>
-<td>tag-jupyter</td>
-<td>带有 Jupyter 的指定标签版本（包含 TensorFlow 教程）。</td>
-</tr>
-</tbody></table>
-<p>这里假定你已经安装Docker，先拉取镜像，以支持 Python 3 的最新 TensorFlow 版本为例  </p>
-<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">docker pull tensorflow/tensorflow:latest-py3  # Download latest stable image</span><br></pre></td></tr></table></figure>
-
-<p>其他版本示例</p>
-<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">docker pull tensorflow/tensorflow                     # latest stable release</span><br><span class="line">docker pull tensorflow/tensorflow:devel-gpu           # nightly dev release w/GPU support</span><br><span class="line">docker pull tensorflow/tensorflow:latest-gpu-jupyter  # latest release w/ GPU support and Jupyter</span><br></pre></td></tr></table></figure>
-
-<p>启动 TensorFlow Docker 容器</p>
-<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">docker run [-it] [--rm] [-p hostPort:containerPort] tensorflow/tensorflow[:tag] [command]</span><br><span class="line">    </span><br></pre></td></tr></table></figure>
-
-<p>以启动支持 Python 3 的最新 TensorFlow 版本为例</p>
-<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">docker run -it -p 8080:8080 tensorflow/tensorflow:latest-py3</span><br></pre></td></tr></table></figure>
-
-<p>启动 Python，验证你的环境</p>
-<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">&gt;&gt;&gt; import tensorflow as tf</span><br><span class="line">&gt;&gt;&gt; print(tf.__version__)</span><br><span class="line">2.1.0</span><br></pre></td></tr></table></figure>
-
-<h1 id="在Linux上安装"><a href="#在Linux上安装" class="headerlink" title="在Linux上安装"></a>在Linux上安装</h1><p>Linux上安装完Virtualenv或者Docker后，其他方法是一样的，不再详细说明。</p>
-<h1 id="参考"><a href="#参考" class="headerlink" title="参考"></a>参考</h1><p>[1] <a href="https://tensorflow.google.cn/install/pip?lang=python3">Install TensorFlow with pip</a><br>[2] <a href="https://tensorflow.google.cn/install/docker">Install TensorFlow with Docker</a></p>
-]]></content>
-      <categories>
-        <category>Technology</category>
-      </categories>
-      <tags>
-        <tag>TensorFlow</tag>
-        <tag>DeepLearning</tag>
-        <tag>Install</tag>
+        <tag>nextcloud</tag>
+        <tag>vps</tag>
       </tags>
   </entry>
   <entry>
@@ -2406,36 +2317,152 @@ attachments/1114283/amf3_spec_05_05_08.pdf>.
       </tags>
   </entry>
   <entry>
-    <title>如何搭建个人私有云盘</title>
-    <url>/2019/01/06/%E5%A6%82%E4%BD%95%E6%90%AD%E5%BB%BA%E4%B8%AA%E4%BA%BA%E7%A7%81%E6%9C%89%E4%BA%91%E7%9B%98/</url>
-    <content><![CDATA[<h1 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h1><p>市场上有很多云盘的产品，比如百度云盘，不过本教程主要目的是要搭建个人私有云盘。查了网上很多资料，个人云盘也有很多，比如nextcloud，owncloud，seafile等。这里选择nextcloud，优势就不用说了，网上一搜一大把。</p>
-<h1 id="Nextcloud搭建办法"><a href="#Nextcloud搭建办法" class="headerlink" title="Nextcloud搭建办法"></a>Nextcloud搭建办法</h1><p>主要的搭建办法有两个：</p>
-<ul>
-<li>通过VPS一键安装</li>
-<li>手动安装</li>
-</ul>
-<h2 id="通过VPS一键安装"><a href="#通过VPS一键安装" class="headerlink" title="通过VPS一键安装"></a>通过VPS一键安装</h2><p><a href="https://www.vultr.com/?ref=8443595-6G">Vultr</a>有一键安装Nextcloud的功能，非常方便。<br>主要步骤如下：</p>
-<ul>
-<li>注册vps</li>
-<li>创建vps实例</li>
-<li>Server Location -&gt; 选择一个好的机房，比如洛杉矶，日本和新加坡等。</li>
-<li>Server Type -&gt; 选Application，选中Nextcloud</li>
-<li>Server Size -&gt; 根据自己需要选择</li>
-<li>剩下的配置使用默认即可</li>
-</ul>
-<p>首先，登陆<a href="https://www.vultr.com/?ref=8443595-6G">Vultr官网</a>，点击Create Account注册。<br>选择一个好的机房，当然是自己测过才放心。这里推荐使用<a href="http://www.nirsoft.net/utils/pinginfoview.zip">PingInfoView</a>来测试。以下是vultr的机房：<br><img src="http://image.noahsun.top/vps/vultr_area.jpeg" alt="vultr_area"></p>
+    <title>搭建自己专属的vpn——选择一个vps</title>
+    <url>/2018/04/07/%E6%90%AD%E5%BB%BA%E8%87%AA%E5%B7%B1%E4%B8%93%E5%B1%9E%E7%9A%84vpn%E2%80%94%E2%80%94%E9%80%89%E6%8B%A9%E4%B8%80%E4%B8%AAvps/</url>
+    <content><![CDATA[<h1 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h1><p>作为一名技术人员，经常需要访问一些墙外的网站，你懂的。本来想直接购买个vpn，但又怕不太安全。看到网上有很多自己搭建vpn的教程，于是自己折腾了一下，终于成功搭建，随便与大家分享一些经验。</p>
+<h1 id="选择一个vps"><a href="#选择一个vps" class="headerlink" title="选择一个vps"></a>选择一个vps</h1><p>搭建vpn的第一步是，你必须有一台公网能访问的vps，而且该vps要在墙外，简单来说就是你必须要有一台能访问墙外的电脑。如何选择一个适合自己的vps呢？我自己认为主要有价格、稳定性和带宽等方面的因素，当然易操作性、良好的售后服务等也比较重要。</p>
+<p>国外常见的vps有Linode、<a href="https://www.vultr.com/?ref=8443595-6G">Vultr</a>、SugarHosts、bandwagonhost等。</p>
+<p>看了网上的一些评测，如《Vultr超高性价比VPS评测使用教程》，以及<a href="https://www.vultr.com/?ref=8443595-6G">Vultr</a>每月$2.5的费用，觉得可以入手，因为网上购买一个vpn也差不多这个费用。</p>
+<h1 id="注册账号"><a href="#注册账号" class="headerlink" title="注册账号"></a>注册账号</h1><p>首先，登陆<a href="https://www.vultr.com/?ref=8443595-6G">Vultr官网</a>，点击Create Account注册即可，之前官方搞活动，暑假注册使用免费送$20，现在好像没有什么优惠了，期待下次还有活动。现在最新优惠是每月$2.5的实例，不过经常没货。</p>
+<p>注册并不会收费，只有创建了实例才会收费，如果觉得不好用可以直接删除自己创建的实例，这样就不会收费了。注意，如果实例关机但没有把实例删除，还是会收费的，毕竟该实例占用了公网IP和硬盘空间。</p>
+<p>可喜的是，现在vultr已经支持支付宝付款了。</p>
+<h1 id="选择机房"><a href="#选择机房" class="headerlink" title="选择机房"></a>选择机房</h1><p>如何选择一个好的机房，当然是自己测过才放心。这里推荐使用<a href="http://www.nirsoft.net/utils/pinginfoview.zip">PingInfoView</a>来测试。以下是vultr的机房：<br><img src="http://image.noahsun.top/vps/vultr_area.jpeg" alt="vultr_area"></p>
 <p>列表如下，贴到PingInfoView上即可。</p>
 <figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">sgp-ping.vultr.com</span><br><span class="line">hnd-jp-ping.vultr.com</span><br><span class="line">syd-au-ping.vultr.com</span><br><span class="line">fra-de-ping.vultr.com</span><br><span class="line">ams-nl-ping.vultr.com</span><br><span class="line">lon-gb-ping.vultr.com</span><br><span class="line">par-fr-ping.vultr.com</span><br><span class="line">wa-us-ping.vultr.com</span><br><span class="line">sjo-ca-us-ping.vultr.com</span><br><span class="line">lax-ca-us-ping.vultr.com</span><br><span class="line">il-us-ping.vultr.com</span><br><span class="line">nj-us-ping.vultr.com</span><br><span class="line">tx-us-ping.vultr.com</span><br><span class="line">ga-us-ping.vultr.com</span><br><span class="line">fl-us-ping.vultr.com</span><br></pre></td></tr></table></figure>
-<p>linux&#x2F;mac用户可以使用我写的脚本<a href="https://github.com/rukesun/vultr_test.git">vultr_test</a>来测试。<br>以下是我的测试结果：<br><img src="http://image.noahsun.top/vps/my_ping_test.png"><br>选择的原则是，ping值最小，丢包率最小。比如我的测试结果中，较不错的是sjo、wa和lax，都是美国机房。</p>
-<p>接下来Server Type选Application，选中Nextcloud，如下所示<br><img src="http://image.noahsun.top/nextcloud/vultr_nextcloud_app.jpg" alt="nextcloud_app"><br>根据自己的需要选择Server Size，剩下的配置使用默认即可。<br>点击Deploy Now，然后静静地等待1~2分钟。<br>部署完成后，查看实例详情，可以看到Nextcloud的地址，登陆账号和密码。<br><img src="http://image.noahsun.top/nextcloud/vultr_nextcloud_info.jpg" alt="nextcloud_info"><br>打开你的Nextcloud地址，会提示不安全，这个是ssl证书问题，你可以直接忽略。<br>下面是打开后的界面<br><img src="http://image.noahsun.top/nextcloud/nextcloud_login.jpg" alt="nextcloud_login"><br>怎么样，是不是很期待？<br>输入账号和密码，点击登录，网盘就可以使用了<br><img src="http://image.noahsun.top/nextcloud/nextcloud_main.jpg" alt="nextcloud_main"><br>可以传视频，文档，可以自定义目录，更多的功能等待你去探索！好了，是不是有点小激动？麻麻再也不用担心我的小电影没地方放了。</p>
+<p>linux&#x2F;mac用户可以使用我写的脚本<a href="https://github.com/rukesun/vultr_test.git">vultr_test</a>来测试。</p>
+<p>以下是我的测试结果：<br><img src="http://image.noahsun.top/vps/my_ping_test.png"><br>选择的原则是，ping值最小，丢包率最小。比如我的测试结果中，较不错的是sjo、wa和lax，都是美国机房。</p>
+<h1 id="部署实例"><a href="#部署实例" class="headerlink" title="部署实例"></a>部署实例</h1><p>点击Servers，然后点右边的+号<br><img src="http://image.noahsun.top/vps/new_vultr_instance.png"><br>依次选择自己测试比较好的机房，选择操作系统版本，选择方案（$2.5的低配方案搭vpn已经够用，另外还可以自己搭个博客什么的），然后部署就搞定了。</p>
+<p>如果vps使用linux操作系统，可以使用ssh的客户端登录，比如SecureCRT，这里就不再详细说明。</p>
 <hr>
 ]]></content>
       <categories>
         <category>Tools</category>
       </categories>
       <tags>
-        <tag>nextcloud</tag>
         <tag>vps</tag>
+        <tag>vpn</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>TensorFlow安装教程</title>
+    <url>/2020/03/01/tensorflow-install/</url>
+    <content><![CDATA[<h1 id="TensorFlow-安装环境要求"><a href="#TensorFlow-安装环境要求" class="headerlink" title="TensorFlow 安装环境要求"></a>TensorFlow 安装环境要求</h1><p>TensorFlow在以下64位系统环境下经过测试和支持</p>
+<ul>
+<li>Python 3.5–3.7</li>
+<li>macOS 10.12.6 (Sierra) or later (no GPU support)</li>
+<li>Ubuntu 16.04 or later</li>
+<li>Raspbian 9.0 or later</li>
+<li>Windows 7 or later</li>
+</ul>
+<h1 id="在mac-OS上安装"><a href="#在mac-OS上安装" class="headerlink" title="在mac OS上安装"></a>在mac OS上安装</h1><p>在mac OS上通常有两种安装方法virtualenv+pip和docker。</p>
+<h2 id="通过virtualenv-pip"><a href="#通过virtualenv-pip" class="headerlink" title="通过virtualenv + pip"></a>通过virtualenv + pip</h2><p>Python 3 要求  </p>
+<blockquote>
+<p>Python 3.5–3.7<br>pip &gt;&#x3D; 19.0</p>
+</blockquote>
+<p>Python 2.7 要求</p>
+<blockquote>
+<p>Python &#x3D;&#x3D; 2.7<br>pip &gt;&#x3D; 19.0</p>
+</blockquote>
+<h3 id="安装Pthon开发环境"><a href="#安装Pthon开发环境" class="headerlink" title="安装Pthon开发环境"></a>安装Pthon开发环境</h3><p>这里以Python 3 为例，如果你没有安装<a href="https://www.python.org/">Python</a>，<a href="https://pip.pypa.io/en/stable/installing/">pip</a>和<a href="https://virtualenv.pypa.io/en/stable/">Virtualenv</a>，请参考下面的方法，否则跳过这一步</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">/usr/bin/ruby -e &quot;$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install)&quot;</span><br><span class="line">export PATH=&quot;/usr/local/bin:/usr/local/sbin:$PATH&quot;</span><br><span class="line">brew update</span><br><span class="line">brew install python  # Python 3</span><br><span class="line">sudo pip3 install -U virtualenv  # system-wide install</span><br></pre></td></tr></table></figure>
+
+<h3 id="创建一个Virtualenv"><a href="#创建一个Virtualenv" class="headerlink" title="创建一个Virtualenv"></a>创建一个Virtualenv</h3><p>Virtualenv 可以做到与其他 Python 开发隔离的虚拟环境。下面是在 .&#x2F;py3x 目录下创建一个Python 3 的虚拟环境  </p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">virtualenv --system-site-packages -p python3 ./py3x</span><br></pre></td></tr></table></figure>
+
+<p>激活虚拟环境  </p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">source ./py3x/bin/activate  # sh, bash, ksh, or zsh</span><br></pre></td></tr></table></figure>
+
+<p>在虚拟环境中升级pip  </p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">pip install --upgrade pip</span><br></pre></td></tr></table></figure>
+
+<p>如果不想使用虚拟环境，可以使用下面的命令退出  </p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">deactivate  # don&#x27;t exit until you&#x27;re done using TensorFlow</span><br></pre></td></tr></table></figure>
+
+<h3 id="通过pip安装TensorFlow"><a href="#通过pip安装TensorFlow" class="headerlink" title="通过pip安装TensorFlow"></a>通过pip安装TensorFlow</h3><p>pip有下面三种不同的TensorFlow包：</p>
+<ul>
+<li>tensorflow：最新稳定发布版</li>
+<li>tf-nightly：预览版，可能不稳定</li>
+<li>tensorflow&#x3D;&#x3D;1.15：TensorFlow 1.x 的最后一个版本</li>
+</ul>
+<p>安装示例  </p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">pip install --upgrade tensorflow</span><br></pre></td></tr></table></figure>
+
+<p>校验是否安装成功  </p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">python -c &quot;import tensorflow as tf;print(tf.reduce_sum(tf.random.normal([1000, 1000])))&quot;</span><br></pre></td></tr></table></figure>
+
+
+<h2 id="通过docker"><a href="#通过docker" class="headerlink" title="通过docker"></a>通过docker</h2><p><a href="https://docs.docker.com/install/">Docker</a> 使用容器创建虚拟环境，以便将 TensorFlow 安装与系统的其余部分隔离开来。</p>
+<p>官方 TensorFlow Docker 的镜像位于 <a href="https://hub.docker.com/r/tensorflow/tensorflow/">tensorflow&#x2F;tensorflow</a>。下面是各标签的说明</p>
+<table>
+<thead>
+<tr>
+<th>标签</th>
+<th>说明</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>latest</td>
+<td>TensorFlow 最新稳定版。</td>
+</tr>
+<tr>
+<td>nightly</td>
+<td>TensorFlow 预览版（不稳定）。</td>
+</tr>
+<tr>
+<td>version</td>
+<td>TensorFlow 指定版本，如1.15.0。</td>
+</tr>
+<tr>
+<td>devel</td>
+<td>TensorFlow开发版，包含源码。</td>
+</tr>
+</tbody></table>
+<p>上面的标签也有一些变体，下面是相关的说明</p>
+<table>
+<thead>
+<tr>
+<th>标签变体</th>
+<th>说明</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>tag-gpu</td>
+<td>支持 GPU 的指定标签版本。</td>
+</tr>
+<tr>
+<td>tag-py3</td>
+<td>支持 Python 3 的指定标签版本。</td>
+</tr>
+<tr>
+<td>tag-jupyter</td>
+<td>带有 Jupyter 的指定标签版本（包含 TensorFlow 教程）。</td>
+</tr>
+</tbody></table>
+<p>这里假定你已经安装Docker，先拉取镜像，以支持 Python 3 的最新 TensorFlow 版本为例  </p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">docker pull tensorflow/tensorflow:latest-py3  # Download latest stable image</span><br></pre></td></tr></table></figure>
+
+<p>其他版本示例</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">docker pull tensorflow/tensorflow                     # latest stable release</span><br><span class="line">docker pull tensorflow/tensorflow:devel-gpu           # nightly dev release w/GPU support</span><br><span class="line">docker pull tensorflow/tensorflow:latest-gpu-jupyter  # latest release w/ GPU support and Jupyter</span><br></pre></td></tr></table></figure>
+
+<p>启动 TensorFlow Docker 容器</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">docker run [-it] [--rm] [-p hostPort:containerPort] tensorflow/tensorflow[:tag] [command]</span><br><span class="line">    </span><br></pre></td></tr></table></figure>
+
+<p>以启动支持 Python 3 的最新 TensorFlow 版本为例</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">docker run -it -p 8080:8080 tensorflow/tensorflow:latest-py3</span><br></pre></td></tr></table></figure>
+
+<p>启动 Python，验证你的环境</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">&gt;&gt;&gt; import tensorflow as tf</span><br><span class="line">&gt;&gt;&gt; print(tf.__version__)</span><br><span class="line">2.1.0</span><br></pre></td></tr></table></figure>
+
+<h1 id="在Linux上安装"><a href="#在Linux上安装" class="headerlink" title="在Linux上安装"></a>在Linux上安装</h1><p>Linux上安装完Virtualenv或者Docker后，其他方法是一样的，不再详细说明。</p>
+<h1 id="参考"><a href="#参考" class="headerlink" title="参考"></a>参考</h1><p>[1] <a href="https://tensorflow.google.cn/install/pip?lang=python3">Install TensorFlow with pip</a><br>[2] <a href="https://tensorflow.google.cn/install/docker">Install TensorFlow with Docker</a></p>
+]]></content>
+      <categories>
+        <category>Technology</category>
+      </categories>
+      <tags>
+        <tag>TensorFlow</tag>
+        <tag>DeepLearning</tag>
+        <tag>Install</tag>
       </tags>
   </entry>
   <entry>
@@ -2586,58 +2613,6 @@ attachments/1114283/amf3_spec_05_05_08.pdf>.
       <tags>
         <tag>vps</tag>
         <tag>vpn</tag>
-      </tags>
-  </entry>
-  <entry>
-    <title>搭建自己专属的vpn——选择一个vps</title>
-    <url>/2018/04/07/%E6%90%AD%E5%BB%BA%E8%87%AA%E5%B7%B1%E4%B8%93%E5%B1%9E%E7%9A%84vpn%E2%80%94%E2%80%94%E9%80%89%E6%8B%A9%E4%B8%80%E4%B8%AAvps/</url>
-    <content><![CDATA[<h1 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h1><p>作为一名技术人员，经常需要访问一些墙外的网站，你懂的。本来想直接购买个vpn，但又怕不太安全。看到网上有很多自己搭建vpn的教程，于是自己折腾了一下，终于成功搭建，随便与大家分享一些经验。</p>
-<h1 id="选择一个vps"><a href="#选择一个vps" class="headerlink" title="选择一个vps"></a>选择一个vps</h1><p>搭建vpn的第一步是，你必须有一台公网能访问的vps，而且该vps要在墙外，简单来说就是你必须要有一台能访问墙外的电脑。如何选择一个适合自己的vps呢？我自己认为主要有价格、稳定性和带宽等方面的因素，当然易操作性、良好的售后服务等也比较重要。</p>
-<p>国外常见的vps有Linode、<a href="https://www.vultr.com/?ref=8443595-6G">Vultr</a>、SugarHosts、bandwagonhost等。</p>
-<p>看了网上的一些评测，如《Vultr超高性价比VPS评测使用教程》，以及<a href="https://www.vultr.com/?ref=8443595-6G">Vultr</a>每月$2.5的费用，觉得可以入手，因为网上购买一个vpn也差不多这个费用。</p>
-<h1 id="注册账号"><a href="#注册账号" class="headerlink" title="注册账号"></a>注册账号</h1><p>首先，登陆<a href="https://www.vultr.com/?ref=8443595-6G">Vultr官网</a>，点击Create Account注册即可，之前官方搞活动，暑假注册使用免费送$20，现在好像没有什么优惠了，期待下次还有活动。现在最新优惠是每月$2.5的实例，不过经常没货。</p>
-<p>注册并不会收费，只有创建了实例才会收费，如果觉得不好用可以直接删除自己创建的实例，这样就不会收费了。注意，如果实例关机但没有把实例删除，还是会收费的，毕竟该实例占用了公网IP和硬盘空间。</p>
-<p>可喜的是，现在vultr已经支持支付宝付款了。</p>
-<h1 id="选择机房"><a href="#选择机房" class="headerlink" title="选择机房"></a>选择机房</h1><p>如何选择一个好的机房，当然是自己测过才放心。这里推荐使用<a href="http://www.nirsoft.net/utils/pinginfoview.zip">PingInfoView</a>来测试。以下是vultr的机房：<br><img src="http://image.noahsun.top/vps/vultr_area.jpeg" alt="vultr_area"></p>
-<p>列表如下，贴到PingInfoView上即可。</p>
-<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">sgp-ping.vultr.com</span><br><span class="line">hnd-jp-ping.vultr.com</span><br><span class="line">syd-au-ping.vultr.com</span><br><span class="line">fra-de-ping.vultr.com</span><br><span class="line">ams-nl-ping.vultr.com</span><br><span class="line">lon-gb-ping.vultr.com</span><br><span class="line">par-fr-ping.vultr.com</span><br><span class="line">wa-us-ping.vultr.com</span><br><span class="line">sjo-ca-us-ping.vultr.com</span><br><span class="line">lax-ca-us-ping.vultr.com</span><br><span class="line">il-us-ping.vultr.com</span><br><span class="line">nj-us-ping.vultr.com</span><br><span class="line">tx-us-ping.vultr.com</span><br><span class="line">ga-us-ping.vultr.com</span><br><span class="line">fl-us-ping.vultr.com</span><br></pre></td></tr></table></figure>
-<p>linux&#x2F;mac用户可以使用我写的脚本<a href="https://github.com/rukesun/vultr_test.git">vultr_test</a>来测试。</p>
-<p>以下是我的测试结果：<br><img src="http://image.noahsun.top/vps/my_ping_test.png"><br>选择的原则是，ping值最小，丢包率最小。比如我的测试结果中，较不错的是sjo、wa和lax，都是美国机房。</p>
-<h1 id="部署实例"><a href="#部署实例" class="headerlink" title="部署实例"></a>部署实例</h1><p>点击Servers，然后点右边的+号<br><img src="http://image.noahsun.top/vps/new_vultr_instance.png"><br>依次选择自己测试比较好的机房，选择操作系统版本，选择方案（$2.5的低配方案搭vpn已经够用，另外还可以自己搭个博客什么的），然后部署就搞定了。</p>
-<p>如果vps使用linux操作系统，可以使用ssh的客户端登录，比如SecureCRT，这里就不再详细说明。</p>
-<hr>
-]]></content>
-      <categories>
-        <category>Tools</category>
-      </categories>
-      <tags>
-        <tag>vps</tag>
-        <tag>vpn</tag>
-      </tags>
-  </entry>
-  <entry>
-    <title>测试文章 - OpenClaw 自动化测试</title>
-    <url>/2026/02/23/%E6%B5%8B%E8%AF%95%E6%96%87%E7%AB%A0-OpenClaw%E8%87%AA%E5%8A%A8%E5%8C%96%E6%B5%8B%E8%AF%95/</url>
-    <content><![CDATA[<p>这是一篇测试文章，用于验证 OpenClaw 是否能够正常写作和发布 Hexo 博客。</p>
-<h2 id="测试内容"><a href="#测试内容" class="headerlink" title="测试内容"></a>测试内容</h2><ol>
-<li>创建文章文件</li>
-<li>生成静态页面</li>
-<li>部署到远程仓库</li>
-</ol>
-<h2 id="功能验证"><a href="#功能验证" class="headerlink" title="功能验证"></a>功能验证</h2><ul>
-<li>✅ 文章创建</li>
-<li>⏳ 静态生成</li>
-<li>⏳ 部署发布</li>
-</ul>
-<hr>
-<p><em>由 OpenClaw 自动生成于 2026-02-23</em></p>
-]]></content>
-      <categories>
-        <category>自动化</category>
-      </categories>
-      <tags>
-        <tag>测试</tag>
-        <tag>OpenClaw</tag>
       </tags>
   </entry>
 </search>
