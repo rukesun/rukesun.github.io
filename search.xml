@@ -1,28 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <search>
   <entry>
-    <title>FFmpeg的那些坑-RTP missed xxx packets</title>
-    <url>/2018/07/01/FFmpeg%E7%9A%84%E9%82%A3%E4%BA%9B%E5%9D%91-RTP-missed-xxx-packets/</url>
-    <content><![CDATA[<h1 id="FFmpeg使用场景"><a href="#FFmpeg使用场景" class="headerlink" title="FFmpeg使用场景"></a>FFmpeg使用场景</h1><p>使用FFmpeg将两路RTP流合成一路流</p>
-<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">ffmpeg -acodec libopus -i ../var/tmp/1024_0.sdp -acodec libopus -i ../var/tmp/1024_1.sdp -filter_complex &quot;[0:v]setpts=PTS-STARTPTS,setsar=1[left];[1:v]setpts=PTS-STARTPTS,setsar=1[right];[left][right]hstack[vout];[0:a][1:a]amix[aout]&quot; -map [vout] -map [aout] -vcodec libx264 -profile:v high -preset veryfast -strict -2 -acodec aac -f flv rtmp://localhost:1935/live/1024</span><br></pre></td></tr></table></figure>
-
-<h1 id="问题"><a href="#问题" class="headerlink" title="问题"></a>问题</h1><p>FFmpeg日志提示RTP: missed xxx packets<br>合流视频花屏。</p>
-<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">[h264 @ 0x45c05a0] Invalid level prefix</span><br><span class="line">[h264 @ 0x45c05a0] error while decoding MB 11 19</span><br><span class="line">[h264 @ 0x45c05a0] concealing 53 DC, 53 AC, 53 MV errors in I frame</span><br><span class="line">[sdp @ 0x42e5c20] max delay reached. need to consume packet</span><br><span class="line">[sdp @ 0x42e5c20] RTP: missed 16 packets</span><br><span class="line">[sdp @ 0x42e5c20] max delay reached. need to consume packet</span><br><span class="line">[sdp @ 0x42e5c20] RTP: missed 4 packets</span><br><span class="line">[h264 @ 0x45c05a0] negative number of zero coeffs at 0 4</span><br><span class="line">[h264 @ 0x45c05a0] error while decoding MB 0 4</span><br><span class="line">[h264 @ 0x45c05a0] concealing 289 DC, 289 AC, 289 MV errors in P frame</span><br><span class="line">[h264 @ 0x4413420] Invalid level prefix</span><br><span class="line">[h264 @ 0x4413420] error while decoding MB 9 19</span><br><span class="line">[h264 @ 0x4413420] concealing 55 DC, 55 AC, 55 MV errors in P frame</span><br></pre></td></tr></table></figure>
-
-
-<h1 id="原因"><a href="#原因" class="headerlink" title="原因"></a>原因</h1><p>FFmpeg默认接收线程数据队列大小thread_queue_size为8，当合流不够快时，接收数据队列溢出，导致RTP接收数据丢包。</p>
-<h1 id="解决办法"><a href="#解决办法" class="headerlink" title="解决办法"></a>解决办法</h1><p>使用thread_queue_size选项配置大一点的接收线程数据队列，如</p>
-<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">ffmpeg -thread_queue_size 512 -acodec libopus -i ../var/tmp/1024_0.sdp  -thread_queue_size 512 -acodec libopus -i ../var/tmp/1024_1.sdp -filter_complex &quot;[0:v]setpts=PTS-STARTPTS,setsar=1[left];[1:v]setpts=PTS-STARTPTS,setsar=1[right];[left][right]hstack[vout];[0:a][1:a]amix[aout]&quot; -map [vout] -map [aout] -vcodec libx264 -profile:v high -preset veryfast -strict -2 -acodec aac -f flv rtmp://localhost:1935/live/1024</span><br></pre></td></tr></table></figure>
-]]></content>
-      <categories>
-        <category>Technology</category>
-      </categories>
-      <tags>
-        <tag>FFmpeg</tag>
-        <tag>av</tag>
-      </tags>
-  </entry>
-  <entry>
     <title>FFmpeg的那些坑-Too many packets buffered for output stream</title>
     <url>/2018/07/01/FFmpeg%E7%9A%84%E9%82%A3%E4%BA%9B%E5%9D%91-Too-many-packets-buffered-for-output-stream/</url>
     <content><![CDATA[<h1 id="FFmpeg使用场景"><a href="#FFmpeg使用场景" class="headerlink" title="FFmpeg使用场景"></a>FFmpeg使用场景</h1><p>使用FFmpeg给视频打水印</p>
@@ -98,6 +76,28 @@
         <tag>KMS</tag>
         <tag>Kurento</tag>
         <tag>WebRTC</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>FFmpeg的那些坑-RTP missed xxx packets</title>
+    <url>/2018/07/01/FFmpeg%E7%9A%84%E9%82%A3%E4%BA%9B%E5%9D%91-RTP-missed-xxx-packets/</url>
+    <content><![CDATA[<h1 id="FFmpeg使用场景"><a href="#FFmpeg使用场景" class="headerlink" title="FFmpeg使用场景"></a>FFmpeg使用场景</h1><p>使用FFmpeg将两路RTP流合成一路流</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">ffmpeg -acodec libopus -i ../var/tmp/1024_0.sdp -acodec libopus -i ../var/tmp/1024_1.sdp -filter_complex &quot;[0:v]setpts=PTS-STARTPTS,setsar=1[left];[1:v]setpts=PTS-STARTPTS,setsar=1[right];[left][right]hstack[vout];[0:a][1:a]amix[aout]&quot; -map [vout] -map [aout] -vcodec libx264 -profile:v high -preset veryfast -strict -2 -acodec aac -f flv rtmp://localhost:1935/live/1024</span><br></pre></td></tr></table></figure>
+
+<h1 id="问题"><a href="#问题" class="headerlink" title="问题"></a>问题</h1><p>FFmpeg日志提示RTP: missed xxx packets<br>合流视频花屏。</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">[h264 @ 0x45c05a0] Invalid level prefix</span><br><span class="line">[h264 @ 0x45c05a0] error while decoding MB 11 19</span><br><span class="line">[h264 @ 0x45c05a0] concealing 53 DC, 53 AC, 53 MV errors in I frame</span><br><span class="line">[sdp @ 0x42e5c20] max delay reached. need to consume packet</span><br><span class="line">[sdp @ 0x42e5c20] RTP: missed 16 packets</span><br><span class="line">[sdp @ 0x42e5c20] max delay reached. need to consume packet</span><br><span class="line">[sdp @ 0x42e5c20] RTP: missed 4 packets</span><br><span class="line">[h264 @ 0x45c05a0] negative number of zero coeffs at 0 4</span><br><span class="line">[h264 @ 0x45c05a0] error while decoding MB 0 4</span><br><span class="line">[h264 @ 0x45c05a0] concealing 289 DC, 289 AC, 289 MV errors in P frame</span><br><span class="line">[h264 @ 0x4413420] Invalid level prefix</span><br><span class="line">[h264 @ 0x4413420] error while decoding MB 9 19</span><br><span class="line">[h264 @ 0x4413420] concealing 55 DC, 55 AC, 55 MV errors in P frame</span><br></pre></td></tr></table></figure>
+
+
+<h1 id="原因"><a href="#原因" class="headerlink" title="原因"></a>原因</h1><p>FFmpeg默认接收线程数据队列大小thread_queue_size为8，当合流不够快时，接收数据队列溢出，导致RTP接收数据丢包。</p>
+<h1 id="解决办法"><a href="#解决办法" class="headerlink" title="解决办法"></a>解决办法</h1><p>使用thread_queue_size选项配置大一点的接收线程数据队列，如</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">ffmpeg -thread_queue_size 512 -acodec libopus -i ../var/tmp/1024_0.sdp  -thread_queue_size 512 -acodec libopus -i ../var/tmp/1024_1.sdp -filter_complex &quot;[0:v]setpts=PTS-STARTPTS,setsar=1[left];[1:v]setpts=PTS-STARTPTS,setsar=1[right];[left][right]hstack[vout];[0:a][1:a]amix[aout]&quot; -map [vout] -map [aout] -vcodec libx264 -profile:v high -preset veryfast -strict -2 -acodec aac -f flv rtmp://localhost:1935/live/1024</span><br></pre></td></tr></table></figure>
+]]></content>
+      <categories>
+        <category>Technology</category>
+      </categories>
+      <tags>
+        <tag>FFmpeg</tag>
+        <tag>av</tag>
       </tags>
   </entry>
   <entry>
@@ -473,6 +473,23 @@
         <tag>PB</tag>
         <tag>Protocol Buffers</tag>
         <tag>RPC</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>The background of this blog</title>
+    <url>/2017/07/23/The-background-of-this-blog/</url>
+    <content><![CDATA[<p>欢迎浏览本博客。<br>作为第一篇非技术类的文章，可能没什么干货分享，但总感觉应该写点什么。好吧，就谈谈开博背景！</p>
+<p>自由。本人喜欢自由的写作，在其他博客平台，总有各种各样的限制，比如审核。自己的博客，样式随便改。</p>
+<p>简洁。喜欢MarkDown的简洁，也喜欢简洁的博客主题。</p>
+<p>分享。无他，写博客就为了分享。当然，这也是大家相互学习的一种有效途径。</p>
+<p>精彩。人生在世，不过短短几十年，我们不是什么伟人，但这可以记录我们的精彩。</p>
+<p>战斗吧，兄弟！</p>
+]]></content>
+      <categories>
+        <category>Essay</category>
+      </categories>
+      <tags>
+        <tag>Blog</tag>
       </tags>
   </entry>
   <entry>
@@ -1469,90 +1486,6 @@ attachments/1114283/amf3_spec_05_05_08.pdf>.
       </tags>
   </entry>
   <entry>
-    <title>The background of this blog</title>
-    <url>/2017/07/23/The-background-of-this-blog/</url>
-    <content><![CDATA[<p>欢迎浏览本博客。<br>作为第一篇非技术类的文章，可能没什么干货分享，但总感觉应该写点什么。好吧，就谈谈开博背景！</p>
-<p>自由。本人喜欢自由的写作，在其他博客平台，总有各种各样的限制，比如审核。自己的博客，样式随便改。</p>
-<p>简洁。喜欢MarkDown的简洁，也喜欢简洁的博客主题。</p>
-<p>分享。无他，写博客就为了分享。当然，这也是大家相互学习的一种有效途径。</p>
-<p>精彩。人生在世，不过短短几十年，我们不是什么伟人，但这可以记录我们的精彩。</p>
-<p>战斗吧，兄弟！</p>
-]]></content>
-      <categories>
-        <category>Essay</category>
-      </categories>
-      <tags>
-        <tag>Blog</tag>
-      </tags>
-  </entry>
-  <entry>
-    <title>Git commit格式参考</title>
-    <url>/2020/03/22/git-commit-guidelines/</url>
-    <content><![CDATA[<h1 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h1><p>编写良好的Commit messages可以达到以下几个重要的目的</p>
-<ul>
-<li>加快review的流程</li>
-<li>帮助我们编写良好的版本发布日志</li>
-<li>让之后的维护者了解代码里出现特定变化和feature被添加的原因</li>
-</ul>
-<p>目前，社区有多种 Commit message 的写法规范。来自Angular 规范是目前使用最广的写法，比较合理和系统化。如下图：<br><img src="/uploads/git_commit_guidelines/angular_commit_example.jpg" alt="angular_commit_example"></p>
-<h1 id="Commit-messages格式"><a href="#Commit-messages格式" class="headerlink" title="Commit messages格式"></a>Commit messages格式</h1><p>当前业界应用的比较广泛的是 <a href="https://github.com/angular/angular.js/blob/master/DEVELOPERS.md#-git-commit-guidelines">Angular Git Commit Guidelines</a></p>
-<p>具体格式为:</p>
-<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">&lt;type&gt;: &lt;subject&gt;</span><br><span class="line">&lt;BLANK LINE&gt;</span><br><span class="line">&lt;body&gt;</span><br><span class="line">&lt;BLANK LINE&gt;</span><br><span class="line">&lt;footer&gt;</span><br></pre></td></tr></table></figure>
-
-<p>每个commit message一般包含header、body和footer，header是必须的，body和footer不做强制要求，所以一般可以简化为</p>
-<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">&lt;type&gt;(&lt;scope&gt;): &lt;subject&gt;</span><br></pre></td></tr></table></figure>
-
-<p>或者省略scope</p>
-<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">&lt;type&gt;: &lt;subject&gt;</span><br></pre></td></tr></table></figure>
-
-<p>说明</p>
-<ul>
-<li>type: 本次 commit 的类型，诸如 bugfix docs style 等</li>
-<li>scope: 本次 commit 波及的范围</li>
-<li>subject: 简明扼要的阐述下本次 commit 的主旨</li>
-<li>body: 同样使用祈使句，在主体内容中我们需要把本次 commit 详细的描述一下，比如此次变更的动机</li>
-<li>footer: 描述下与之关联的 issue 或 break change，详见案例</li>
-</ul>
-<p>例子</p>
-<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">feat(jqLite): add prop() support</span><br><span class="line">fix(ngStyle): correctly remove old style when new style value is invalid</span><br><span class="line">docs(developers): commit message format typo</span><br><span class="line">style(animator): style cleanup</span><br><span class="line">refactor(filter): filters are now injectable and services</span><br><span class="line">perf(*): don&#x27;t trigger digests after enter/leave of structural directives</span><br><span class="line">test(mocks): test mocks with compiled angular</span><br><span class="line">chore(release): preparing release notes for 0.10.3</span><br></pre></td></tr></table></figure>
-
-<h2 id="Type"><a href="#Type" class="headerlink" title="Type"></a>Type</h2><p>类型必须是以下其中一种</p>
-<ul>
-<li>feat: 新功能</li>
-<li>fix: bug fix</li>
-<li>docs: 只改了文档</li>
-<li>style: 代码格式修改，不影响代码的逻辑性，比如空格，格式化，缺失分号等</li>
-<li>refactor: 代码重构，既不是bug fix也不是新功能</li>
-<li>perf: 性能优化</li>
-<li>test: 补充或修改测试代码</li>
-<li>chore: 改变构建流程，或者增加依赖库和工具等，比如增加文档生成工具</li>
-</ul>
-<h2 id="Scope"><a href="#Scope" class="headerlink" title="Scope"></a>Scope</h2><p>范围可以是指定提交更改位置的任何内容，比如search, location, browser, compile等</p>
-<p>你可以使用*来代替多个范围</p>
-<h2 id="Subject"><a href="#Subject" class="headerlink" title="Subject"></a>Subject</h2><p>主题包含对变更的简洁描述，有几个要求</p>
-<ul>
-<li>使用祈使句和现代时，比如使用change而不是changed或者changes</li>
-<li>首字母不要大写</li>
-<li>句末无需使用句号</li>
-</ul>
-<h2 id="Body"><a href="#Body" class="headerlink" title="Body"></a>Body</h2><p>主体与主题一样，应使用祈使句和现代时，应包括改变的动机，并将其与以前的行为进行对比。</p>
-<h2 id="Footer"><a href="#Footer" class="headerlink" title="Footer"></a>Footer</h2><p>描述一些重大的修改和相关的问题，详情参考 <a href="https://docs.google.com/document/d/1QrDFcIiPjSLDn3EL15IJygNPiHORgU1_OOAqWjiDU5Y/edit#heading=h.j8e4paqkfz0q">AngularJS Message footer</a></p>
-<h2 id="Revert"><a href="#Revert" class="headerlink" title="Revert"></a>Revert</h2><p>当回滚提交时，必须以 revert: 作为开头然后紧跟着该提交的header。</p>
-<p>body部分可以这样描述</p>
-<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line"></span><br><span class="line">This reverts commit &lt;hash&gt;.</span><br><span class="line"></span><br></pre></td></tr></table></figure>
-<p>hash是将要被回滚的那个提交的SHA码。</p>
-<h1 id="参考"><a href="#参考" class="headerlink" title="参考"></a>参考</h1><p><a href="https://juejin.im/post/5b4328bbf265da0fa21a6820">您必须知道的 Git 分支开发规范</a><br><a href="https://github.com/angular/angular.js/blob/master/DEVELOPERS.md#-git-commit-guidelines">angular.js-git-commit-guidelines</a><br><a href="https://docs.google.com/document/d/1QrDFcIiPjSLDn3EL15IJygNPiHORgU1_OOAqWjiDU5Y/edit">AngularJS Git Commit Message Conventions</a></p>
-]]></content>
-      <categories>
-        <category>Technology</category>
-      </categories>
-      <tags>
-        <tag>Git Commit</tag>
-        <tag>Git</tag>
-        <tag>Manual</tag>
-      </tags>
-  </entry>
-  <entry>
     <title>ctypes使用指南</title>
     <url>/2017/09/17/ctypes%E4%BD%BF%E7%94%A8%E6%8C%87%E5%8D%97/</url>
     <content><![CDATA[<h1 id="ctypes-简介"><a href="#ctypes-简介" class="headerlink" title="ctypes 简介"></a>ctypes 简介</h1><p>从Python2.5开始引入。<br>ctypes是Python的外部函数库。它提供了C兼容的数据类型，并且允许调用动态链接库&#x2F;共享库中的函数。它可以将这些库包装起来给Python使用。</p>
@@ -1908,6 +1841,73 @@ attachments/1114283/amf3_spec_05_05_08.pdf>.
       <tags>
         <tag>ctypes</tag>
         <tag>Cross language</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>Git commit格式参考</title>
+    <url>/2020/03/22/git-commit-guidelines/</url>
+    <content><![CDATA[<h1 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h1><p>编写良好的Commit messages可以达到以下几个重要的目的</p>
+<ul>
+<li>加快review的流程</li>
+<li>帮助我们编写良好的版本发布日志</li>
+<li>让之后的维护者了解代码里出现特定变化和feature被添加的原因</li>
+</ul>
+<p>目前，社区有多种 Commit message 的写法规范。来自Angular 规范是目前使用最广的写法，比较合理和系统化。如下图：<br><img src="/uploads/git_commit_guidelines/angular_commit_example.jpg" alt="angular_commit_example"></p>
+<h1 id="Commit-messages格式"><a href="#Commit-messages格式" class="headerlink" title="Commit messages格式"></a>Commit messages格式</h1><p>当前业界应用的比较广泛的是 <a href="https://github.com/angular/angular.js/blob/master/DEVELOPERS.md#-git-commit-guidelines">Angular Git Commit Guidelines</a></p>
+<p>具体格式为:</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">&lt;type&gt;: &lt;subject&gt;</span><br><span class="line">&lt;BLANK LINE&gt;</span><br><span class="line">&lt;body&gt;</span><br><span class="line">&lt;BLANK LINE&gt;</span><br><span class="line">&lt;footer&gt;</span><br></pre></td></tr></table></figure>
+
+<p>每个commit message一般包含header、body和footer，header是必须的，body和footer不做强制要求，所以一般可以简化为</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">&lt;type&gt;(&lt;scope&gt;): &lt;subject&gt;</span><br></pre></td></tr></table></figure>
+
+<p>或者省略scope</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">&lt;type&gt;: &lt;subject&gt;</span><br></pre></td></tr></table></figure>
+
+<p>说明</p>
+<ul>
+<li>type: 本次 commit 的类型，诸如 bugfix docs style 等</li>
+<li>scope: 本次 commit 波及的范围</li>
+<li>subject: 简明扼要的阐述下本次 commit 的主旨</li>
+<li>body: 同样使用祈使句，在主体内容中我们需要把本次 commit 详细的描述一下，比如此次变更的动机</li>
+<li>footer: 描述下与之关联的 issue 或 break change，详见案例</li>
+</ul>
+<p>例子</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">feat(jqLite): add prop() support</span><br><span class="line">fix(ngStyle): correctly remove old style when new style value is invalid</span><br><span class="line">docs(developers): commit message format typo</span><br><span class="line">style(animator): style cleanup</span><br><span class="line">refactor(filter): filters are now injectable and services</span><br><span class="line">perf(*): don&#x27;t trigger digests after enter/leave of structural directives</span><br><span class="line">test(mocks): test mocks with compiled angular</span><br><span class="line">chore(release): preparing release notes for 0.10.3</span><br></pre></td></tr></table></figure>
+
+<h2 id="Type"><a href="#Type" class="headerlink" title="Type"></a>Type</h2><p>类型必须是以下其中一种</p>
+<ul>
+<li>feat: 新功能</li>
+<li>fix: bug fix</li>
+<li>docs: 只改了文档</li>
+<li>style: 代码格式修改，不影响代码的逻辑性，比如空格，格式化，缺失分号等</li>
+<li>refactor: 代码重构，既不是bug fix也不是新功能</li>
+<li>perf: 性能优化</li>
+<li>test: 补充或修改测试代码</li>
+<li>chore: 改变构建流程，或者增加依赖库和工具等，比如增加文档生成工具</li>
+</ul>
+<h2 id="Scope"><a href="#Scope" class="headerlink" title="Scope"></a>Scope</h2><p>范围可以是指定提交更改位置的任何内容，比如search, location, browser, compile等</p>
+<p>你可以使用*来代替多个范围</p>
+<h2 id="Subject"><a href="#Subject" class="headerlink" title="Subject"></a>Subject</h2><p>主题包含对变更的简洁描述，有几个要求</p>
+<ul>
+<li>使用祈使句和现代时，比如使用change而不是changed或者changes</li>
+<li>首字母不要大写</li>
+<li>句末无需使用句号</li>
+</ul>
+<h2 id="Body"><a href="#Body" class="headerlink" title="Body"></a>Body</h2><p>主体与主题一样，应使用祈使句和现代时，应包括改变的动机，并将其与以前的行为进行对比。</p>
+<h2 id="Footer"><a href="#Footer" class="headerlink" title="Footer"></a>Footer</h2><p>描述一些重大的修改和相关的问题，详情参考 <a href="https://docs.google.com/document/d/1QrDFcIiPjSLDn3EL15IJygNPiHORgU1_OOAqWjiDU5Y/edit#heading=h.j8e4paqkfz0q">AngularJS Message footer</a></p>
+<h2 id="Revert"><a href="#Revert" class="headerlink" title="Revert"></a>Revert</h2><p>当回滚提交时，必须以 revert: 作为开头然后紧跟着该提交的header。</p>
+<p>body部分可以这样描述</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line"></span><br><span class="line">This reverts commit &lt;hash&gt;.</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+<p>hash是将要被回滚的那个提交的SHA码。</p>
+<h1 id="参考"><a href="#参考" class="headerlink" title="参考"></a>参考</h1><p><a href="https://juejin.im/post/5b4328bbf265da0fa21a6820">您必须知道的 Git 分支开发规范</a><br><a href="https://github.com/angular/angular.js/blob/master/DEVELOPERS.md#-git-commit-guidelines">angular.js-git-commit-guidelines</a><br><a href="https://docs.google.com/document/d/1QrDFcIiPjSLDn3EL15IJygNPiHORgU1_OOAqWjiDU5Y/edit">AngularJS Git Commit Message Conventions</a></p>
+]]></content>
+      <categories>
+        <category>Technology</category>
+      </categories>
+      <tags>
+        <tag>Git Commit</tag>
+        <tag>Git</tag>
+        <tag>Manual</tag>
       </tags>
   </entry>
   <entry>
@@ -2645,23 +2645,6 @@ attachments/1114283/amf3_spec_05_05_08.pdf>.
       </tags>
   </entry>
   <entry>
-    <title>推荐的学习资源</title>
-    <url>/2019/12/01/recommended-study-resources/</url>
-    <content><![CDATA[<h1 id="推荐的学习资源列表"><a href="#推荐的学习资源列表" class="headerlink" title="推荐的学习资源列表"></a>推荐的学习资源列表</h1><h2 id="Golang语言"><a href="#Golang语言" class="headerlink" title="Golang语言"></a>Golang语言</h2><p><a href="https://github.com/Unknwon/the-way-to-go_ZH_CN/blob/master/eBook/directory.md">the-way-to-go</a> (recommend)<br><a href="https://golang.org/doc/">golang.org</a> (official)  </p>
-<h2 id="数据库"><a href="#数据库" class="headerlink" title="数据库"></a>数据库</h2><h3 id="Mongodb"><a href="#Mongodb" class="headerlink" title="Mongodb"></a>Mongodb</h3><p><a href="https://www.runoob.com/mongodb/mongodb-tutorial.html">mongodb-tutorial</a> (recommend)<br><a href="https://docs.mongodb.com/manual/">docs.mongodb.com</a> (official)  </p>
-<h3 id="Redis"><a href="#Redis" class="headerlink" title="Redis"></a>Redis</h3><p><a href="https://www.runoob.com/redis/redis-tutorial.html">redis-tutorial</a> (recommend)<br><a href="http://redisdoc.com/index.html">redisdoc</a><br><a href="https://redis.io/documentation">redis.io</a>  (official)  </p>
-<h3 id="SQL"><a href="#SQL" class="headerlink" title="SQL"></a>SQL</h3><p><a href="https://www.runoob.com/sql/sql-tutorial.html">sql-tutorial</a><br><a href="https://www.runoob.com/mysql/mysql-tutorial.html">mysql-tutorial</a><br><a href="https://dev.mysql.com/doc/">dev.mysql.com</a> (official)  </p>
-<h3 id="Nginx"><a href="#Nginx" class="headerlink" title="Nginx"></a>Nginx</h3><p><a href="http://nginx.org/en/docs/">nginx.org</a> (official)<br><a href="https://www.runoob.com/w3cnote/nginx-setup-intro.html">Nginx 配置详解</a><br><a href="https://www.runoob.com/w3cnote/nginx-proxy-balancing.html">Nginx 反向代理与负载均衡详解</a><br><a href="https://moonbingbing.gitbooks.io/openresty-best-practices/ngx/nginx.html">OpenResty最佳实践-Nginx</a><br><a href="http://tengine.taobao.org/book/index.html">Nginx开发从入门到精通</a>  </p>
-]]></content>
-      <categories>
-        <category>Technology</category>
-      </categories>
-      <tags>
-        <tag>Study</tag>
-        <tag>Resource</tag>
-      </tags>
-  </entry>
-  <entry>
     <title>TensorFlow安装教程</title>
     <url>/2020/03/01/tensorflow-install/</url>
     <content><![CDATA[<h1 id="TensorFlow-安装环境要求"><a href="#TensorFlow-安装环境要求" class="headerlink" title="TensorFlow 安装环境要求"></a>TensorFlow 安装环境要求</h1><p>TensorFlow在以下64位系统环境下经过测试和支持</p>
@@ -2933,36 +2916,20 @@ attachments/1114283/amf3_spec_05_05_08.pdf>.
       </tags>
   </entry>
   <entry>
-    <title>如何搭建个人私有云盘</title>
-    <url>/2019/01/06/%E5%A6%82%E4%BD%95%E6%90%AD%E5%BB%BA%E4%B8%AA%E4%BA%BA%E7%A7%81%E6%9C%89%E4%BA%91%E7%9B%98/</url>
-    <content><![CDATA[<h1 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h1><p>市场上有很多云盘的产品，比如百度云盘，不过本教程主要目的是要搭建个人私有云盘。查了网上很多资料，个人云盘也有很多，比如nextcloud，owncloud，seafile等。这里选择nextcloud，优势就不用说了，网上一搜一大把。</p>
-<h1 id="Nextcloud搭建办法"><a href="#Nextcloud搭建办法" class="headerlink" title="Nextcloud搭建办法"></a>Nextcloud搭建办法</h1><p>主要的搭建办法有两个：</p>
-<ul>
-<li>通过VPS一键安装</li>
-<li>手动安装</li>
-</ul>
-<h2 id="通过VPS一键安装"><a href="#通过VPS一键安装" class="headerlink" title="通过VPS一键安装"></a>通过VPS一键安装</h2><p><a href="https://www.vultr.com/?ref=8443595-6G">Vultr</a>有一键安装Nextcloud的功能，非常方便。<br>主要步骤如下：</p>
-<ul>
-<li>注册vps</li>
-<li>创建vps实例</li>
-<li>Server Location -&gt; 选择一个好的机房，比如洛杉矶，日本和新加坡等。</li>
-<li>Server Type -&gt; 选Application，选中Nextcloud</li>
-<li>Server Size -&gt; 根据自己需要选择</li>
-<li>剩下的配置使用默认即可</li>
-</ul>
-<p>首先，登陆<a href="https://www.vultr.com/?ref=8443595-6G">Vultr官网</a>，点击Create Account注册。<br>选择一个好的机房，当然是自己测过才放心。这里推荐使用<a href="http://www.nirsoft.net/utils/pinginfoview.zip">PingInfoView</a>来测试。以下是vultr的机房：<br><img src="/uploads/vps/vultr_area.jpeg" alt="vultr_area"></p>
-<p>列表如下，贴到PingInfoView上即可。</p>
-<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">sgp-ping.vultr.com</span><br><span class="line">hnd-jp-ping.vultr.com</span><br><span class="line">syd-au-ping.vultr.com</span><br><span class="line">fra-de-ping.vultr.com</span><br><span class="line">ams-nl-ping.vultr.com</span><br><span class="line">lon-gb-ping.vultr.com</span><br><span class="line">par-fr-ping.vultr.com</span><br><span class="line">wa-us-ping.vultr.com</span><br><span class="line">sjo-ca-us-ping.vultr.com</span><br><span class="line">lax-ca-us-ping.vultr.com</span><br><span class="line">il-us-ping.vultr.com</span><br><span class="line">nj-us-ping.vultr.com</span><br><span class="line">tx-us-ping.vultr.com</span><br><span class="line">ga-us-ping.vultr.com</span><br><span class="line">fl-us-ping.vultr.com</span><br></pre></td></tr></table></figure>
-<p>linux&#x2F;mac用户可以使用我写的脚本<a href="https://github.com/rukesun/vultr_test.git">vultr_test</a>来测试。<br>以下是我的测试结果：<br><img src="/uploads/vps/my_ping_test.png"><br>选择的原则是，ping值最小，丢包率最小。比如我的测试结果中，较不错的是sjo、wa和lax，都是美国机房。</p>
-<p>接下来Server Type选Application，选中Nextcloud，如下所示<br><img src="/uploads/nextcloud/vultr_nextcloud_app.jpg" alt="nextcloud_app"><br>根据自己的需要选择Server Size，剩下的配置使用默认即可。<br>点击Deploy Now，然后静静地等待1~2分钟。<br>部署完成后，查看实例详情，可以看到Nextcloud的地址，登陆账号和密码。<br><img src="/uploads/nextcloud/vultr_nextcloud_info.jpg" alt="nextcloud_info"><br>打开你的Nextcloud地址，会提示不安全，这个是ssl证书问题，你可以直接忽略。<br>下面是打开后的界面<br><img src="/uploads/nextcloud/nextcloud_login.jpg" alt="nextcloud_login"><br>怎么样，是不是很期待？<br>输入账号和密码，点击登录，网盘就可以使用了<br><img src="/uploads/nextcloud/nextcloud_main.jpg" alt="nextcloud_main"><br>可以传视频，文档，可以自定义目录，更多的功能等待你去探索！好了，是不是有点小激动？麻麻再也不用担心我的小电影没地方放了。</p>
-<hr>
+    <title>推荐的学习资源</title>
+    <url>/2019/12/01/recommended-study-resources/</url>
+    <content><![CDATA[<h1 id="推荐的学习资源列表"><a href="#推荐的学习资源列表" class="headerlink" title="推荐的学习资源列表"></a>推荐的学习资源列表</h1><h2 id="Golang语言"><a href="#Golang语言" class="headerlink" title="Golang语言"></a>Golang语言</h2><p><a href="https://github.com/Unknwon/the-way-to-go_ZH_CN/blob/master/eBook/directory.md">the-way-to-go</a> (recommend)<br><a href="https://golang.org/doc/">golang.org</a> (official)  </p>
+<h2 id="数据库"><a href="#数据库" class="headerlink" title="数据库"></a>数据库</h2><h3 id="Mongodb"><a href="#Mongodb" class="headerlink" title="Mongodb"></a>Mongodb</h3><p><a href="https://www.runoob.com/mongodb/mongodb-tutorial.html">mongodb-tutorial</a> (recommend)<br><a href="https://docs.mongodb.com/manual/">docs.mongodb.com</a> (official)  </p>
+<h3 id="Redis"><a href="#Redis" class="headerlink" title="Redis"></a>Redis</h3><p><a href="https://www.runoob.com/redis/redis-tutorial.html">redis-tutorial</a> (recommend)<br><a href="http://redisdoc.com/index.html">redisdoc</a><br><a href="https://redis.io/documentation">redis.io</a>  (official)  </p>
+<h3 id="SQL"><a href="#SQL" class="headerlink" title="SQL"></a>SQL</h3><p><a href="https://www.runoob.com/sql/sql-tutorial.html">sql-tutorial</a><br><a href="https://www.runoob.com/mysql/mysql-tutorial.html">mysql-tutorial</a><br><a href="https://dev.mysql.com/doc/">dev.mysql.com</a> (official)  </p>
+<h3 id="Nginx"><a href="#Nginx" class="headerlink" title="Nginx"></a>Nginx</h3><p><a href="http://nginx.org/en/docs/">nginx.org</a> (official)<br><a href="https://www.runoob.com/w3cnote/nginx-setup-intro.html">Nginx 配置详解</a><br><a href="https://www.runoob.com/w3cnote/nginx-proxy-balancing.html">Nginx 反向代理与负载均衡详解</a><br><a href="https://moonbingbing.gitbooks.io/openresty-best-practices/ngx/nginx.html">OpenResty最佳实践-Nginx</a><br><a href="http://tengine.taobao.org/book/index.html">Nginx开发从入门到精通</a>  </p>
 ]]></content>
       <categories>
-        <category>Tools</category>
+        <category>Technology</category>
       </categories>
       <tags>
-        <tag>nextcloud</tag>
-        <tag>vps</tag>
+        <tag>Study</tag>
+        <tag>Resource</tag>
       </tags>
   </entry>
   <entry>
@@ -3111,8 +3078,8 @@ attachments/1114283/amf3_spec_05_05_08.pdf>.
         <category>Tools</category>
       </categories>
       <tags>
-        <tag>vps</tag>
         <tag>vpn</tag>
+        <tag>vps</tag>
       </tags>
   </entry>
   <entry>
@@ -3138,8 +3105,41 @@ attachments/1114283/amf3_spec_05_05_08.pdf>.
         <category>Tools</category>
       </categories>
       <tags>
-        <tag>vps</tag>
         <tag>vpn</tag>
+        <tag>vps</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>如何搭建个人私有云盘</title>
+    <url>/2019/01/06/%E5%A6%82%E4%BD%95%E6%90%AD%E5%BB%BA%E4%B8%AA%E4%BA%BA%E7%A7%81%E6%9C%89%E4%BA%91%E7%9B%98/</url>
+    <content><![CDATA[<h1 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h1><p>市场上有很多云盘的产品，比如百度云盘，不过本教程主要目的是要搭建个人私有云盘。查了网上很多资料，个人云盘也有很多，比如nextcloud，owncloud，seafile等。这里选择nextcloud，优势就不用说了，网上一搜一大把。</p>
+<h1 id="Nextcloud搭建办法"><a href="#Nextcloud搭建办法" class="headerlink" title="Nextcloud搭建办法"></a>Nextcloud搭建办法</h1><p>主要的搭建办法有两个：</p>
+<ul>
+<li>通过VPS一键安装</li>
+<li>手动安装</li>
+</ul>
+<h2 id="通过VPS一键安装"><a href="#通过VPS一键安装" class="headerlink" title="通过VPS一键安装"></a>通过VPS一键安装</h2><p><a href="https://www.vultr.com/?ref=8443595-6G">Vultr</a>有一键安装Nextcloud的功能，非常方便。<br>主要步骤如下：</p>
+<ul>
+<li>注册vps</li>
+<li>创建vps实例</li>
+<li>Server Location -&gt; 选择一个好的机房，比如洛杉矶，日本和新加坡等。</li>
+<li>Server Type -&gt; 选Application，选中Nextcloud</li>
+<li>Server Size -&gt; 根据自己需要选择</li>
+<li>剩下的配置使用默认即可</li>
+</ul>
+<p>首先，登陆<a href="https://www.vultr.com/?ref=8443595-6G">Vultr官网</a>，点击Create Account注册。<br>选择一个好的机房，当然是自己测过才放心。这里推荐使用<a href="http://www.nirsoft.net/utils/pinginfoview.zip">PingInfoView</a>来测试。以下是vultr的机房：<br><img src="/uploads/vps/vultr_area.jpeg" alt="vultr_area"></p>
+<p>列表如下，贴到PingInfoView上即可。</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">sgp-ping.vultr.com</span><br><span class="line">hnd-jp-ping.vultr.com</span><br><span class="line">syd-au-ping.vultr.com</span><br><span class="line">fra-de-ping.vultr.com</span><br><span class="line">ams-nl-ping.vultr.com</span><br><span class="line">lon-gb-ping.vultr.com</span><br><span class="line">par-fr-ping.vultr.com</span><br><span class="line">wa-us-ping.vultr.com</span><br><span class="line">sjo-ca-us-ping.vultr.com</span><br><span class="line">lax-ca-us-ping.vultr.com</span><br><span class="line">il-us-ping.vultr.com</span><br><span class="line">nj-us-ping.vultr.com</span><br><span class="line">tx-us-ping.vultr.com</span><br><span class="line">ga-us-ping.vultr.com</span><br><span class="line">fl-us-ping.vultr.com</span><br></pre></td></tr></table></figure>
+<p>linux&#x2F;mac用户可以使用我写的脚本<a href="https://github.com/rukesun/vultr_test.git">vultr_test</a>来测试。<br>以下是我的测试结果：<br><img src="/uploads/vps/my_ping_test.png"><br>选择的原则是，ping值最小，丢包率最小。比如我的测试结果中，较不错的是sjo、wa和lax，都是美国机房。</p>
+<p>接下来Server Type选Application，选中Nextcloud，如下所示<br><img src="/uploads/nextcloud/vultr_nextcloud_app.jpg" alt="nextcloud_app"><br>根据自己的需要选择Server Size，剩下的配置使用默认即可。<br>点击Deploy Now，然后静静地等待1~2分钟。<br>部署完成后，查看实例详情，可以看到Nextcloud的地址，登陆账号和密码。<br><img src="/uploads/nextcloud/vultr_nextcloud_info.jpg" alt="nextcloud_info"><br>打开你的Nextcloud地址，会提示不安全，这个是ssl证书问题，你可以直接忽略。<br>下面是打开后的界面<br><img src="/uploads/nextcloud/nextcloud_login.jpg" alt="nextcloud_login"><br>怎么样，是不是很期待？<br>输入账号和密码，点击登录，网盘就可以使用了<br><img src="/uploads/nextcloud/nextcloud_main.jpg" alt="nextcloud_main"><br>可以传视频，文档，可以自定义目录，更多的功能等待你去探索！好了，是不是有点小激动？麻麻再也不用担心我的小电影没地方放了。</p>
+<hr>
+]]></content>
+      <categories>
+        <category>Tools</category>
+      </categories>
+      <tags>
+        <tag>vps</tag>
+        <tag>nextcloud</tag>
       </tags>
   </entry>
 </search>
