@@ -71,8 +71,19 @@ $(document).ready(function() {
   // TOC item animation navigate & prevent #item selector in adress bar.
   $('.post-toc a').on('click', function(e) {
     e.preventDefault();
-    var targetSelector = NexT.utils.escapeSelector(this.getAttribute('href'));
-    var offset = $(targetSelector).offset().top;
+    var href = this.getAttribute('href');
+    // Decode URI component to handle Chinese/Unicode characters in IDs
+    if (href && href.charAt(0) === '#') {
+      try {
+        href = '#' + decodeURIComponent(href.substring(1));
+      } catch (err) {
+        // If decoding fails, use original href
+      }
+    }
+    var targetSelector = NexT.utils.escapeSelector(href);
+    var $target = $(targetSelector);
+    if ($target.length === 0) return;
+    var offset = $target.offset().top;
 
     hasVelocity
       ? html.velocity('stop').velocity('scroll', {

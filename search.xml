@@ -1,6 +1,28 @@
 <?xml version="1.0" encoding="utf-8"?>
 <search>
   <entry>
+    <title>FFmpeg的那些坑-RTP missed xxx packets</title>
+    <url>/2018/07/01/FFmpeg%E7%9A%84%E9%82%A3%E4%BA%9B%E5%9D%91-RTP-missed-xxx-packets/</url>
+    <content><![CDATA[<h1 id="FFmpeg使用场景"><a href="#FFmpeg使用场景" class="headerlink" title="FFmpeg使用场景"></a>FFmpeg使用场景</h1><p>使用FFmpeg将两路RTP流合成一路流</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">ffmpeg -acodec libopus -i ../var/tmp/1024_0.sdp -acodec libopus -i ../var/tmp/1024_1.sdp -filter_complex &quot;[0:v]setpts=PTS-STARTPTS,setsar=1[left];[1:v]setpts=PTS-STARTPTS,setsar=1[right];[left][right]hstack[vout];[0:a][1:a]amix[aout]&quot; -map [vout] -map [aout] -vcodec libx264 -profile:v high -preset veryfast -strict -2 -acodec aac -f flv rtmp://localhost:1935/live/1024</span><br></pre></td></tr></table></figure>
+
+<h1 id="问题"><a href="#问题" class="headerlink" title="问题"></a>问题</h1><p>FFmpeg日志提示RTP: missed xxx packets<br>合流视频花屏。</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">[h264 @ 0x45c05a0] Invalid level prefix</span><br><span class="line">[h264 @ 0x45c05a0] error while decoding MB 11 19</span><br><span class="line">[h264 @ 0x45c05a0] concealing 53 DC, 53 AC, 53 MV errors in I frame</span><br><span class="line">[sdp @ 0x42e5c20] max delay reached. need to consume packet</span><br><span class="line">[sdp @ 0x42e5c20] RTP: missed 16 packets</span><br><span class="line">[sdp @ 0x42e5c20] max delay reached. need to consume packet</span><br><span class="line">[sdp @ 0x42e5c20] RTP: missed 4 packets</span><br><span class="line">[h264 @ 0x45c05a0] negative number of zero coeffs at 0 4</span><br><span class="line">[h264 @ 0x45c05a0] error while decoding MB 0 4</span><br><span class="line">[h264 @ 0x45c05a0] concealing 289 DC, 289 AC, 289 MV errors in P frame</span><br><span class="line">[h264 @ 0x4413420] Invalid level prefix</span><br><span class="line">[h264 @ 0x4413420] error while decoding MB 9 19</span><br><span class="line">[h264 @ 0x4413420] concealing 55 DC, 55 AC, 55 MV errors in P frame</span><br></pre></td></tr></table></figure>
+
+
+<h1 id="原因"><a href="#原因" class="headerlink" title="原因"></a>原因</h1><p>FFmpeg默认接收线程数据队列大小thread_queue_size为8，当合流不够快时，接收数据队列溢出，导致RTP接收数据丢包。</p>
+<h1 id="解决办法"><a href="#解决办法" class="headerlink" title="解决办法"></a>解决办法</h1><p>使用thread_queue_size选项配置大一点的接收线程数据队列，如</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">ffmpeg -thread_queue_size 512 -acodec libopus -i ../var/tmp/1024_0.sdp  -thread_queue_size 512 -acodec libopus -i ../var/tmp/1024_1.sdp -filter_complex &quot;[0:v]setpts=PTS-STARTPTS,setsar=1[left];[1:v]setpts=PTS-STARTPTS,setsar=1[right];[left][right]hstack[vout];[0:a][1:a]amix[aout]&quot; -map [vout] -map [aout] -vcodec libx264 -profile:v high -preset veryfast -strict -2 -acodec aac -f flv rtmp://localhost:1935/live/1024</span><br></pre></td></tr></table></figure>
+]]></content>
+      <categories>
+        <category>Technology</category>
+      </categories>
+      <tags>
+        <tag>FFmpeg</tag>
+        <tag>av</tag>
+      </tags>
+  </entry>
+  <entry>
     <title>FFmpeg的那些坑-Too many packets buffered for output stream</title>
     <url>/2018/07/01/FFmpeg%E7%9A%84%E9%82%A3%E4%BA%9B%E5%9D%91-Too-many-packets-buffered-for-output-stream/</url>
     <content><![CDATA[<h1 id="FFmpeg使用场景"><a href="#FFmpeg使用场景" class="headerlink" title="FFmpeg使用场景"></a>FFmpeg使用场景</h1><p>使用FFmpeg给视频打水印</p>
@@ -23,81 +45,20 @@
       </tags>
   </entry>
   <entry>
-    <title>Kurento Media Server源码编译</title>
-    <url>/2018/05/27/Kurento-Media-Server%E6%BA%90%E7%A0%81%E7%BC%96%E8%AF%91/</url>
-    <content><![CDATA[<h1 id="Build-dependency"><a href="#Build-dependency" class="headerlink" title="Build dependency"></a>Build dependency</h1><h2 id="Module-dependency-graph"><a href="#Module-dependency-graph" class="headerlink" title="Module dependency graph"></a>Module dependency graph</h2><p>Kurento模块的依赖关系如下图所示<br><img src="/uploads/kms_build/kms_module_dependency_graph.png" alt="kms_module_dependency_graph"></p>
-<h2 id="Module-dependency-list"><a href="#Module-dependency-list" class="headerlink" title="Module dependency list"></a>Module dependency list</h2><p>Kurento模块依赖关系并不是严格的线性关系，所以编译顺序可以有多种组合，以下是其中一种可能的编译顺序：</p>
-<p>Externals：</p>
-<ul>
-<li>gstreamer</li>
-<li>libsrtp</li>
-<li>openh264</li>
-<li>usrsctp</li>
-<li>jsoncpp</li>
-<li>gst-plugins-base</li>
-<li>gst-plugins-good</li>
-<li>gst-plugins-ugly</li>
-<li>gst-plugins-bad</li>
-<li>gst-libav</li>
-<li>openwebrtc-gst-plugins</li>
-<li>libnice</li>
-</ul>
-<p>KMS Main + Extra:</p>
-<ul>
-<li>kurento-module-creator</li>
-<li>kms-cmake-utils</li>
-<li>kms-jsonrpc</li>
-<li>kms-core</li>
-<li>kms-elements</li>
-<li>kms-filters</li>
-<li>kurento-media-server</li>
-<li>kms-chroma</li>
-<li>kms-crowddetector</li>
-<li>kms-datachannelexample</li>
-<li>kms-platedetector</li>
-<li>kms-pointerdetector</li>
-</ul>
-<h1 id="Build"><a href="#Build" class="headerlink" title="Build"></a>Build</h1><p>Note: </p>
-<ol>
-<li>适用于Ubuntu和Centos</li>
-<li>如果在Centos下编译，还需要升级glib，autotools等</li>
-</ol>
-<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line"># KMS源码目录</span><br><span class="line">KMS_HOME=$HOME/kms_source</span><br><span class="line"># KMS编译目录</span><br><span class="line">KMS_BUILD_HOME=$KMS_HOME/build/kms</span><br><span class="line"></span><br><span class="line">CMAKE_MODULES_PATH=$&#123;KMS_BUILD_HOME&#125;/share/cmake-3.5/Modules</span><br><span class="line"></span><br><span class="line"># 导入编译所需的环境变量</span><br><span class="line">export CMAKE_OPTS=&quot;-DCMAKE_INSTALL_LIBDIR=lib -DCMAKE_MODULE_PATH:STRING=$&#123;CMAKE_MODULES_PATH&#125; -DKURENTO_MODULES_DIR:STRING=$&#123;KMS_BUILD_HOME&#125;/share/kurento/modules&quot;</span><br><span class="line">export PKG_CONFIG_PATH=$PKG_CONFIG_PATH:$KMS_BUILD_HOME/lib/pkgconfig</span><br><span class="line">export LIBRARY_PATH=$LIBRARY_PATH:$KMS_BUILD_HOME/lib</span><br><span class="line">export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$KMS_BUILD_HOME/lib</span><br><span class="line">export CPATH=$CPATH:$KMS_BUILD_HOME/include:$KMS_BUILD_HOME/include/gstreamer-1.5</span><br><span class="line">export PATH=$PATH:$KMS_BUILD_HOME/bin</span><br><span class="line">JAVA_CMD=$(which java)</span><br><span class="line"></span><br><span class="line"># 创建所需目录</span><br><span class="line">mkdir -p $&#123;KMS_HOME&#125;</span><br><span class="line">mkdir -p $&#123;KMS_BUILD_HOME&#125;</span><br><span class="line">mkdir -p $&#123;KMS_BUILD_HOME&#125;/bin</span><br><span class="line"></span><br><span class="line"># ---- build externals ----</span><br><span class="line"># gstreamer</span><br><span class="line">cd $&#123;KMS_HOME&#125;</span><br><span class="line">git clone https://github.com/Kurento/gstreamer.git</span><br><span class="line">cd gstreamer</span><br><span class="line">git checkout kms6.6.0</span><br><span class="line">./autogen.sh</span><br><span class="line"># introspection requires python &gt;= 2.7</span><br><span class="line">./configure --enable-introspection=no --prefix=$KMS_BUILD_HOME &amp;&amp; make &amp;&amp; make install</span><br><span class="line">if [ $? -ne 0 ]; then exit -1; fi</span><br><span class="line"></span><br><span class="line"># build openssl</span><br><span class="line">cd $&#123;KMS_HOME&#125;</span><br><span class="line">wget https://www.openssl.org/source/old/1.0.2/openssl-1.0.2g.tar.gz</span><br><span class="line">tar -zxvf openssl-1.0.2g.tar.gz</span><br><span class="line">cd openssl-1.0.2g</span><br><span class="line">./config shared --prefix=$KMS_BUILD_HOME &amp;&amp; make &amp;&amp; make install</span><br><span class="line">if [ $? -ne 0 ]; then exit -1; fi</span><br><span class="line"></span><br><span class="line"># build libsrtp</span><br><span class="line">cd $&#123;KMS_HOME&#125;</span><br><span class="line">git clone https://github.com/Kurento/libsrtp.git</span><br><span class="line">cd libsrtp</span><br><span class="line">git checkout kms6.6.0</span><br><span class="line">./configure --prefix=$KMS_BUILD_HOME &amp;&amp; make &amp;&amp; make install</span><br><span class="line">if [ $? -ne 0 ]; then exit -1; fi</span><br><span class="line"></span><br><span class="line"># build nasm</span><br><span class="line"># required by openh264</span><br><span class="line">cd $&#123;KMS_HOME&#125;</span><br><span class="line">wget https://www.nasm.us/pub/nasm/releasebuilds/2.13.02/nasm-2.13.02.tar.gz</span><br><span class="line">tar -xzvf nasm-2.13.02.tar.gz</span><br><span class="line">cd nasm-2.13.02</span><br><span class="line">./configure --prefix=$KMS_BUILD_HOME &amp;&amp; make &amp;&amp; make install</span><br><span class="line">if [ $? -ne 0 ]; then exit -1; fi</span><br><span class="line"></span><br><span class="line"># build openh264</span><br><span class="line">cd $&#123;KMS_HOME&#125;</span><br><span class="line">git clone https://github.com/cisco/openh264.git</span><br><span class="line">cd openh264</span><br><span class="line">git checkout v1.4.0</span><br><span class="line">make &amp;&amp; make install PREFIX=$KMS_BUILD_HOME</span><br><span class="line">if [ $? -ne 0 ]; then exit -1; fi</span><br><span class="line"></span><br><span class="line"># build usrsctp</span><br><span class="line">cd $&#123;KMS_HOME&#125;</span><br><span class="line">git clone https://github.com/Kurento/usrsctp.git</span><br><span class="line">cd usrsctp</span><br><span class="line">git checkout kms6.6.0</span><br><span class="line">./bootstrap</span><br><span class="line">./configure --prefix=$KMS_BUILD_HOME</span><br><span class="line">make &amp;&amp; make install</span><br><span class="line">if [ $? -ne 0 ]; then exit -1; fi</span><br><span class="line"></span><br><span class="line"># build opus</span><br><span class="line">cd $&#123;KMS_HOME&#125;</span><br><span class="line">wget https://archive.mozilla.org/pub/opus/opus-1.2.1.tar.gz</span><br><span class="line">tar -zxvf opus-1.2.1.tar.gz</span><br><span class="line">cd opus-1.2.1</span><br><span class="line">./configure --prefix=$KMS_BUILD_HOME &amp;&amp; make &amp;&amp; make install</span><br><span class="line">if [ $? -ne 0 ]; then exit -1; fi</span><br><span class="line"></span><br><span class="line"># build orc</span><br><span class="line">cd $&#123;KMS_HOME&#125;</span><br><span class="line">wget https://gstreamer.freedesktop.org/src/orc/orc-0.4.28.tar.xz</span><br><span class="line">tar -Jxvf orc-0.4.28.tar.xz</span><br><span class="line">cd orc-0.4.28</span><br><span class="line">./configure --prefix=$KMS_BUILD_HOME &amp;&amp; make &amp;&amp; make install</span><br><span class="line">if [ $? -ne 0 ]; then exit -1; fi</span><br><span class="line"></span><br><span class="line"># build jsoncpp</span><br><span class="line">cd $&#123;KMS_HOME&#125;</span><br><span class="line">git clone https://github.com/Kurento/jsoncpp.git</span><br><span class="line">cd jsoncpp</span><br><span class="line">git checkout kms6.6.0</span><br><span class="line">mkdir -p build &amp;&amp; cd build</span><br><span class="line">cmake -DCMAKE_INSTALL_PREFIX=$KMS_BUILD_HOME $CMAKE_OPTS ..</span><br><span class="line">make &amp;&amp; make install</span><br><span class="line">if [ $? -ne 0 ]; then exit -1; fi</span><br><span class="line"># 否则编译kms-jsonrpc会报错 fatal error: json/json.h: No such file or directory</span><br><span class="line">sed -i &#x27;s/\/kmsjsoncpp//g&#x27; $KMS_BUILD_HOME/lib/pkgconfig/kmsjsoncpp.pc</span><br><span class="line"></span><br><span class="line"># gst-plugins-base</span><br><span class="line">cd $&#123;KMS_HOME&#125;</span><br><span class="line">git clone https://github.com/Kurento/gst-plugins-base.git</span><br><span class="line">cd gst-plugins-base</span><br><span class="line">git checkout kms6.6.0</span><br><span class="line">./autogen.sh</span><br><span class="line">./configure --enable-introspection=no --prefix=$KMS_BUILD_HOME &amp;&amp; make &amp;&amp; make install</span><br><span class="line">if [ $? -ne 0 ]; then exit -1; fi</span><br><span class="line"></span><br><span class="line"># gst-plugins-good</span><br><span class="line"># for rtp </span><br><span class="line">cd $&#123;KMS_HOME&#125;</span><br><span class="line">git clone https://github.com/Kurento/gst-plugins-good.git</span><br><span class="line">cd gst-plugins-good</span><br><span class="line">git checkout kms6.6.0</span><br><span class="line">./autogen.sh</span><br><span class="line">./configure --enable-introspection=no --prefix=$KMS_BUILD_HOME &amp;&amp; make &amp;&amp; make install</span><br><span class="line">if [ $? -ne 0 ]; then exit -1; fi</span><br><span class="line"></span><br><span class="line"># gst-plugins-ugly</span><br><span class="line">cd $&#123;KMS_HOME&#125;</span><br><span class="line">git clone https://github.com/Kurento/gst-plugins-ugly.git</span><br><span class="line">cd gst-plugins-ugly</span><br><span class="line">git checkout kms6.6.0</span><br><span class="line">./autogen.sh</span><br><span class="line">./configure --enable-introspection=no --prefix=$KMS_BUILD_HOME &amp;&amp; make &amp;&amp; make install</span><br><span class="line">if [ $? -ne 0 ]; then exit -1; fi</span><br><span class="line"></span><br><span class="line"># gst-plugins-bad</span><br><span class="line"># for openh264+libsrtp</span><br><span class="line">cd $&#123;KMS_HOME&#125;</span><br><span class="line">git clone https://github.com/Kurento/gst-plugins-bad.git</span><br><span class="line">cd gst-plugins-bad</span><br><span class="line">git checkout kms6.6.0</span><br><span class="line">./autogen.sh</span><br><span class="line">./configure --enable-introspection=no --prefix=$KMS_BUILD_HOME &amp;&amp; make &amp;&amp; make install</span><br><span class="line">if [ $? -ne 0 ]; then exit -1; fi</span><br><span class="line"></span><br><span class="line"># gst-libav</span><br><span class="line">cd $&#123;KMS_HOME&#125;</span><br><span class="line">git clone https://github.com/Kurento/gst-libav.git</span><br><span class="line">cd gst-libav</span><br><span class="line">git checkout kms6.6.0</span><br><span class="line">./autogen.sh</span><br><span class="line">./configure --enable-introspection=no --prefix=$KMS_BUILD_HOME &amp;&amp; make &amp;&amp; make install</span><br><span class="line">if [ $? -ne 0 ]; then exit -1; fi</span><br><span class="line"></span><br><span class="line"># build openwebrtc-gst-plugins</span><br><span class="line">cd $&#123;KMS_HOME&#125;</span><br><span class="line">git clone https://github.com/Kurento/openwebrtc-gst-plugins.git</span><br><span class="line">cd openwebrtc-gst-plugins</span><br><span class="line">git checkout kms6.6.0</span><br><span class="line">./autogen.sh</span><br><span class="line">./configure --prefix=$KMS_BUILD_HOME &amp;&amp; make &amp;&amp; make install</span><br><span class="line">if [ $? -ne 0 ]; then exit -1; fi</span><br><span class="line"></span><br><span class="line"># build libnice</span><br><span class="line">cd $&#123;KMS_HOME&#125;</span><br><span class="line">git clone https://github.com/Kurento/libnice.git</span><br><span class="line">cd libnice</span><br><span class="line">git checkout kms6.6.1</span><br><span class="line">./autogen.sh</span><br><span class="line">./configure --enable-introspection=no --prefix=$KMS_BUILD_HOME &amp;&amp; make &amp;&amp; make install</span><br><span class="line">if [ $? -ne 0 ]; then exit -1; fi</span><br><span class="line"></span><br><span class="line"># build libevent</span><br><span class="line"># required by kurento-media-server</span><br><span class="line">cd $&#123;KMS_HOME&#125;</span><br><span class="line">wget https://github.com/libevent/libevent/releases/download/release-2.0.22-stable/libevent-2.0.22-stable.tar.gz</span><br><span class="line">tar -xzvf libevent-2.0.22-stable.tar.gz</span><br><span class="line">cd libevent-2.0.22-stable</span><br><span class="line">./configure --prefix=$KMS_BUILD_HOME &amp;&amp; make &amp;&amp; make install</span><br><span class="line">if [ $? -ne 0 ]; then exit -1; fi</span><br><span class="line"></span><br><span class="line"># build boost</span><br><span class="line">cd $&#123;KMS_HOME&#125;</span><br><span class="line"># boost&gt;1.58.0不支持json配置注释</span><br><span class="line">wget &quot;https://sourceforge.net/projects/boost/files/boost/1.58.0/boost_1_58_0.tar.gz/download&quot; -O boost_1_58_0.tar.gz</span><br><span class="line">tar -zxvf boost_1_58_0.tar.gz</span><br><span class="line">cd boost_1_58_0</span><br><span class="line">./bootstrap.sh</span><br><span class="line">./b2 install --prefix=$KMS_BUILD_HOME</span><br><span class="line">#if [ $? -ne 0 ]; then exit -1; fi</span><br><span class="line"></span><br><span class="line"># ---- build kms main ----</span><br><span class="line"># build kms-cmake-utils</span><br><span class="line">cd $&#123;KMS_HOME&#125;</span><br><span class="line">git clone https://github.com/Kurento/kms-cmake-utils.git</span><br><span class="line">cd kms-cmake-utils</span><br><span class="line">git checkout 6.7.0</span><br><span class="line">mkdir -p build &amp;&amp; cd build &amp;&amp; cmake -DCMAKE_INSTALL_PREFIX=$KMS_BUILD_HOME $CMAKE_OPTS .. &amp;&amp; make &amp;&amp; make install</span><br><span class="line">if [ $? -ne 0 ]; then exit -1; fi</span><br><span class="line"></span><br><span class="line"># build kurento-module-creator</span><br><span class="line">cd $&#123;KMS_HOME&#125;</span><br><span class="line">git clone https://github.com/Kurento/kurento-module-creator.git</span><br><span class="line">cd kurento-module-creator</span><br><span class="line">git checkout 6.7.0</span><br><span class="line">mvn package</span><br><span class="line">cp target/classes/FindKurentoModuleCreator.cmake $&#123;CMAKE_MODULES_PATH&#125;</span><br><span class="line">cp target/kurento-module-creator-jar-with-dependencies.jar $&#123;KMS_BUILD_HOME&#125;/bin</span><br><span class="line">cp scripts/kurento-module-creator $&#123;KMS_BUILD_HOME&#125;/bin</span><br><span class="line">sed -i &quot;s|JAVA_CMD=.*|JAVA_CMD=$&#123;JAVA_CMD&#125;|g&quot; $KMS_BUILD_HOME/bin/kurento-module-creator</span><br><span class="line">if [ $? -ne 0 ]; then exit -1; fi</span><br><span class="line"></span><br><span class="line"># build kms-jsonrpc</span><br><span class="line">cd $&#123;KMS_HOME&#125;</span><br><span class="line">git clone https://github.com/Kurento/kms-jsonrpc.git</span><br><span class="line">cd kms-jsonrpc </span><br><span class="line">git checkout 6.7.0</span><br><span class="line">rm -rf build &amp;&amp; mkdir -p build &amp;&amp; cd build</span><br><span class="line">cmake -DCMAKE_INSTALL_PREFIX=$KMS_BUILD_HOME $CMAKE_OPTS ..</span><br><span class="line">make &amp;&amp; make install</span><br><span class="line">if [ $? -ne 0 ]; then exit -1; fi</span><br><span class="line"></span><br><span class="line"># build kms-core</span><br><span class="line">cd $&#123;KMS_HOME&#125;</span><br><span class="line">git clone https://github.com/Kurento/kms-core.git</span><br><span class="line">cd kms-core</span><br><span class="line">git checkout 6.7.1</span><br><span class="line">rm -rf build &amp;&amp; mkdir -p build &amp;&amp; cd build</span><br><span class="line">cmake -DCMAKE_INSTALL_PREFIX=$KMS_BUILD_HOME $CMAKE_OPTS .. &amp;&amp; make &amp;&amp; make install</span><br><span class="line">if [ $? -ne 0 ]; then exit -1; fi</span><br><span class="line"></span><br><span class="line"># build kms-elements</span><br><span class="line">cd $&#123;KMS_HOME&#125;</span><br><span class="line">git clone https://github.com/Kurento/kms-elements.git</span><br><span class="line">cd kms-elements</span><br><span class="line">git checkout 6.7.1</span><br><span class="line">rm -rf build &amp;&amp; mkdir -p build &amp;&amp; cd build</span><br><span class="line">cmake -DCMAKE_INSTALL_PREFIX=$KMS_BUILD_HOME $CMAKE_OPTS .. &amp;&amp; make &amp;&amp; make install</span><br><span class="line">if [ $? -ne 0 ]; then exit -1; fi</span><br><span class="line"></span><br><span class="line"># build kurento-media-server</span><br><span class="line">cd $&#123;KMS_HOME&#125;</span><br><span class="line">git clone https://github.com/Kurento/kurento-media-server.git</span><br><span class="line">cd kurento-media-server </span><br><span class="line">git checkout 6.7.1</span><br><span class="line">rm -rf build &amp;&amp; mkdir -p build &amp;&amp; cd build</span><br><span class="line">cmake -DCMAKE_INSTALL_PREFIX=$KMS_BUILD_HOME $CMAKE_OPTS .. </span><br><span class="line">make &amp;&amp; make install</span><br><span class="line">if [ $? -ne 0 ]; then exit -1; fi</span><br><span class="line"></span><br></pre></td></tr></table></figure>
-
-<h1 id="Run"><a href="#Run" class="headerlink" title="Run"></a>Run</h1><figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">KMS_HOME=$HOME/kms_source</span><br><span class="line">KMS_BUILD_HOME=$KMS_HOME/build/kms</span><br><span class="line">export LD_LIBRARY_PATH=$KMS_BUILD_HOME/lib:$LD_LIBRARY_PATH</span><br><span class="line"></span><br><span class="line">$KMS_BUILD_HOME/bin/kurento-media-server -f $KMS_BUILD_HOME/etc/kurento/kurento.conf.json -c $KMS_BUILD_HOME/etc/kurento/modules/kurento</span><br></pre></td></tr></table></figure>
-<h1 id="Reference"><a href="#Reference" class="headerlink" title="Reference"></a>Reference</h1><ol>
-<li><a href="http://doc-kurento.readthedocs.io/en/stable/dev/dev_guide.html">Kurento Developer Guide</a></li>
-</ol>
+    <title>The background of this blog</title>
+    <url>/2017/07/23/The-background-of-this-blog/</url>
+    <content><![CDATA[<p>欢迎浏览本博客。<br>作为第一篇非技术类的文章，可能没什么干货分享，但总感觉应该写点什么。好吧，就谈谈开博背景！</p>
+<p>自由。本人喜欢自由的写作，在其他博客平台，总有各种各样的限制，比如审核。自己的博客，样式随便改。</p>
+<p>简洁。喜欢MarkDown的简洁，也喜欢简洁的博客主题。</p>
+<p>分享。无他，写博客就为了分享。当然，这也是大家相互学习的一种有效途径。</p>
+<p>精彩。人生在世，不过短短几十年，我们不是什么伟人，但这可以记录我们的精彩。</p>
+<p>战斗吧，兄弟！</p>
 ]]></content>
       <categories>
-        <category>Technology</category>
+        <category>Essay</category>
       </categories>
       <tags>
-        <tag>KMS</tag>
-        <tag>Kurento</tag>
-        <tag>WebRTC</tag>
-      </tags>
-  </entry>
-  <entry>
-    <title>FFmpeg的那些坑-RTP missed xxx packets</title>
-    <url>/2018/07/01/FFmpeg%E7%9A%84%E9%82%A3%E4%BA%9B%E5%9D%91-RTP-missed-xxx-packets/</url>
-    <content><![CDATA[<h1 id="FFmpeg使用场景"><a href="#FFmpeg使用场景" class="headerlink" title="FFmpeg使用场景"></a>FFmpeg使用场景</h1><p>使用FFmpeg将两路RTP流合成一路流</p>
-<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">ffmpeg -acodec libopus -i ../var/tmp/1024_0.sdp -acodec libopus -i ../var/tmp/1024_1.sdp -filter_complex &quot;[0:v]setpts=PTS-STARTPTS,setsar=1[left];[1:v]setpts=PTS-STARTPTS,setsar=1[right];[left][right]hstack[vout];[0:a][1:a]amix[aout]&quot; -map [vout] -map [aout] -vcodec libx264 -profile:v high -preset veryfast -strict -2 -acodec aac -f flv rtmp://localhost:1935/live/1024</span><br></pre></td></tr></table></figure>
-
-<h1 id="问题"><a href="#问题" class="headerlink" title="问题"></a>问题</h1><p>FFmpeg日志提示RTP: missed xxx packets<br>合流视频花屏。</p>
-<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">[h264 @ 0x45c05a0] Invalid level prefix</span><br><span class="line">[h264 @ 0x45c05a0] error while decoding MB 11 19</span><br><span class="line">[h264 @ 0x45c05a0] concealing 53 DC, 53 AC, 53 MV errors in I frame</span><br><span class="line">[sdp @ 0x42e5c20] max delay reached. need to consume packet</span><br><span class="line">[sdp @ 0x42e5c20] RTP: missed 16 packets</span><br><span class="line">[sdp @ 0x42e5c20] max delay reached. need to consume packet</span><br><span class="line">[sdp @ 0x42e5c20] RTP: missed 4 packets</span><br><span class="line">[h264 @ 0x45c05a0] negative number of zero coeffs at 0 4</span><br><span class="line">[h264 @ 0x45c05a0] error while decoding MB 0 4</span><br><span class="line">[h264 @ 0x45c05a0] concealing 289 DC, 289 AC, 289 MV errors in P frame</span><br><span class="line">[h264 @ 0x4413420] Invalid level prefix</span><br><span class="line">[h264 @ 0x4413420] error while decoding MB 9 19</span><br><span class="line">[h264 @ 0x4413420] concealing 55 DC, 55 AC, 55 MV errors in P frame</span><br></pre></td></tr></table></figure>
-
-
-<h1 id="原因"><a href="#原因" class="headerlink" title="原因"></a>原因</h1><p>FFmpeg默认接收线程数据队列大小thread_queue_size为8，当合流不够快时，接收数据队列溢出，导致RTP接收数据丢包。</p>
-<h1 id="解决办法"><a href="#解决办法" class="headerlink" title="解决办法"></a>解决办法</h1><p>使用thread_queue_size选项配置大一点的接收线程数据队列，如</p>
-<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">ffmpeg -thread_queue_size 512 -acodec libopus -i ../var/tmp/1024_0.sdp  -thread_queue_size 512 -acodec libopus -i ../var/tmp/1024_1.sdp -filter_complex &quot;[0:v]setpts=PTS-STARTPTS,setsar=1[left];[1:v]setpts=PTS-STARTPTS,setsar=1[right];[left][right]hstack[vout];[0:a][1:a]amix[aout]&quot; -map [vout] -map [aout] -vcodec libx264 -profile:v high -preset veryfast -strict -2 -acodec aac -f flv rtmp://localhost:1935/live/1024</span><br></pre></td></tr></table></figure>
-]]></content>
-      <categories>
-        <category>Technology</category>
-      </categories>
-      <tags>
-        <tag>FFmpeg</tag>
-        <tag>av</tag>
+        <tag>Blog</tag>
       </tags>
   </entry>
   <entry>
@@ -473,23 +434,6 @@
         <tag>PB</tag>
         <tag>Protocol Buffers</tag>
         <tag>RPC</tag>
-      </tags>
-  </entry>
-  <entry>
-    <title>The background of this blog</title>
-    <url>/2017/07/23/The-background-of-this-blog/</url>
-    <content><![CDATA[<p>欢迎浏览本博客。<br>作为第一篇非技术类的文章，可能没什么干货分享，但总感觉应该写点什么。好吧，就谈谈开博背景！</p>
-<p>自由。本人喜欢自由的写作，在其他博客平台，总有各种各样的限制，比如审核。自己的博客，样式随便改。</p>
-<p>简洁。喜欢MarkDown的简洁，也喜欢简洁的博客主题。</p>
-<p>分享。无他，写博客就为了分享。当然，这也是大家相互学习的一种有效途径。</p>
-<p>精彩。人生在世，不过短短几十年，我们不是什么伟人，但这可以记录我们的精彩。</p>
-<p>战斗吧，兄弟！</p>
-]]></content>
-      <categories>
-        <category>Essay</category>
-      </categories>
-      <tags>
-        <tag>Blog</tag>
       </tags>
   </entry>
   <entry>
@@ -1844,6 +1788,62 @@ attachments/1114283/amf3_spec_05_05_08.pdf>.
       </tags>
   </entry>
   <entry>
+    <title>Kurento Media Server源码编译</title>
+    <url>/2018/05/27/Kurento-Media-Server%E6%BA%90%E7%A0%81%E7%BC%96%E8%AF%91/</url>
+    <content><![CDATA[<h1 id="Build-dependency"><a href="#Build-dependency" class="headerlink" title="Build dependency"></a>Build dependency</h1><h2 id="Module-dependency-graph"><a href="#Module-dependency-graph" class="headerlink" title="Module dependency graph"></a>Module dependency graph</h2><p>Kurento模块的依赖关系如下图所示<br><img src="/uploads/kms_build/kms_module_dependency_graph.png" alt="kms_module_dependency_graph"></p>
+<h2 id="Module-dependency-list"><a href="#Module-dependency-list" class="headerlink" title="Module dependency list"></a>Module dependency list</h2><p>Kurento模块依赖关系并不是严格的线性关系，所以编译顺序可以有多种组合，以下是其中一种可能的编译顺序：</p>
+<p>Externals：</p>
+<ul>
+<li>gstreamer</li>
+<li>libsrtp</li>
+<li>openh264</li>
+<li>usrsctp</li>
+<li>jsoncpp</li>
+<li>gst-plugins-base</li>
+<li>gst-plugins-good</li>
+<li>gst-plugins-ugly</li>
+<li>gst-plugins-bad</li>
+<li>gst-libav</li>
+<li>openwebrtc-gst-plugins</li>
+<li>libnice</li>
+</ul>
+<p>KMS Main + Extra:</p>
+<ul>
+<li>kurento-module-creator</li>
+<li>kms-cmake-utils</li>
+<li>kms-jsonrpc</li>
+<li>kms-core</li>
+<li>kms-elements</li>
+<li>kms-filters</li>
+<li>kurento-media-server</li>
+<li>kms-chroma</li>
+<li>kms-crowddetector</li>
+<li>kms-datachannelexample</li>
+<li>kms-platedetector</li>
+<li>kms-pointerdetector</li>
+</ul>
+<h1 id="Build"><a href="#Build" class="headerlink" title="Build"></a>Build</h1><p>Note: </p>
+<ol>
+<li>适用于Ubuntu和Centos</li>
+<li>如果在Centos下编译，还需要升级glib，autotools等</li>
+</ol>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line"># KMS源码目录</span><br><span class="line">KMS_HOME=$HOME/kms_source</span><br><span class="line"># KMS编译目录</span><br><span class="line">KMS_BUILD_HOME=$KMS_HOME/build/kms</span><br><span class="line"></span><br><span class="line">CMAKE_MODULES_PATH=$&#123;KMS_BUILD_HOME&#125;/share/cmake-3.5/Modules</span><br><span class="line"></span><br><span class="line"># 导入编译所需的环境变量</span><br><span class="line">export CMAKE_OPTS=&quot;-DCMAKE_INSTALL_LIBDIR=lib -DCMAKE_MODULE_PATH:STRING=$&#123;CMAKE_MODULES_PATH&#125; -DKURENTO_MODULES_DIR:STRING=$&#123;KMS_BUILD_HOME&#125;/share/kurento/modules&quot;</span><br><span class="line">export PKG_CONFIG_PATH=$PKG_CONFIG_PATH:$KMS_BUILD_HOME/lib/pkgconfig</span><br><span class="line">export LIBRARY_PATH=$LIBRARY_PATH:$KMS_BUILD_HOME/lib</span><br><span class="line">export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$KMS_BUILD_HOME/lib</span><br><span class="line">export CPATH=$CPATH:$KMS_BUILD_HOME/include:$KMS_BUILD_HOME/include/gstreamer-1.5</span><br><span class="line">export PATH=$PATH:$KMS_BUILD_HOME/bin</span><br><span class="line">JAVA_CMD=$(which java)</span><br><span class="line"></span><br><span class="line"># 创建所需目录</span><br><span class="line">mkdir -p $&#123;KMS_HOME&#125;</span><br><span class="line">mkdir -p $&#123;KMS_BUILD_HOME&#125;</span><br><span class="line">mkdir -p $&#123;KMS_BUILD_HOME&#125;/bin</span><br><span class="line"></span><br><span class="line"># ---- build externals ----</span><br><span class="line"># gstreamer</span><br><span class="line">cd $&#123;KMS_HOME&#125;</span><br><span class="line">git clone https://github.com/Kurento/gstreamer.git</span><br><span class="line">cd gstreamer</span><br><span class="line">git checkout kms6.6.0</span><br><span class="line">./autogen.sh</span><br><span class="line"># introspection requires python &gt;= 2.7</span><br><span class="line">./configure --enable-introspection=no --prefix=$KMS_BUILD_HOME &amp;&amp; make &amp;&amp; make install</span><br><span class="line">if [ $? -ne 0 ]; then exit -1; fi</span><br><span class="line"></span><br><span class="line"># build openssl</span><br><span class="line">cd $&#123;KMS_HOME&#125;</span><br><span class="line">wget https://www.openssl.org/source/old/1.0.2/openssl-1.0.2g.tar.gz</span><br><span class="line">tar -zxvf openssl-1.0.2g.tar.gz</span><br><span class="line">cd openssl-1.0.2g</span><br><span class="line">./config shared --prefix=$KMS_BUILD_HOME &amp;&amp; make &amp;&amp; make install</span><br><span class="line">if [ $? -ne 0 ]; then exit -1; fi</span><br><span class="line"></span><br><span class="line"># build libsrtp</span><br><span class="line">cd $&#123;KMS_HOME&#125;</span><br><span class="line">git clone https://github.com/Kurento/libsrtp.git</span><br><span class="line">cd libsrtp</span><br><span class="line">git checkout kms6.6.0</span><br><span class="line">./configure --prefix=$KMS_BUILD_HOME &amp;&amp; make &amp;&amp; make install</span><br><span class="line">if [ $? -ne 0 ]; then exit -1; fi</span><br><span class="line"></span><br><span class="line"># build nasm</span><br><span class="line"># required by openh264</span><br><span class="line">cd $&#123;KMS_HOME&#125;</span><br><span class="line">wget https://www.nasm.us/pub/nasm/releasebuilds/2.13.02/nasm-2.13.02.tar.gz</span><br><span class="line">tar -xzvf nasm-2.13.02.tar.gz</span><br><span class="line">cd nasm-2.13.02</span><br><span class="line">./configure --prefix=$KMS_BUILD_HOME &amp;&amp; make &amp;&amp; make install</span><br><span class="line">if [ $? -ne 0 ]; then exit -1; fi</span><br><span class="line"></span><br><span class="line"># build openh264</span><br><span class="line">cd $&#123;KMS_HOME&#125;</span><br><span class="line">git clone https://github.com/cisco/openh264.git</span><br><span class="line">cd openh264</span><br><span class="line">git checkout v1.4.0</span><br><span class="line">make &amp;&amp; make install PREFIX=$KMS_BUILD_HOME</span><br><span class="line">if [ $? -ne 0 ]; then exit -1; fi</span><br><span class="line"></span><br><span class="line"># build usrsctp</span><br><span class="line">cd $&#123;KMS_HOME&#125;</span><br><span class="line">git clone https://github.com/Kurento/usrsctp.git</span><br><span class="line">cd usrsctp</span><br><span class="line">git checkout kms6.6.0</span><br><span class="line">./bootstrap</span><br><span class="line">./configure --prefix=$KMS_BUILD_HOME</span><br><span class="line">make &amp;&amp; make install</span><br><span class="line">if [ $? -ne 0 ]; then exit -1; fi</span><br><span class="line"></span><br><span class="line"># build opus</span><br><span class="line">cd $&#123;KMS_HOME&#125;</span><br><span class="line">wget https://archive.mozilla.org/pub/opus/opus-1.2.1.tar.gz</span><br><span class="line">tar -zxvf opus-1.2.1.tar.gz</span><br><span class="line">cd opus-1.2.1</span><br><span class="line">./configure --prefix=$KMS_BUILD_HOME &amp;&amp; make &amp;&amp; make install</span><br><span class="line">if [ $? -ne 0 ]; then exit -1; fi</span><br><span class="line"></span><br><span class="line"># build orc</span><br><span class="line">cd $&#123;KMS_HOME&#125;</span><br><span class="line">wget https://gstreamer.freedesktop.org/src/orc/orc-0.4.28.tar.xz</span><br><span class="line">tar -Jxvf orc-0.4.28.tar.xz</span><br><span class="line">cd orc-0.4.28</span><br><span class="line">./configure --prefix=$KMS_BUILD_HOME &amp;&amp; make &amp;&amp; make install</span><br><span class="line">if [ $? -ne 0 ]; then exit -1; fi</span><br><span class="line"></span><br><span class="line"># build jsoncpp</span><br><span class="line">cd $&#123;KMS_HOME&#125;</span><br><span class="line">git clone https://github.com/Kurento/jsoncpp.git</span><br><span class="line">cd jsoncpp</span><br><span class="line">git checkout kms6.6.0</span><br><span class="line">mkdir -p build &amp;&amp; cd build</span><br><span class="line">cmake -DCMAKE_INSTALL_PREFIX=$KMS_BUILD_HOME $CMAKE_OPTS ..</span><br><span class="line">make &amp;&amp; make install</span><br><span class="line">if [ $? -ne 0 ]; then exit -1; fi</span><br><span class="line"># 否则编译kms-jsonrpc会报错 fatal error: json/json.h: No such file or directory</span><br><span class="line">sed -i &#x27;s/\/kmsjsoncpp//g&#x27; $KMS_BUILD_HOME/lib/pkgconfig/kmsjsoncpp.pc</span><br><span class="line"></span><br><span class="line"># gst-plugins-base</span><br><span class="line">cd $&#123;KMS_HOME&#125;</span><br><span class="line">git clone https://github.com/Kurento/gst-plugins-base.git</span><br><span class="line">cd gst-plugins-base</span><br><span class="line">git checkout kms6.6.0</span><br><span class="line">./autogen.sh</span><br><span class="line">./configure --enable-introspection=no --prefix=$KMS_BUILD_HOME &amp;&amp; make &amp;&amp; make install</span><br><span class="line">if [ $? -ne 0 ]; then exit -1; fi</span><br><span class="line"></span><br><span class="line"># gst-plugins-good</span><br><span class="line"># for rtp </span><br><span class="line">cd $&#123;KMS_HOME&#125;</span><br><span class="line">git clone https://github.com/Kurento/gst-plugins-good.git</span><br><span class="line">cd gst-plugins-good</span><br><span class="line">git checkout kms6.6.0</span><br><span class="line">./autogen.sh</span><br><span class="line">./configure --enable-introspection=no --prefix=$KMS_BUILD_HOME &amp;&amp; make &amp;&amp; make install</span><br><span class="line">if [ $? -ne 0 ]; then exit -1; fi</span><br><span class="line"></span><br><span class="line"># gst-plugins-ugly</span><br><span class="line">cd $&#123;KMS_HOME&#125;</span><br><span class="line">git clone https://github.com/Kurento/gst-plugins-ugly.git</span><br><span class="line">cd gst-plugins-ugly</span><br><span class="line">git checkout kms6.6.0</span><br><span class="line">./autogen.sh</span><br><span class="line">./configure --enable-introspection=no --prefix=$KMS_BUILD_HOME &amp;&amp; make &amp;&amp; make install</span><br><span class="line">if [ $? -ne 0 ]; then exit -1; fi</span><br><span class="line"></span><br><span class="line"># gst-plugins-bad</span><br><span class="line"># for openh264+libsrtp</span><br><span class="line">cd $&#123;KMS_HOME&#125;</span><br><span class="line">git clone https://github.com/Kurento/gst-plugins-bad.git</span><br><span class="line">cd gst-plugins-bad</span><br><span class="line">git checkout kms6.6.0</span><br><span class="line">./autogen.sh</span><br><span class="line">./configure --enable-introspection=no --prefix=$KMS_BUILD_HOME &amp;&amp; make &amp;&amp; make install</span><br><span class="line">if [ $? -ne 0 ]; then exit -1; fi</span><br><span class="line"></span><br><span class="line"># gst-libav</span><br><span class="line">cd $&#123;KMS_HOME&#125;</span><br><span class="line">git clone https://github.com/Kurento/gst-libav.git</span><br><span class="line">cd gst-libav</span><br><span class="line">git checkout kms6.6.0</span><br><span class="line">./autogen.sh</span><br><span class="line">./configure --enable-introspection=no --prefix=$KMS_BUILD_HOME &amp;&amp; make &amp;&amp; make install</span><br><span class="line">if [ $? -ne 0 ]; then exit -1; fi</span><br><span class="line"></span><br><span class="line"># build openwebrtc-gst-plugins</span><br><span class="line">cd $&#123;KMS_HOME&#125;</span><br><span class="line">git clone https://github.com/Kurento/openwebrtc-gst-plugins.git</span><br><span class="line">cd openwebrtc-gst-plugins</span><br><span class="line">git checkout kms6.6.0</span><br><span class="line">./autogen.sh</span><br><span class="line">./configure --prefix=$KMS_BUILD_HOME &amp;&amp; make &amp;&amp; make install</span><br><span class="line">if [ $? -ne 0 ]; then exit -1; fi</span><br><span class="line"></span><br><span class="line"># build libnice</span><br><span class="line">cd $&#123;KMS_HOME&#125;</span><br><span class="line">git clone https://github.com/Kurento/libnice.git</span><br><span class="line">cd libnice</span><br><span class="line">git checkout kms6.6.1</span><br><span class="line">./autogen.sh</span><br><span class="line">./configure --enable-introspection=no --prefix=$KMS_BUILD_HOME &amp;&amp; make &amp;&amp; make install</span><br><span class="line">if [ $? -ne 0 ]; then exit -1; fi</span><br><span class="line"></span><br><span class="line"># build libevent</span><br><span class="line"># required by kurento-media-server</span><br><span class="line">cd $&#123;KMS_HOME&#125;</span><br><span class="line">wget https://github.com/libevent/libevent/releases/download/release-2.0.22-stable/libevent-2.0.22-stable.tar.gz</span><br><span class="line">tar -xzvf libevent-2.0.22-stable.tar.gz</span><br><span class="line">cd libevent-2.0.22-stable</span><br><span class="line">./configure --prefix=$KMS_BUILD_HOME &amp;&amp; make &amp;&amp; make install</span><br><span class="line">if [ $? -ne 0 ]; then exit -1; fi</span><br><span class="line"></span><br><span class="line"># build boost</span><br><span class="line">cd $&#123;KMS_HOME&#125;</span><br><span class="line"># boost&gt;1.58.0不支持json配置注释</span><br><span class="line">wget &quot;https://sourceforge.net/projects/boost/files/boost/1.58.0/boost_1_58_0.tar.gz/download&quot; -O boost_1_58_0.tar.gz</span><br><span class="line">tar -zxvf boost_1_58_0.tar.gz</span><br><span class="line">cd boost_1_58_0</span><br><span class="line">./bootstrap.sh</span><br><span class="line">./b2 install --prefix=$KMS_BUILD_HOME</span><br><span class="line">#if [ $? -ne 0 ]; then exit -1; fi</span><br><span class="line"></span><br><span class="line"># ---- build kms main ----</span><br><span class="line"># build kms-cmake-utils</span><br><span class="line">cd $&#123;KMS_HOME&#125;</span><br><span class="line">git clone https://github.com/Kurento/kms-cmake-utils.git</span><br><span class="line">cd kms-cmake-utils</span><br><span class="line">git checkout 6.7.0</span><br><span class="line">mkdir -p build &amp;&amp; cd build &amp;&amp; cmake -DCMAKE_INSTALL_PREFIX=$KMS_BUILD_HOME $CMAKE_OPTS .. &amp;&amp; make &amp;&amp; make install</span><br><span class="line">if [ $? -ne 0 ]; then exit -1; fi</span><br><span class="line"></span><br><span class="line"># build kurento-module-creator</span><br><span class="line">cd $&#123;KMS_HOME&#125;</span><br><span class="line">git clone https://github.com/Kurento/kurento-module-creator.git</span><br><span class="line">cd kurento-module-creator</span><br><span class="line">git checkout 6.7.0</span><br><span class="line">mvn package</span><br><span class="line">cp target/classes/FindKurentoModuleCreator.cmake $&#123;CMAKE_MODULES_PATH&#125;</span><br><span class="line">cp target/kurento-module-creator-jar-with-dependencies.jar $&#123;KMS_BUILD_HOME&#125;/bin</span><br><span class="line">cp scripts/kurento-module-creator $&#123;KMS_BUILD_HOME&#125;/bin</span><br><span class="line">sed -i &quot;s|JAVA_CMD=.*|JAVA_CMD=$&#123;JAVA_CMD&#125;|g&quot; $KMS_BUILD_HOME/bin/kurento-module-creator</span><br><span class="line">if [ $? -ne 0 ]; then exit -1; fi</span><br><span class="line"></span><br><span class="line"># build kms-jsonrpc</span><br><span class="line">cd $&#123;KMS_HOME&#125;</span><br><span class="line">git clone https://github.com/Kurento/kms-jsonrpc.git</span><br><span class="line">cd kms-jsonrpc </span><br><span class="line">git checkout 6.7.0</span><br><span class="line">rm -rf build &amp;&amp; mkdir -p build &amp;&amp; cd build</span><br><span class="line">cmake -DCMAKE_INSTALL_PREFIX=$KMS_BUILD_HOME $CMAKE_OPTS ..</span><br><span class="line">make &amp;&amp; make install</span><br><span class="line">if [ $? -ne 0 ]; then exit -1; fi</span><br><span class="line"></span><br><span class="line"># build kms-core</span><br><span class="line">cd $&#123;KMS_HOME&#125;</span><br><span class="line">git clone https://github.com/Kurento/kms-core.git</span><br><span class="line">cd kms-core</span><br><span class="line">git checkout 6.7.1</span><br><span class="line">rm -rf build &amp;&amp; mkdir -p build &amp;&amp; cd build</span><br><span class="line">cmake -DCMAKE_INSTALL_PREFIX=$KMS_BUILD_HOME $CMAKE_OPTS .. &amp;&amp; make &amp;&amp; make install</span><br><span class="line">if [ $? -ne 0 ]; then exit -1; fi</span><br><span class="line"></span><br><span class="line"># build kms-elements</span><br><span class="line">cd $&#123;KMS_HOME&#125;</span><br><span class="line">git clone https://github.com/Kurento/kms-elements.git</span><br><span class="line">cd kms-elements</span><br><span class="line">git checkout 6.7.1</span><br><span class="line">rm -rf build &amp;&amp; mkdir -p build &amp;&amp; cd build</span><br><span class="line">cmake -DCMAKE_INSTALL_PREFIX=$KMS_BUILD_HOME $CMAKE_OPTS .. &amp;&amp; make &amp;&amp; make install</span><br><span class="line">if [ $? -ne 0 ]; then exit -1; fi</span><br><span class="line"></span><br><span class="line"># build kurento-media-server</span><br><span class="line">cd $&#123;KMS_HOME&#125;</span><br><span class="line">git clone https://github.com/Kurento/kurento-media-server.git</span><br><span class="line">cd kurento-media-server </span><br><span class="line">git checkout 6.7.1</span><br><span class="line">rm -rf build &amp;&amp; mkdir -p build &amp;&amp; cd build</span><br><span class="line">cmake -DCMAKE_INSTALL_PREFIX=$KMS_BUILD_HOME $CMAKE_OPTS .. </span><br><span class="line">make &amp;&amp; make install</span><br><span class="line">if [ $? -ne 0 ]; then exit -1; fi</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+
+<h1 id="Run"><a href="#Run" class="headerlink" title="Run"></a>Run</h1><figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">KMS_HOME=$HOME/kms_source</span><br><span class="line">KMS_BUILD_HOME=$KMS_HOME/build/kms</span><br><span class="line">export LD_LIBRARY_PATH=$KMS_BUILD_HOME/lib:$LD_LIBRARY_PATH</span><br><span class="line"></span><br><span class="line">$KMS_BUILD_HOME/bin/kurento-media-server -f $KMS_BUILD_HOME/etc/kurento/kurento.conf.json -c $KMS_BUILD_HOME/etc/kurento/modules/kurento</span><br></pre></td></tr></table></figure>
+<h1 id="Reference"><a href="#Reference" class="headerlink" title="Reference"></a>Reference</h1><ol>
+<li><a href="http://doc-kurento.readthedocs.io/en/stable/dev/dev_guide.html">Kurento Developer Guide</a></li>
+</ol>
+]]></content>
+      <categories>
+        <category>Technology</category>
+      </categories>
+      <tags>
+        <tag>KMS</tag>
+        <tag>Kurento</tag>
+        <tag>WebRTC</tag>
+      </tags>
+  </entry>
+  <entry>
     <title>Git commit格式参考</title>
     <url>/2020/03/22/git-commit-guidelines/</url>
     <content><![CDATA[<h1 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h1><p>编写良好的Commit messages可以达到以下几个重要的目的</p>
@@ -1908,6 +1908,22 @@ attachments/1114283/amf3_spec_05_05_08.pdf>.
         <tag>Git Commit</tag>
         <tag>Git</tag>
         <tag>Manual</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>golang学习资料</title>
+    <url>/2018/10/27/golang%E5%AD%A6%E4%B9%A0%E8%B5%84%E6%96%99/</url>
+    <content><![CDATA[<h1 id="基础"><a href="#基础" class="headerlink" title="基础"></a>基础</h1><p><a href="https://golang.org/doc/">golang.org</a><br><a href="https://github.com/Unknwon/the-way-to-go_ZH_CN/blob/master/eBook/directory.md">the-way-to-go</a><br><a href="https://docs.hacknode.org/gopl-zh/index.html">Go语言圣经</a></p>
+<h1 id="规范与习惯"><a href="#规范与习惯" class="headerlink" title="规范与习惯"></a>规范与习惯</h1><p><a href="https://github.com/golang-standards/project-layout">project-layout</a><br><a href="https://github.com/golang/go/wiki/CodeReviewComments">CodeReviewComments</a><br><a href="https://golang.org/doc/effective_go.html">Effective Go</a><br><a href="https://www.kancloud.cn/kancloud/effective/72199">Effective Go中文版</a></p>
+<h1 id="API"><a href="#API" class="headerlink" title="API"></a>API</h1><p><a href="https://golang.org/pkg/">Go Packages</a><br><a href="https://cloud.tencent.com/developer/doc/1101">Tencent developer doc for Go</a></p>
+<h1 id="资源"><a href="#资源" class="headerlink" title="资源"></a>资源</h1><p><a href="https://github.com/golang/go/wiki/Projects">Go Projects</a><br><a href="https://github.com/Unknwon/go-study-index">go-study-index</a></p>
+]]></content>
+      <categories>
+        <category>Technology</category>
+      </categories>
+      <tags>
+        <tag>programing</tag>
+        <tag>golang</tag>
       </tags>
   </entry>
   <entry>
@@ -2034,22 +2050,6 @@ attachments/1114283/amf3_spec_05_05_08.pdf>.
         <tag>pprof</tag>
         <tag>vscode</tag>
         <tag>goland</tag>
-      </tags>
-  </entry>
-  <entry>
-    <title>golang学习资料</title>
-    <url>/2018/10/27/golang%E5%AD%A6%E4%B9%A0%E8%B5%84%E6%96%99/</url>
-    <content><![CDATA[<h1 id="基础"><a href="#基础" class="headerlink" title="基础"></a>基础</h1><p><a href="https://golang.org/doc/">golang.org</a><br><a href="https://github.com/Unknwon/the-way-to-go_ZH_CN/blob/master/eBook/directory.md">the-way-to-go</a><br><a href="https://docs.hacknode.org/gopl-zh/index.html">Go语言圣经</a></p>
-<h1 id="规范与习惯"><a href="#规范与习惯" class="headerlink" title="规范与习惯"></a>规范与习惯</h1><p><a href="https://github.com/golang-standards/project-layout">project-layout</a><br><a href="https://github.com/golang/go/wiki/CodeReviewComments">CodeReviewComments</a><br><a href="https://golang.org/doc/effective_go.html">Effective Go</a><br><a href="https://www.kancloud.cn/kancloud/effective/72199">Effective Go中文版</a></p>
-<h1 id="API"><a href="#API" class="headerlink" title="API"></a>API</h1><p><a href="https://golang.org/pkg/">Go Packages</a><br><a href="https://cloud.tencent.com/developer/doc/1101">Tencent developer doc for Go</a></p>
-<h1 id="资源"><a href="#资源" class="headerlink" title="资源"></a>资源</h1><p><a href="https://github.com/golang/go/wiki/Projects">Go Projects</a><br><a href="https://github.com/Unknwon/go-study-index">go-study-index</a></p>
-]]></content>
-      <categories>
-        <category>Technology</category>
-      </categories>
-      <tags>
-        <tag>programing</tag>
-        <tag>golang</tag>
       </tags>
   </entry>
   <entry>
@@ -2500,6 +2500,56 @@ attachments/1114283/amf3_spec_05_05_08.pdf>.
       </tags>
   </entry>
   <entry>
+    <title>推荐的学习资源</title>
+    <url>/2019/12/01/recommended-study-resources/</url>
+    <content><![CDATA[<h1 id="推荐的学习资源列表"><a href="#推荐的学习资源列表" class="headerlink" title="推荐的学习资源列表"></a>推荐的学习资源列表</h1><h2 id="Golang语言"><a href="#Golang语言" class="headerlink" title="Golang语言"></a>Golang语言</h2><p><a href="https://github.com/Unknwon/the-way-to-go_ZH_CN/blob/master/eBook/directory.md">the-way-to-go</a> (recommend)<br><a href="https://golang.org/doc/">golang.org</a> (official)  </p>
+<h2 id="数据库"><a href="#数据库" class="headerlink" title="数据库"></a>数据库</h2><h3 id="Mongodb"><a href="#Mongodb" class="headerlink" title="Mongodb"></a>Mongodb</h3><p><a href="https://www.runoob.com/mongodb/mongodb-tutorial.html">mongodb-tutorial</a> (recommend)<br><a href="https://docs.mongodb.com/manual/">docs.mongodb.com</a> (official)  </p>
+<h3 id="Redis"><a href="#Redis" class="headerlink" title="Redis"></a>Redis</h3><p><a href="https://www.runoob.com/redis/redis-tutorial.html">redis-tutorial</a> (recommend)<br><a href="http://redisdoc.com/index.html">redisdoc</a><br><a href="https://redis.io/documentation">redis.io</a>  (official)  </p>
+<h3 id="SQL"><a href="#SQL" class="headerlink" title="SQL"></a>SQL</h3><p><a href="https://www.runoob.com/sql/sql-tutorial.html">sql-tutorial</a><br><a href="https://www.runoob.com/mysql/mysql-tutorial.html">mysql-tutorial</a><br><a href="https://dev.mysql.com/doc/">dev.mysql.com</a> (official)  </p>
+<h3 id="Nginx"><a href="#Nginx" class="headerlink" title="Nginx"></a>Nginx</h3><p><a href="http://nginx.org/en/docs/">nginx.org</a> (official)<br><a href="https://www.runoob.com/w3cnote/nginx-setup-intro.html">Nginx 配置详解</a><br><a href="https://www.runoob.com/w3cnote/nginx-proxy-balancing.html">Nginx 反向代理与负载均衡详解</a><br><a href="https://moonbingbing.gitbooks.io/openresty-best-practices/ngx/nginx.html">OpenResty最佳实践-Nginx</a><br><a href="http://tengine.taobao.org/book/index.html">Nginx开发从入门到精通</a>  </p>
+]]></content>
+      <categories>
+        <category>Technology</category>
+      </categories>
+      <tags>
+        <tag>Study</tag>
+        <tag>Resource</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>如何搭建个人私有云盘</title>
+    <url>/2019/01/06/%E5%A6%82%E4%BD%95%E6%90%AD%E5%BB%BA%E4%B8%AA%E4%BA%BA%E7%A7%81%E6%9C%89%E4%BA%91%E7%9B%98/</url>
+    <content><![CDATA[<h1 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h1><p>市场上有很多云盘的产品，比如百度云盘，不过本教程主要目的是要搭建个人私有云盘。查了网上很多资料，个人云盘也有很多，比如nextcloud，owncloud，seafile等。这里选择nextcloud，优势就不用说了，网上一搜一大把。</p>
+<h1 id="Nextcloud搭建办法"><a href="#Nextcloud搭建办法" class="headerlink" title="Nextcloud搭建办法"></a>Nextcloud搭建办法</h1><p>主要的搭建办法有两个：</p>
+<ul>
+<li>通过VPS一键安装</li>
+<li>手动安装</li>
+</ul>
+<h2 id="通过VPS一键安装"><a href="#通过VPS一键安装" class="headerlink" title="通过VPS一键安装"></a>通过VPS一键安装</h2><p><a href="https://www.vultr.com/?ref=8443595-6G">Vultr</a>有一键安装Nextcloud的功能，非常方便。<br>主要步骤如下：</p>
+<ul>
+<li>注册vps</li>
+<li>创建vps实例</li>
+<li>Server Location -&gt; 选择一个好的机房，比如洛杉矶，日本和新加坡等。</li>
+<li>Server Type -&gt; 选Application，选中Nextcloud</li>
+<li>Server Size -&gt; 根据自己需要选择</li>
+<li>剩下的配置使用默认即可</li>
+</ul>
+<p>首先，登陆<a href="https://www.vultr.com/?ref=8443595-6G">Vultr官网</a>，点击Create Account注册。<br>选择一个好的机房，当然是自己测过才放心。这里推荐使用<a href="http://www.nirsoft.net/utils/pinginfoview.zip">PingInfoView</a>来测试。以下是vultr的机房：<br><img src="/uploads/vps/vultr_area.jpeg" alt="vultr_area"></p>
+<p>列表如下，贴到PingInfoView上即可。</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">sgp-ping.vultr.com</span><br><span class="line">hnd-jp-ping.vultr.com</span><br><span class="line">syd-au-ping.vultr.com</span><br><span class="line">fra-de-ping.vultr.com</span><br><span class="line">ams-nl-ping.vultr.com</span><br><span class="line">lon-gb-ping.vultr.com</span><br><span class="line">par-fr-ping.vultr.com</span><br><span class="line">wa-us-ping.vultr.com</span><br><span class="line">sjo-ca-us-ping.vultr.com</span><br><span class="line">lax-ca-us-ping.vultr.com</span><br><span class="line">il-us-ping.vultr.com</span><br><span class="line">nj-us-ping.vultr.com</span><br><span class="line">tx-us-ping.vultr.com</span><br><span class="line">ga-us-ping.vultr.com</span><br><span class="line">fl-us-ping.vultr.com</span><br></pre></td></tr></table></figure>
+<p>linux&#x2F;mac用户可以使用我写的脚本<a href="https://github.com/rukesun/vultr_test.git">vultr_test</a>来测试。<br>以下是我的测试结果：<br><img src="/uploads/vps/my_ping_test.png"><br>选择的原则是，ping值最小，丢包率最小。比如我的测试结果中，较不错的是sjo、wa和lax，都是美国机房。</p>
+<p>接下来Server Type选Application，选中Nextcloud，如下所示<br><img src="/uploads/nextcloud/vultr_nextcloud_app.jpg" alt="nextcloud_app"><br>根据自己的需要选择Server Size，剩下的配置使用默认即可。<br>点击Deploy Now，然后静静地等待1~2分钟。<br>部署完成后，查看实例详情，可以看到Nextcloud的地址，登陆账号和密码。<br><img src="/uploads/nextcloud/vultr_nextcloud_info.jpg" alt="nextcloud_info"><br>打开你的Nextcloud地址，会提示不安全，这个是ssl证书问题，你可以直接忽略。<br>下面是打开后的界面<br><img src="/uploads/nextcloud/nextcloud_login.jpg" alt="nextcloud_login"><br>怎么样，是不是很期待？<br>输入账号和密码，点击登录，网盘就可以使用了<br><img src="/uploads/nextcloud/nextcloud_main.jpg" alt="nextcloud_main"><br>可以传视频，文档，可以自定义目录，更多的功能等待你去探索！好了，是不是有点小激动？麻麻再也不用担心我的小电影没地方放了。</p>
+<hr>
+]]></content>
+      <categories>
+        <category>Tools</category>
+      </categories>
+      <tags>
+        <tag>nextcloud</tag>
+        <tag>vps</tag>
+      </tags>
+  </entry>
+  <entry>
     <title>OpenClaw多Agent实战教程：打造专属AI团队</title>
     <url>/2026/02/23/openclaw-multi-agent-tutorial/</url>
     <content><![CDATA[<h2 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h2><p>在上一篇文章中，我们介绍了OpenClaw的整体架构。今天我们深入探讨一个强大的功能：<strong>多Agent路由</strong>。</p>
@@ -2767,6 +2817,156 @@ attachments/1114283/amf3_spec_05_05_08.pdf>.
       </tags>
   </entry>
   <entry>
+    <title>搭建自己专属的vpn——Centos搭建vpn的几种办法</title>
+    <url>/2018/04/07/%E6%90%AD%E5%BB%BA%E8%87%AA%E5%B7%B1%E4%B8%93%E5%B1%9E%E7%9A%84vpn%E2%80%94%E2%80%94Centos%E6%90%AD%E5%BB%BAvpn%E7%9A%84%E5%87%A0%E7%A7%8D%E5%8A%9E%E6%B3%95/</url>
+    <content><![CDATA[<h1 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h1><p>上一篇《搭建自己专属的vpn——选择一个vps》提到如何选择一个vps，这一篇就淡淡如何利用<a href="https://www.vultr.com/?ref=8443595-6G">vultr</a>的vps搭建一个vpn。</p>
+<h1 id="方法一：搭建shadowsocks-serverspeeder（特别推荐）"><a href="#方法一：搭建shadowsocks-serverspeeder（特别推荐）" class="headerlink" title="方法一：搭建shadowsocks+serverspeeder（特别推荐）"></a>方法一：搭建shadowsocks+serverspeeder（特别推荐）</h1><h2 id="shadowsocks服务端安装"><a href="#shadowsocks服务端安装" class="headerlink" title="shadowsocks服务端安装"></a>shadowsocks服务端安装</h2><p>参考<a href="https://github.com/shadowsocks/shadowsocks/wiki/Shadowsocks-%E4%BD%BF%E7%94%A8%E8%AF%B4%E6%98%8E">官方Shadowsocks使用说明</a>：</p>
+<p>CentOS:</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">yum install python-setuptools &amp;&amp; easy_install pip  </span><br><span class="line">pip install shadowsocks </span><br></pre></td></tr></table></figure>
+
+<p>Debian &#x2F; Ubuntu:</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">apt-get install python-pip  </span><br><span class="line">pip install shadowsocks </span><br></pre></td></tr></table></figure>
+
+<p>配置<br>参考<a href="https://github.com/shadowsocks/shadowsocks/wiki/Configuration-via-Config-File">Configuration via Config File</a></p>
+<p>修改配置文件&#x2F;etc&#x2F;shadowsocks.json，如果没有则新建。<br>内容如下：</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">&#123;  </span><br><span class="line">    &quot;server&quot;:&quot;0.0.0.0&quot;,  </span><br><span class="line">    &quot;server_port&quot;:8388,  </span><br><span class="line">    &quot;local_address&quot;: &quot;127.0.0.1&quot;,  </span><br><span class="line">    &quot;local_port&quot;:1080,  </span><br><span class="line">    &quot;password&quot;:&quot;mypassword&quot;,  </span><br><span class="line">    &quot;timeout&quot;:300,  </span><br><span class="line">    &quot;method&quot;:&quot;aes-256-cfb&quot;,  </span><br><span class="line">    &quot;fast_open&quot;: false  </span><br><span class="line">&#125;  </span><br></pre></td></tr></table></figure>
+<p>或（多个SS账号）</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">&#123;  </span><br><span class="line">    &quot;server&quot;:&quot;0.0.0.0&quot;,  </span><br><span class="line">    &quot;port_password&quot;:&#123;  </span><br><span class="line">     &quot;8381&quot;:&quot;xxxxxxx&quot;,  </span><br><span class="line">     &quot;8382&quot;:&quot;xxxxxxx&quot;,  </span><br><span class="line">     &quot;8383&quot;:&quot;xxxxxxx&quot;,  </span><br><span class="line">     &quot;8384&quot;:&quot;xxxxxxx&quot;  </span><br><span class="line">     &#125;,  </span><br><span class="line">    &quot;timeout&quot;:300,  </span><br><span class="line">    &quot;method&quot;:&quot;aes-256-cfb&quot;,  </span><br><span class="line">    &quot;fast_open&quot;: false  </span><br><span class="line">&#125; </span><br></pre></td></tr></table></figure>
+
+<p>配置说明：</p>
+<table>
+<thead>
+<tr>
+<th>字段</th>
+<th>说明</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>server</td>
+<td>ss服务监听地址</td>
+</tr>
+<tr>
+<td>server_port</td>
+<td>ss服务监听端口</td>
+</tr>
+<tr>
+<td>local_address</td>
+<td>本地的监听地址</td>
+</tr>
+<tr>
+<td>local_port</td>
+<td>本地的监听端口</td>
+</tr>
+<tr>
+<td>password</td>
+<td>密码</td>
+</tr>
+<tr>
+<td>timeout</td>
+<td>超时时间，单位秒</td>
+</tr>
+<tr>
+<td>method</td>
+<td>加密方法，默认是aes-256-cfb</td>
+</tr>
+<tr>
+<td>fast_open</td>
+<td>使用TCP_FASTOPEN, true &#x2F; false</td>
+</tr>
+<tr>
+<td>workers</td>
+<td>workers数，只支持Unix&#x2F;Linux系统</td>
+</tr>
+</tbody></table>
+<p>启动：<br>前台启动</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">ssserver -c /etc/shadowsocks.json</span><br></pre></td></tr></table></figure>
+
+<p>后台启动与停止</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">ssserver -c /etc/shadowsocks.json -d start  </span><br><span class="line">ssserver -c /etc/shadowsocks.json -d stop </span><br></pre></td></tr></table></figure>
+
+<p>如需开机启动<br>修改&#x2F;etc&#x2F;rc.local，加入以下内容</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">ssserver -c /etc/shadowsocks.json -d start </span><br></pre></td></tr></table></figure>
+
+<p>日志<br>shadowsocks的日志保存在 &#x2F;var&#x2F;log&#x2F;shadowsocks.log</p>
+<h2 id="shadowsocks客户端安装"><a href="#shadowsocks客户端安装" class="headerlink" title="shadowsocks客户端安装"></a>shadowsocks客户端安装</h2><p>下载地址：</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">Windows   </span><br><span class="line">https://github.com/shadowsocks/shadowsocks-windows/releases   </span><br><span class="line">  </span><br><span class="line">Mac OS X   </span><br><span class="line">https://github.com/shadowsocks/ShadowsocksX-NG/releases </span><br><span class="line"></span><br><span class="line">Linux   </span><br><span class="line">https://github.com/shadowsocks/shadowsocks-qt5/wiki/Installation   </span><br><span class="line">https://github.com/shadowsocks/shadowsocks-qt5/releases  </span><br><span class="line"></span><br><span class="line">IOS   </span><br><span class="line">https://itunes.apple.com/app/apple-store/id1070901416?pt=2305194&amp;ct=shadowsocks.org&amp;mt=8   </span><br><span class="line">https://github.com/shadowsocks/shadowsocks-iOS/releases</span><br><span class="line"></span><br><span class="line">Android   </span><br><span class="line">https://play.google.com/store/apps/details?id=com.github.shadowsocks   </span><br><span class="line">https://github.com/shadowsocks/shadowsocks-android/releases </span><br></pre></td></tr></table></figure>
+
+<h2 id="serverspeeder加速安装"><a href="#serverspeeder加速安装" class="headerlink" title="serverspeeder加速安装"></a>serverspeeder加速安装</h2><p>注意：serverspeeder加速是可选的，如果你使用vpn测速发现很慢，可以安装试试。</p>
+<p>加速前<br><img src="/uploads/vpn/before_speed_test1.jpeg"></p>
+<p>加速后<br><img src="/uploads/vpn/after_speed_test1.jpeg"></p>
+<p>下行速度瞬间提升，是不是觉得有点小激动？<br>一键安装serverspeeder<br>注：参考<a href="https://github.com/91yun/serverspeeder">serverspeeder锐速一键破解安装版</a></p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">wget -N --no-check-certificate https://github.com/91yun/serverspeeder/raw/master/serverspeeder.sh &amp;&amp; bash serverspeeder.sh </span><br></pre></td></tr></table></figure>
+
+<p>如果报内核不支持，可以更换系统内核</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">下载内核安装包  </span><br><span class="line">wget http://ftp.scientificlinux.org/linux/scientific/6.6/x86_64/updates/security/kernel-2.6.32-504.3.3.el6.x86_64.rpm  </span><br><span class="line">  </span><br><span class="line">更换内核  </span><br><span class="line">rpm -ivh kernel-2.6.32-504.3.3.el6.x86_64.rpm --force  </span><br><span class="line">  </span><br><span class="line">重启  </span><br><span class="line">reboot  </span><br><span class="line">  </span><br><span class="line">查看内核版本是否替换成功  </span><br><span class="line">cat /proc/version  </span><br></pre></td></tr></table></figure>
+
+<p>如果系统内核已更新，再次执行一键安装serverspeeder方法即可。至此serverspeeder安装完毕，快去试试速度是不提升了。</p>
+<p>卸载serverspeeder的方法</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">chattr -i /serverspeeder/etc/apx* &amp;&amp; /serverspeeder/bin/serverSpeeder.sh uninstall -f </span><br></pre></td></tr></table></figure>
+<h1 id="方法二：搭建l2tp-vpn（推荐）"><a href="#方法二：搭建l2tp-vpn（推荐）" class="headerlink" title="方法二：搭建l2tp vpn（推荐）"></a>方法二：搭建l2tp vpn（推荐）</h1><p>参考<a href="http://blog.deartanker.com/">DearTanker’s Blog</a>的一键安装方法：</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">wget --no-check-certificate https://raw.githubusercontent.com/teddysun/across/master/l2tp.sh  </span><br><span class="line">chmod +x l2tp.sh  </span><br><span class="line">./l2tp.sh</span><br></pre></td></tr></table></figure>
+<p>基本上，按交互式命令的提示按回车或者自定义自己的选择即可，然后再次验证ipsec（L2TP）并重启相关服务，否则提示服务器无响应</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">service ipsec restart  </span><br><span class="line">service xl2tpd restart  </span><br><span class="line">ipsec verify</span><br></pre></td></tr></table></figure>
+
+<p>如果需要修改或者增加账号密码，可以修改&#x2F;etc&#x2F;ppp&#x2F;chap-secrets</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">账户    l2tpd    密码       * </span><br></pre></td></tr></table></figure>
+<p>测试成功使用的客户端有，win7+win10自带vpn客户端，andriod自带vpn客户端。</p>
+<p>测试成功使用的网络环境有，电信+联通宽带，移动4g无法连接成功，如果哪位朋友在移动网络下有成功的经验，麻烦分享一下。</p>
+<p>不使用vpn时，使用<a href="http://www.speedtest.net/">speedtest</a>的测速结果：<br><img src="/uploads/vpn/before_speed_test2.png"></p>
+<p>下面是成功连接vpn后，使用speedtest的测速结果，虽然不是非常快，但基本够用。<br><img src="/uploads/vpn/after_speed_test2.png"></p>
+<h1 id="方法三：搭建openvpn（不建议）"><a href="#方法三：搭建openvpn（不建议）" class="headerlink" title="方法三：搭建openvpn（不建议）"></a>方法三：搭建openvpn（不建议）</h1><p>vultr面板提供一键安装openvpn的办法，方法是在新建一个vps实例时选择默认安装一个应用程序：<br><img src="/uploads/vpn/vultr_openvpn.png"></p>
+<p>具体安装办法参考官方的<a href="https://www.vultr.com/docs/one-click-openvpn">一键安装openvpn</a>说明。openvpn是使用操作系统的登录账号登录的，所以搭建完openvpn后，你可以参考linux新建用户的办法新建一个用户及修改用户密码，然后使用opevpn提供的客户端或者网页（一般情况下是 <a href="https://your_vps_ip:943/">https://your_vps_ip:943/</a> ）登录即可。</p>
+<p>之所以不建议使用openvpn，原因是测速发现比较慢，下载带宽不到1M，而且openvpn貌似不支持移动端登录。</p>
+<h1 id="方法四：搭建pptpd-vpn（不建议）"><a href="#方法四：搭建pptpd-vpn（不建议）" class="headerlink" title="方法四：搭建pptpd vpn（不建议）"></a>方法四：搭建pptpd vpn（不建议）</h1><p>注：之所以不建议使用pptpd，一方面是pptpd经常被墙，二是容易出问题。</p>
+<h2 id="安装"><a href="#安装" class="headerlink" title="安装"></a>安装</h2><figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">yum install ppp iptables pptpd</span><br></pre></td></tr></table></figure>
+
+<h2 id="配置"><a href="#配置" class="headerlink" title="配置"></a>配置</h2><p>编辑&#x2F;etc&#x2F;pptpd.conf，搜索localip，去掉下面字段前面的#，然后保存退出</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">localip 192.168.0.1  </span><br><span class="line">remoteip 192.168.0.234-238,192.168.0.245  </span><br><span class="line"></span><br></pre></td></tr></table></figure>
+<p>注意，pptpd默认支持最大100个连接，每个remoteip分配一个连接，如果remoteip数不够100个，那么默认连接数就会变成remoteip数。如果默认连接数不够的话，就会出现自动断开的情况，比如手机上的vpn连上了，PC端的vpn就会断开。</p>
+<p>编辑options.pptpd，搜索ms-dns，去掉搜索到的两行ms-dns前面的#，并修改为下面的字段</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">ms-dns 8.8.8.8  </span><br><span class="line">ms-dns 8.8.4.4 </span><br></pre></td></tr></table></figure>
+
+<p>编辑&#x2F;etc&#x2F;ppp&#x2F;chap-secrets设置VPN的帐号密码，注意，用户名与密码是区分大小写的</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">用户名 pptpd 密码 *</span><br></pre></td></tr></table></figure>
+
+<p>编辑&#x2F;etc&#x2F;sysctl.conf，修改内核参数，在末尾添加下面的代码，使内核支持转发</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">net.ipv4.ip_forward=1 </span><br></pre></td></tr></table></figure>
+
+<p>运行下面的命令使内核修改生效</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">sysctl -p</span><br></pre></td></tr></table></figure>
+
+<p>添加下面的iptables转发规则（直接在SSH运行下面命令即可）</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">iptables -t nat -A POSTROUTING -s 192.168.0.0/24 -o eth0 -j MASQUERADE  </span><br></pre></td></tr></table></figure>
+
+<p>添加转发规则后重启就会失效，Centos 6系统可以使用service iptables save保存配置，而Centos7则可以修改&#x2F;etc&#x2F;rc.d&#x2F;rc.local保存上面的命令，这样开机会自动执行上面的命令。</p>
+<h2 id="启动"><a href="#启动" class="headerlink" title="启动"></a>启动</h2><p>用下面的命令使pptpd开机自动启动</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">chkconfig pptpd on </span><br></pre></td></tr></table></figure>
+
+<p>启动pptpd</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">service pptpd start</span><br></pre></td></tr></table></figure>
+
+<h2 id="使用"><a href="#使用" class="headerlink" title="使用"></a>使用</h2><p>使用你的vpn客户端连接即可，如果配置没问题的话，就可以连接成功。<br>测试成功连接的vpn客户端有，win7+win10自带vpn客户端，andriod自带vpn客户端。但只在宽带网络上连接成功，4g网络连接不成功。</p>
+<h2 id="排错"><a href="#排错" class="headerlink" title="排错"></a>排错</h2><p>如果你的vpn连接不成功，有可能是iptable防火墙的问题，你可以使用下面命令</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">iptables -A INPUT -p tcp --dport 1723 -j ACCEPT  </span><br><span class="line">或者  </span><br><span class="line">iptables -F</span><br></pre></td></tr></table></figure>
+
+<p>然后在你的其他电脑使用telnet your_ip 1723测试是否连通。</p>
+<p>如果你遇到访问网站偶尔连接上又断的问题，可能是MTU太大导致，可以</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">执行  </span><br><span class="line">iptables -I FORWARD -p tcp --syn -i ppp+ -j TCPMSS --set-mss 1356  </span><br><span class="line">或者修改/etc/ppp/options.pptpd，在文件最后添加  </span><br><span class="line">mtu 1356 </span><br></pre></td></tr></table></figure>
+
+<p>更多问题，可以打开pptpd的debug日志，根据debug日志的输出上网搜索一步步解决<br>修改&#x2F;etc&#x2F;ppp&#x2F;options.pptpd<br>取消下面的注释 </p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">debug  </span><br><span class="line">dump  </span><br><span class="line">logfile /var/log/pptpd.log（没有则手工修改） </span><br></pre></td></tr></table></figure>
+
+<hr>
+]]></content>
+      <categories>
+        <category>Tools</category>
+      </categories>
+      <tags>
+        <tag>vps</tag>
+        <tag>vpn</tag>
+      </tags>
+  </entry>
+  <entry>
     <title>多媒体框架GStreamer</title>
     <url>/2018/06/03/%E5%A4%9A%E5%AA%92%E4%BD%93%E6%A1%86%E6%9E%B6GStreamer/</url>
     <content><![CDATA[<h1 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h1><p>注：原文出处<a href="https://newdee.cf/posts/413bb42a/">多媒体框架GStreamer</a></p>
@@ -2916,173 +3116,6 @@ attachments/1114283/amf3_spec_05_05_08.pdf>.
       </tags>
   </entry>
   <entry>
-    <title>推荐的学习资源</title>
-    <url>/2019/12/01/recommended-study-resources/</url>
-    <content><![CDATA[<h1 id="推荐的学习资源列表"><a href="#推荐的学习资源列表" class="headerlink" title="推荐的学习资源列表"></a>推荐的学习资源列表</h1><h2 id="Golang语言"><a href="#Golang语言" class="headerlink" title="Golang语言"></a>Golang语言</h2><p><a href="https://github.com/Unknwon/the-way-to-go_ZH_CN/blob/master/eBook/directory.md">the-way-to-go</a> (recommend)<br><a href="https://golang.org/doc/">golang.org</a> (official)  </p>
-<h2 id="数据库"><a href="#数据库" class="headerlink" title="数据库"></a>数据库</h2><h3 id="Mongodb"><a href="#Mongodb" class="headerlink" title="Mongodb"></a>Mongodb</h3><p><a href="https://www.runoob.com/mongodb/mongodb-tutorial.html">mongodb-tutorial</a> (recommend)<br><a href="https://docs.mongodb.com/manual/">docs.mongodb.com</a> (official)  </p>
-<h3 id="Redis"><a href="#Redis" class="headerlink" title="Redis"></a>Redis</h3><p><a href="https://www.runoob.com/redis/redis-tutorial.html">redis-tutorial</a> (recommend)<br><a href="http://redisdoc.com/index.html">redisdoc</a><br><a href="https://redis.io/documentation">redis.io</a>  (official)  </p>
-<h3 id="SQL"><a href="#SQL" class="headerlink" title="SQL"></a>SQL</h3><p><a href="https://www.runoob.com/sql/sql-tutorial.html">sql-tutorial</a><br><a href="https://www.runoob.com/mysql/mysql-tutorial.html">mysql-tutorial</a><br><a href="https://dev.mysql.com/doc/">dev.mysql.com</a> (official)  </p>
-<h3 id="Nginx"><a href="#Nginx" class="headerlink" title="Nginx"></a>Nginx</h3><p><a href="http://nginx.org/en/docs/">nginx.org</a> (official)<br><a href="https://www.runoob.com/w3cnote/nginx-setup-intro.html">Nginx 配置详解</a><br><a href="https://www.runoob.com/w3cnote/nginx-proxy-balancing.html">Nginx 反向代理与负载均衡详解</a><br><a href="https://moonbingbing.gitbooks.io/openresty-best-practices/ngx/nginx.html">OpenResty最佳实践-Nginx</a><br><a href="http://tengine.taobao.org/book/index.html">Nginx开发从入门到精通</a>  </p>
-]]></content>
-      <categories>
-        <category>Technology</category>
-      </categories>
-      <tags>
-        <tag>Study</tag>
-        <tag>Resource</tag>
-      </tags>
-  </entry>
-  <entry>
-    <title>搭建自己专属的vpn——Centos搭建vpn的几种办法</title>
-    <url>/2018/04/07/%E6%90%AD%E5%BB%BA%E8%87%AA%E5%B7%B1%E4%B8%93%E5%B1%9E%E7%9A%84vpn%E2%80%94%E2%80%94Centos%E6%90%AD%E5%BB%BAvpn%E7%9A%84%E5%87%A0%E7%A7%8D%E5%8A%9E%E6%B3%95/</url>
-    <content><![CDATA[<h1 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h1><p>上一篇《搭建自己专属的vpn——选择一个vps》提到如何选择一个vps，这一篇就淡淡如何利用<a href="https://www.vultr.com/?ref=8443595-6G">vultr</a>的vps搭建一个vpn。</p>
-<h1 id="方法一：搭建shadowsocks-serverspeeder（特别推荐）"><a href="#方法一：搭建shadowsocks-serverspeeder（特别推荐）" class="headerlink" title="方法一：搭建shadowsocks+serverspeeder（特别推荐）"></a>方法一：搭建shadowsocks+serverspeeder（特别推荐）</h1><h2 id="shadowsocks服务端安装"><a href="#shadowsocks服务端安装" class="headerlink" title="shadowsocks服务端安装"></a>shadowsocks服务端安装</h2><p>参考<a href="https://github.com/shadowsocks/shadowsocks/wiki/Shadowsocks-%E4%BD%BF%E7%94%A8%E8%AF%B4%E6%98%8E">官方Shadowsocks使用说明</a>：</p>
-<p>CentOS:</p>
-<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">yum install python-setuptools &amp;&amp; easy_install pip  </span><br><span class="line">pip install shadowsocks </span><br></pre></td></tr></table></figure>
-
-<p>Debian &#x2F; Ubuntu:</p>
-<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">apt-get install python-pip  </span><br><span class="line">pip install shadowsocks </span><br></pre></td></tr></table></figure>
-
-<p>配置<br>参考<a href="https://github.com/shadowsocks/shadowsocks/wiki/Configuration-via-Config-File">Configuration via Config File</a></p>
-<p>修改配置文件&#x2F;etc&#x2F;shadowsocks.json，如果没有则新建。<br>内容如下：</p>
-<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">&#123;  </span><br><span class="line">    &quot;server&quot;:&quot;0.0.0.0&quot;,  </span><br><span class="line">    &quot;server_port&quot;:8388,  </span><br><span class="line">    &quot;local_address&quot;: &quot;127.0.0.1&quot;,  </span><br><span class="line">    &quot;local_port&quot;:1080,  </span><br><span class="line">    &quot;password&quot;:&quot;mypassword&quot;,  </span><br><span class="line">    &quot;timeout&quot;:300,  </span><br><span class="line">    &quot;method&quot;:&quot;aes-256-cfb&quot;,  </span><br><span class="line">    &quot;fast_open&quot;: false  </span><br><span class="line">&#125;  </span><br></pre></td></tr></table></figure>
-<p>或（多个SS账号）</p>
-<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">&#123;  </span><br><span class="line">    &quot;server&quot;:&quot;0.0.0.0&quot;,  </span><br><span class="line">    &quot;port_password&quot;:&#123;  </span><br><span class="line">     &quot;8381&quot;:&quot;xxxxxxx&quot;,  </span><br><span class="line">     &quot;8382&quot;:&quot;xxxxxxx&quot;,  </span><br><span class="line">     &quot;8383&quot;:&quot;xxxxxxx&quot;,  </span><br><span class="line">     &quot;8384&quot;:&quot;xxxxxxx&quot;  </span><br><span class="line">     &#125;,  </span><br><span class="line">    &quot;timeout&quot;:300,  </span><br><span class="line">    &quot;method&quot;:&quot;aes-256-cfb&quot;,  </span><br><span class="line">    &quot;fast_open&quot;: false  </span><br><span class="line">&#125; </span><br></pre></td></tr></table></figure>
-
-<p>配置说明：</p>
-<table>
-<thead>
-<tr>
-<th>字段</th>
-<th>说明</th>
-</tr>
-</thead>
-<tbody><tr>
-<td>server</td>
-<td>ss服务监听地址</td>
-</tr>
-<tr>
-<td>server_port</td>
-<td>ss服务监听端口</td>
-</tr>
-<tr>
-<td>local_address</td>
-<td>本地的监听地址</td>
-</tr>
-<tr>
-<td>local_port</td>
-<td>本地的监听端口</td>
-</tr>
-<tr>
-<td>password</td>
-<td>密码</td>
-</tr>
-<tr>
-<td>timeout</td>
-<td>超时时间，单位秒</td>
-</tr>
-<tr>
-<td>method</td>
-<td>加密方法，默认是aes-256-cfb</td>
-</tr>
-<tr>
-<td>fast_open</td>
-<td>使用TCP_FASTOPEN, true &#x2F; false</td>
-</tr>
-<tr>
-<td>workers</td>
-<td>workers数，只支持Unix&#x2F;Linux系统</td>
-</tr>
-</tbody></table>
-<p>启动：<br>前台启动</p>
-<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">ssserver -c /etc/shadowsocks.json</span><br></pre></td></tr></table></figure>
-
-<p>后台启动与停止</p>
-<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">ssserver -c /etc/shadowsocks.json -d start  </span><br><span class="line">ssserver -c /etc/shadowsocks.json -d stop </span><br></pre></td></tr></table></figure>
-
-<p>如需开机启动<br>修改&#x2F;etc&#x2F;rc.local，加入以下内容</p>
-<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">ssserver -c /etc/shadowsocks.json -d start </span><br></pre></td></tr></table></figure>
-
-<p>日志<br>shadowsocks的日志保存在 &#x2F;var&#x2F;log&#x2F;shadowsocks.log</p>
-<h2 id="shadowsocks客户端安装"><a href="#shadowsocks客户端安装" class="headerlink" title="shadowsocks客户端安装"></a>shadowsocks客户端安装</h2><p>下载地址：</p>
-<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">Windows   </span><br><span class="line">https://github.com/shadowsocks/shadowsocks-windows/releases   </span><br><span class="line">  </span><br><span class="line">Mac OS X   </span><br><span class="line">https://github.com/shadowsocks/ShadowsocksX-NG/releases </span><br><span class="line"></span><br><span class="line">Linux   </span><br><span class="line">https://github.com/shadowsocks/shadowsocks-qt5/wiki/Installation   </span><br><span class="line">https://github.com/shadowsocks/shadowsocks-qt5/releases  </span><br><span class="line"></span><br><span class="line">IOS   </span><br><span class="line">https://itunes.apple.com/app/apple-store/id1070901416?pt=2305194&amp;ct=shadowsocks.org&amp;mt=8   </span><br><span class="line">https://github.com/shadowsocks/shadowsocks-iOS/releases</span><br><span class="line"></span><br><span class="line">Android   </span><br><span class="line">https://play.google.com/store/apps/details?id=com.github.shadowsocks   </span><br><span class="line">https://github.com/shadowsocks/shadowsocks-android/releases </span><br></pre></td></tr></table></figure>
-
-<h2 id="serverspeeder加速安装"><a href="#serverspeeder加速安装" class="headerlink" title="serverspeeder加速安装"></a>serverspeeder加速安装</h2><p>注意：serverspeeder加速是可选的，如果你使用vpn测速发现很慢，可以安装试试。</p>
-<p>加速前<br><img src="/uploads/vpn/before_speed_test1.jpeg"></p>
-<p>加速后<br><img src="/uploads/vpn/after_speed_test1.jpeg"></p>
-<p>下行速度瞬间提升，是不是觉得有点小激动？<br>一键安装serverspeeder<br>注：参考<a href="https://github.com/91yun/serverspeeder">serverspeeder锐速一键破解安装版</a></p>
-<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">wget -N --no-check-certificate https://github.com/91yun/serverspeeder/raw/master/serverspeeder.sh &amp;&amp; bash serverspeeder.sh </span><br></pre></td></tr></table></figure>
-
-<p>如果报内核不支持，可以更换系统内核</p>
-<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">下载内核安装包  </span><br><span class="line">wget http://ftp.scientificlinux.org/linux/scientific/6.6/x86_64/updates/security/kernel-2.6.32-504.3.3.el6.x86_64.rpm  </span><br><span class="line">  </span><br><span class="line">更换内核  </span><br><span class="line">rpm -ivh kernel-2.6.32-504.3.3.el6.x86_64.rpm --force  </span><br><span class="line">  </span><br><span class="line">重启  </span><br><span class="line">reboot  </span><br><span class="line">  </span><br><span class="line">查看内核版本是否替换成功  </span><br><span class="line">cat /proc/version  </span><br></pre></td></tr></table></figure>
-
-<p>如果系统内核已更新，再次执行一键安装serverspeeder方法即可。至此serverspeeder安装完毕，快去试试速度是不提升了。</p>
-<p>卸载serverspeeder的方法</p>
-<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">chattr -i /serverspeeder/etc/apx* &amp;&amp; /serverspeeder/bin/serverSpeeder.sh uninstall -f </span><br></pre></td></tr></table></figure>
-<h1 id="方法二：搭建l2tp-vpn（推荐）"><a href="#方法二：搭建l2tp-vpn（推荐）" class="headerlink" title="方法二：搭建l2tp vpn（推荐）"></a>方法二：搭建l2tp vpn（推荐）</h1><p>参考<a href="http://blog.deartanker.com/">DearTanker’s Blog</a>的一键安装方法：</p>
-<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">wget --no-check-certificate https://raw.githubusercontent.com/teddysun/across/master/l2tp.sh  </span><br><span class="line">chmod +x l2tp.sh  </span><br><span class="line">./l2tp.sh</span><br></pre></td></tr></table></figure>
-<p>基本上，按交互式命令的提示按回车或者自定义自己的选择即可，然后再次验证ipsec（L2TP）并重启相关服务，否则提示服务器无响应</p>
-<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">service ipsec restart  </span><br><span class="line">service xl2tpd restart  </span><br><span class="line">ipsec verify</span><br></pre></td></tr></table></figure>
-
-<p>如果需要修改或者增加账号密码，可以修改&#x2F;etc&#x2F;ppp&#x2F;chap-secrets</p>
-<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">账户    l2tpd    密码       * </span><br></pre></td></tr></table></figure>
-<p>测试成功使用的客户端有，win7+win10自带vpn客户端，andriod自带vpn客户端。</p>
-<p>测试成功使用的网络环境有，电信+联通宽带，移动4g无法连接成功，如果哪位朋友在移动网络下有成功的经验，麻烦分享一下。</p>
-<p>不使用vpn时，使用<a href="http://www.speedtest.net/">speedtest</a>的测速结果：<br><img src="/uploads/vpn/before_speed_test2.png"></p>
-<p>下面是成功连接vpn后，使用speedtest的测速结果，虽然不是非常快，但基本够用。<br><img src="/uploads/vpn/after_speed_test2.png"></p>
-<h1 id="方法三：搭建openvpn（不建议）"><a href="#方法三：搭建openvpn（不建议）" class="headerlink" title="方法三：搭建openvpn（不建议）"></a>方法三：搭建openvpn（不建议）</h1><p>vultr面板提供一键安装openvpn的办法，方法是在新建一个vps实例时选择默认安装一个应用程序：<br><img src="/uploads/vpn/vultr_openvpn.png"></p>
-<p>具体安装办法参考官方的<a href="https://www.vultr.com/docs/one-click-openvpn">一键安装openvpn</a>说明。openvpn是使用操作系统的登录账号登录的，所以搭建完openvpn后，你可以参考linux新建用户的办法新建一个用户及修改用户密码，然后使用opevpn提供的客户端或者网页（一般情况下是 <a href="https://your_vps_ip:943/">https://your_vps_ip:943/</a> ）登录即可。</p>
-<p>之所以不建议使用openvpn，原因是测速发现比较慢，下载带宽不到1M，而且openvpn貌似不支持移动端登录。</p>
-<h1 id="方法四：搭建pptpd-vpn（不建议）"><a href="#方法四：搭建pptpd-vpn（不建议）" class="headerlink" title="方法四：搭建pptpd vpn（不建议）"></a>方法四：搭建pptpd vpn（不建议）</h1><p>注：之所以不建议使用pptpd，一方面是pptpd经常被墙，二是容易出问题。</p>
-<h2 id="安装"><a href="#安装" class="headerlink" title="安装"></a>安装</h2><figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">yum install ppp iptables pptpd</span><br></pre></td></tr></table></figure>
-
-<h2 id="配置"><a href="#配置" class="headerlink" title="配置"></a>配置</h2><p>编辑&#x2F;etc&#x2F;pptpd.conf，搜索localip，去掉下面字段前面的#，然后保存退出</p>
-<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">localip 192.168.0.1  </span><br><span class="line">remoteip 192.168.0.234-238,192.168.0.245  </span><br><span class="line"></span><br></pre></td></tr></table></figure>
-<p>注意，pptpd默认支持最大100个连接，每个remoteip分配一个连接，如果remoteip数不够100个，那么默认连接数就会变成remoteip数。如果默认连接数不够的话，就会出现自动断开的情况，比如手机上的vpn连上了，PC端的vpn就会断开。</p>
-<p>编辑options.pptpd，搜索ms-dns，去掉搜索到的两行ms-dns前面的#，并修改为下面的字段</p>
-<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">ms-dns 8.8.8.8  </span><br><span class="line">ms-dns 8.8.4.4 </span><br></pre></td></tr></table></figure>
-
-<p>编辑&#x2F;etc&#x2F;ppp&#x2F;chap-secrets设置VPN的帐号密码，注意，用户名与密码是区分大小写的</p>
-<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">用户名 pptpd 密码 *</span><br></pre></td></tr></table></figure>
-
-<p>编辑&#x2F;etc&#x2F;sysctl.conf，修改内核参数，在末尾添加下面的代码，使内核支持转发</p>
-<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">net.ipv4.ip_forward=1 </span><br></pre></td></tr></table></figure>
-
-<p>运行下面的命令使内核修改生效</p>
-<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">sysctl -p</span><br></pre></td></tr></table></figure>
-
-<p>添加下面的iptables转发规则（直接在SSH运行下面命令即可）</p>
-<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">iptables -t nat -A POSTROUTING -s 192.168.0.0/24 -o eth0 -j MASQUERADE  </span><br></pre></td></tr></table></figure>
-
-<p>添加转发规则后重启就会失效，Centos 6系统可以使用service iptables save保存配置，而Centos7则可以修改&#x2F;etc&#x2F;rc.d&#x2F;rc.local保存上面的命令，这样开机会自动执行上面的命令。</p>
-<h2 id="启动"><a href="#启动" class="headerlink" title="启动"></a>启动</h2><p>用下面的命令使pptpd开机自动启动</p>
-<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">chkconfig pptpd on </span><br></pre></td></tr></table></figure>
-
-<p>启动pptpd</p>
-<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">service pptpd start</span><br></pre></td></tr></table></figure>
-
-<h2 id="使用"><a href="#使用" class="headerlink" title="使用"></a>使用</h2><p>使用你的vpn客户端连接即可，如果配置没问题的话，就可以连接成功。<br>测试成功连接的vpn客户端有，win7+win10自带vpn客户端，andriod自带vpn客户端。但只在宽带网络上连接成功，4g网络连接不成功。</p>
-<h2 id="排错"><a href="#排错" class="headerlink" title="排错"></a>排错</h2><p>如果你的vpn连接不成功，有可能是iptable防火墙的问题，你可以使用下面命令</p>
-<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">iptables -A INPUT -p tcp --dport 1723 -j ACCEPT  </span><br><span class="line">或者  </span><br><span class="line">iptables -F</span><br></pre></td></tr></table></figure>
-
-<p>然后在你的其他电脑使用telnet your_ip 1723测试是否连通。</p>
-<p>如果你遇到访问网站偶尔连接上又断的问题，可能是MTU太大导致，可以</p>
-<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">执行  </span><br><span class="line">iptables -I FORWARD -p tcp --syn -i ppp+ -j TCPMSS --set-mss 1356  </span><br><span class="line">或者修改/etc/ppp/options.pptpd，在文件最后添加  </span><br><span class="line">mtu 1356 </span><br></pre></td></tr></table></figure>
-
-<p>更多问题，可以打开pptpd的debug日志，根据debug日志的输出上网搜索一步步解决<br>修改&#x2F;etc&#x2F;ppp&#x2F;options.pptpd<br>取消下面的注释 </p>
-<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">debug  </span><br><span class="line">dump  </span><br><span class="line">logfile /var/log/pptpd.log（没有则手工修改） </span><br></pre></td></tr></table></figure>
-
-<hr>
-]]></content>
-      <categories>
-        <category>Tools</category>
-      </categories>
-      <tags>
-        <tag>vpn</tag>
-        <tag>vps</tag>
-      </tags>
-  </entry>
-  <entry>
     <title>搭建自己专属的vpn——选择一个vps</title>
     <url>/2018/04/07/%E6%90%AD%E5%BB%BA%E8%87%AA%E5%B7%B1%E4%B8%93%E5%B1%9E%E7%9A%84vpn%E2%80%94%E2%80%94%E9%80%89%E6%8B%A9%E4%B8%80%E4%B8%AAvps/</url>
     <content><![CDATA[<h1 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h1><p>作为一名技术人员，经常需要访问一些墙外的网站，你懂的。本来想直接购买个vpn，但又怕不太安全。看到网上有很多自己搭建vpn的教程，于是自己折腾了一下，终于成功搭建，随便与大家分享一些经验。</p>
@@ -3105,41 +3138,8 @@ attachments/1114283/amf3_spec_05_05_08.pdf>.
         <category>Tools</category>
       </categories>
       <tags>
+        <tag>vps</tag>
         <tag>vpn</tag>
-        <tag>vps</tag>
-      </tags>
-  </entry>
-  <entry>
-    <title>如何搭建个人私有云盘</title>
-    <url>/2019/01/06/%E5%A6%82%E4%BD%95%E6%90%AD%E5%BB%BA%E4%B8%AA%E4%BA%BA%E7%A7%81%E6%9C%89%E4%BA%91%E7%9B%98/</url>
-    <content><![CDATA[<h1 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h1><p>市场上有很多云盘的产品，比如百度云盘，不过本教程主要目的是要搭建个人私有云盘。查了网上很多资料，个人云盘也有很多，比如nextcloud，owncloud，seafile等。这里选择nextcloud，优势就不用说了，网上一搜一大把。</p>
-<h1 id="Nextcloud搭建办法"><a href="#Nextcloud搭建办法" class="headerlink" title="Nextcloud搭建办法"></a>Nextcloud搭建办法</h1><p>主要的搭建办法有两个：</p>
-<ul>
-<li>通过VPS一键安装</li>
-<li>手动安装</li>
-</ul>
-<h2 id="通过VPS一键安装"><a href="#通过VPS一键安装" class="headerlink" title="通过VPS一键安装"></a>通过VPS一键安装</h2><p><a href="https://www.vultr.com/?ref=8443595-6G">Vultr</a>有一键安装Nextcloud的功能，非常方便。<br>主要步骤如下：</p>
-<ul>
-<li>注册vps</li>
-<li>创建vps实例</li>
-<li>Server Location -&gt; 选择一个好的机房，比如洛杉矶，日本和新加坡等。</li>
-<li>Server Type -&gt; 选Application，选中Nextcloud</li>
-<li>Server Size -&gt; 根据自己需要选择</li>
-<li>剩下的配置使用默认即可</li>
-</ul>
-<p>首先，登陆<a href="https://www.vultr.com/?ref=8443595-6G">Vultr官网</a>，点击Create Account注册。<br>选择一个好的机房，当然是自己测过才放心。这里推荐使用<a href="http://www.nirsoft.net/utils/pinginfoview.zip">PingInfoView</a>来测试。以下是vultr的机房：<br><img src="/uploads/vps/vultr_area.jpeg" alt="vultr_area"></p>
-<p>列表如下，贴到PingInfoView上即可。</p>
-<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">sgp-ping.vultr.com</span><br><span class="line">hnd-jp-ping.vultr.com</span><br><span class="line">syd-au-ping.vultr.com</span><br><span class="line">fra-de-ping.vultr.com</span><br><span class="line">ams-nl-ping.vultr.com</span><br><span class="line">lon-gb-ping.vultr.com</span><br><span class="line">par-fr-ping.vultr.com</span><br><span class="line">wa-us-ping.vultr.com</span><br><span class="line">sjo-ca-us-ping.vultr.com</span><br><span class="line">lax-ca-us-ping.vultr.com</span><br><span class="line">il-us-ping.vultr.com</span><br><span class="line">nj-us-ping.vultr.com</span><br><span class="line">tx-us-ping.vultr.com</span><br><span class="line">ga-us-ping.vultr.com</span><br><span class="line">fl-us-ping.vultr.com</span><br></pre></td></tr></table></figure>
-<p>linux&#x2F;mac用户可以使用我写的脚本<a href="https://github.com/rukesun/vultr_test.git">vultr_test</a>来测试。<br>以下是我的测试结果：<br><img src="/uploads/vps/my_ping_test.png"><br>选择的原则是，ping值最小，丢包率最小。比如我的测试结果中，较不错的是sjo、wa和lax，都是美国机房。</p>
-<p>接下来Server Type选Application，选中Nextcloud，如下所示<br><img src="/uploads/nextcloud/vultr_nextcloud_app.jpg" alt="nextcloud_app"><br>根据自己的需要选择Server Size，剩下的配置使用默认即可。<br>点击Deploy Now，然后静静地等待1~2分钟。<br>部署完成后，查看实例详情，可以看到Nextcloud的地址，登陆账号和密码。<br><img src="/uploads/nextcloud/vultr_nextcloud_info.jpg" alt="nextcloud_info"><br>打开你的Nextcloud地址，会提示不安全，这个是ssl证书问题，你可以直接忽略。<br>下面是打开后的界面<br><img src="/uploads/nextcloud/nextcloud_login.jpg" alt="nextcloud_login"><br>怎么样，是不是很期待？<br>输入账号和密码，点击登录，网盘就可以使用了<br><img src="/uploads/nextcloud/nextcloud_main.jpg" alt="nextcloud_main"><br>可以传视频，文档，可以自定义目录，更多的功能等待你去探索！好了，是不是有点小激动？麻麻再也不用担心我的小电影没地方放了。</p>
-<hr>
-]]></content>
-      <categories>
-        <category>Tools</category>
-      </categories>
-      <tags>
-        <tag>vps</tag>
-        <tag>nextcloud</tag>
       </tags>
   </entry>
 </search>

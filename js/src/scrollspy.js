@@ -65,6 +65,14 @@
       .map(function() {
         var $el   = $(this);
         var href  = $el.data('target') || $el.attr('href');
+        // Decode URI component to handle Chinese/Unicode characters in IDs
+        if (href && /^#./.test(href)) {
+          try {
+            href = '#' + decodeURIComponent(href.substring(1));
+          } catch (e) {
+            // If decoding fails, use original href
+          }
+        }
         var $href = /^#./.test(href) && $(NexT.utils.escapeSelector(href)); // Need to escape selector.
 
         return ($href
