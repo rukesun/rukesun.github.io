@@ -1,0 +1,1627 @@
+<!DOCTYPE html>
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+
+<html class="theme-next pisces use-motion" lang="zh-CN,en,default">
+<head>
+  <meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2"/>
+<meta name="theme-color" content="#222">
+
+
+
+
+
+
+
+
+
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+<link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet" type="text/css" />
+
+<link href="/css/main.css?v=6.4.2" rel="stylesheet" type="text/css" />
+
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png?v=6.4.2">
+
+
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png?v=6.4.2">
+
+
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png?v=6.4.2">
+
+
+  <link rel="mask-icon" href="/images/logo.svg?v=6.4.2" color="#222">
+
+
+
+
+
+
+
+
+
+<script type="text/javascript" id="hexo.configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    root: '',
+    scheme: 'Pisces',
+    version: '6.4.2',
+    sidebar: {"position":"left","display":"post","offset":12,"b2t":false,"scrollpercent":false,"onmobile":false},
+    fancybox: false,
+    fastclick: false,
+    lazyload: false,
+    tabs: true,
+    motion: {"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},
+    algolia: {
+      applicationID: '',
+      apiKey: '',
+      indexName: '',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    }
+  };
+</script>
+
+
+  
+
+
+
+
+  <meta name="description" content="前言2017年，Google发表论文《Attention Is All You Need》，提出了Transformer架构。这篇论文彻底改变了NLP领域，成为GPT、BERT、LLaMA等大语言模型的共同基石。 本文将深入剖析Transformer的架构原理，从数学推导到代码实现，帮你彻底理解这个改变AI历史的设计。 为什么需要Transformer？RNN&#x2F;LSTM的局限在Trans">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Transformer架构深度解析：大模型的基石">
+<meta property="og:url" content="http://blog.noahsun.top/2026/02/26/transformer-architecture-deep-dive/index.html">
+<meta property="og:site_name" content="Noah Sun&#39;s Home">
+<meta property="og:description" content="前言2017年，Google发表论文《Attention Is All You Need》，提出了Transformer架构。这篇论文彻底改变了NLP领域，成为GPT、BERT、LLaMA等大语言模型的共同基石。 本文将深入剖析Transformer的架构原理，从数学推导到代码实现，帮你彻底理解这个改变AI历史的设计。 为什么需要Transformer？RNN&#x2F;LSTM的局限在Trans">
+<meta property="og:locale" content="zh_CN">
+<meta property="article:published_time" content="2026-02-26T09:45:00.000Z">
+<meta property="article:modified_time" content="2026-02-26T09:43:49.639Z">
+<meta property="article:author" content="Noah Sun">
+<meta property="article:tag" content="AI">
+<meta property="article:tag" content="DeepLearning">
+<meta property="article:tag" content="Transformer">
+<meta property="article:tag" content="LLM">
+<meta name="twitter:card" content="summary">
+
+
+
+
+
+
+  <link rel="canonical" href="http://blog.noahsun.top/2026/02/26/transformer-architecture-deep-dive/"/>
+
+
+
+<script type="text/javascript" id="page.configurations">
+  CONFIG.page = {
+    sidebar: "",
+  };
+</script>
+
+  <title>Transformer架构深度解析：大模型的基石 | Noah Sun's Home</title>
+  
+
+
+
+
+<script async src="https://www.googletagmanager.com/gtag/js?id=UA-102233237-1"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+
+  gtag('config', 'UA-102233237-1');
+</script>
+
+
+
+  <script type="text/javascript">
+    var _hmt = _hmt || [];
+    (function() {
+      var hm = document.createElement("script");
+      hm.src = "https://hm.baidu.com/hm.js?07c7e0461feabfd55d89458a5c4ae94b";
+      var s = document.getElementsByTagName("script")[0];
+      s.parentNode.insertBefore(hm, s);
+    })();
+  </script>
+
+
+
+
+
+
+  <noscript>
+  <style type="text/css">
+    .use-motion .motion-element,
+    .use-motion .brand,
+    .use-motion .menu-item,
+    .sidebar-inner,
+    .use-motion .post-block,
+    .use-motion .pagination,
+    .use-motion .comments,
+    .use-motion .post-header,
+    .use-motion .post-body,
+    .use-motion .collection-title { opacity: initial; }
+
+    .use-motion .logo,
+    .use-motion .site-title,
+    .use-motion .site-subtitle {
+      opacity: initial;
+      top: initial;
+    }
+
+    .use-motion {
+      .logo-line-before i { left: initial; }
+      .logo-line-after i { right: initial; }
+    }
+  </style>
+</noscript>
+
+<meta name="generator" content="Hexo 6.3.0"></head>
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="zh-CN">
+
+  
+  
+    
+  
+
+  <div class="container sidebar-position-left page-post-detail">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-wrapper">
+  <div class="site-meta ">
+    
+
+    <div class="custom-logo-site-title">
+      <a href="/" class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title">Noah Sun's Home</span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+    
+  </div>
+
+  <div class="site-nav-toggle">
+    <button aria-label="切换导航栏">
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+    </button>
+  </div>
+</div>
+
+
+
+<nav class="site-nav">
+  
+    <ul id="menu" class="menu">
+      
+        
+        
+        
+          
+          <li class="menu-item menu-item-home">
+    <a href="/" rel="section">
+      <i class="menu-item-icon fa fa-fw fa-home"></i> <br />首页</a>
+  </li>
+        
+        
+        
+          
+          <li class="menu-item menu-item-archives">
+    <a href="/archives/" rel="section">
+      <i class="menu-item-icon fa fa-fw fa-archive"></i> <br />归档</a>
+  </li>
+        
+        
+        
+          
+          <li class="menu-item menu-item-categories">
+    <a href="/categories/" rel="section">
+      <i class="menu-item-icon fa fa-fw fa-th"></i> <br />分类</a>
+  </li>
+        
+        
+        
+          
+          <li class="menu-item menu-item-tags">
+    <a href="/tags/" rel="section">
+      <i class="menu-item-icon fa fa-fw fa-tags"></i> <br />标签</a>
+  </li>
+        
+        
+        
+          
+          <li class="menu-item menu-item-about">
+    <a href="/about/" rel="section">
+      <i class="menu-item-icon fa fa-fw fa-user"></i> <br />关于</a>
+  </li>
+
+      
+      
+        <li class="menu-item menu-item-search">
+          
+            <a href="javascript:;" class="popup-trigger">
+          
+            
+              <i class="menu-item-icon fa fa-search fa-fw"></i> <br />搜索</a>
+        </li>
+      
+    </ul>
+  
+
+  
+
+  
+    <div class="site-search">
+      
+  <div class="popup search-popup local-search-popup">
+  <div class="local-search-header clearfix">
+    <span class="search-icon">
+      <i class="fa fa-search"></i>
+    </span>
+    <span class="popup-btn-close">
+      <i class="fa fa-times-circle"></i>
+    </span>
+    <div class="local-search-input-wrapper">
+      <input autocomplete="off"
+             placeholder="搜索..." spellcheck="false"
+             type="text" id="local-search-input">
+    </div>
+  </div>
+  <div id="local-search-result"></div>
+</div>
+
+
+
+    </div>
+  
+</nav>
+
+
+
+  
+
+
+
+</div>
+    </header>
+
+    
+
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+            
+
+          
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+
+  
+  
+  
+
+  
+
+  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="http://blog.noahsun.top/2026/02/26/transformer-architecture-deep-dive/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="Noah Sun">
+      <meta itemprop="description" content="Noah Sun's Blog.">
+      <meta itemprop="image" content="/images/avatar.jpg">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Noah Sun's Home">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">Transformer架构深度解析：大模型的基石
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+
+            
+            
+            
+
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+
+              
+                
+              
+
+              <time title="创建时间：2026-02-26 17:45:00 / 修改时间：17:43:49" itemprop="dateCreated datePublished" datetime="2026-02-26T17:45:00+08:00">2026-02-26</time>
+            
+
+            
+              
+
+              
+            
+          </span>
+
+          
+            <span class="post-category" >
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing"><a href="/categories/Technology/" itemprop="url" rel="index"><span itemprop="name">Technology</span></a></span>
+
+                
+                
+                  ，
+                
+              
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing"><a href="/categories/Technology/DeepLearning/" itemprop="url" rel="index"><span itemprop="name">DeepLearning</span></a></span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+              <span class="post-comments-count">
+                <span class="post-meta-divider">|</span>
+                <span class="post-meta-item-icon">
+                  <i class="fa fa-comment-o"></i>
+                </span>
+                <a href="/2026/02/26/transformer-architecture-deep-dive/#comments" itemprop="discussionUrl">
+                  <span class="post-meta-item-text">评论数：</span> <span class="post-comments-count fb-comments-count" data-href="http://blog.noahsun.top/2026/02/26/transformer-architecture-deep-dive/" itemprop="commentCount">0</span>
+                </a>
+              </span>
+            
+          
+
+          
+          
+             <span id="/2026/02/26/transformer-architecture-deep-dive/" class="leancloud_visitors" data-flag-title="Transformer架构深度解析：大模型的基石">
+               <span class="post-meta-divider">|</span>
+               <span class="post-meta-item-icon">
+                 <i class="fa fa-eye"></i>
+               </span>
+               
+                 <span class="post-meta-item-text">阅读次数：</span>
+               
+                 <span class="leancloud-visitors-count"></span>
+             </span>
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <h2 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h2><p>2017年，Google发表论文《Attention Is All You Need》，提出了<strong>Transformer</strong>架构。这篇论文彻底改变了NLP领域，成为GPT、BERT、LLaMA等大语言模型的共同基石。</p>
+<p>本文将深入剖析Transformer的架构原理，从数学推导到代码实现，帮你彻底理解这个改变AI历史的设计。</p>
+<h2 id="为什么需要Transformer？"><a href="#为什么需要Transformer？" class="headerlink" title="为什么需要Transformer？"></a>为什么需要Transformer？</h2><h3 id="RNN-LSTM的局限"><a href="#RNN-LSTM的局限" class="headerlink" title="RNN&#x2F;LSTM的局限"></a>RNN&#x2F;LSTM的局限</h3><p>在Transformer之前，序列建模的主流方法是RNN和LSTM：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">h₁ → h₂ → h₃ → ... → hₙ</span><br><span class="line"> ↓    ↓    ↓         ↓</span><br><span class="line">y₁   y₂   y₃        yₙ</span><br></pre></td></tr></table></figure>
+
+<p><strong>主要问题</strong>：</p>
+<ol>
+<li><strong>顺序计算瓶颈</strong>：无法并行，训练慢</li>
+<li><strong>长距离依赖</strong>：信息需要逐步传递，远距离token难以关联</li>
+<li><strong>梯度消失&#x2F;爆炸</strong>：长序列训练困难</li>
+</ol>
+<h3 id="Transformer的解决方案"><a href="#Transformer的解决方案" class="headerlink" title="Transformer的解决方案"></a>Transformer的解决方案</h3><p>Transformer的核心思想：<strong>用Attention替代循环</strong></p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">┌─────────────────────────────────┐</span><br><span class="line">│     所有位置同时计算Self-Attention    │</span><br><span class="line">│  x₁  x₂  x₃  ...  xₙ           │</span><br><span class="line">│   ↘  ↓  ↙                      │</span><br><span class="line">│      Parallel Computation       │</span><br><span class="line">└─────────────────────────────────┘</span><br></pre></td></tr></table></figure>
+
+<p>优势：</p>
+<ul>
+<li>✅ 完全并行化</li>
+<li>✅ 任意距离直接连接</li>
+<li>✅ 训练稳定</li>
+</ul>
+<h2 id="整体架构"><a href="#整体架构" class="headerlink" title="整体架构"></a>整体架构</h2><p>Transformer采用<strong>Encoder-Decoder</strong>结构：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br></pre></td><td class="code"><pre><span class="line">                    Output Embedding</span><br><span class="line">                         │</span><br><span class="line">                    Positional Encoding</span><br><span class="line">                         │</span><br><span class="line">┌────────────────────────┴────────────────────────┐</span><br><span class="line">│                  DECODER (N layers)              │</span><br><span class="line">│  ┌─────────────────────────────────────────┐   │</span><br><span class="line">│  │ Masked Multi-Head Attention             │   │</span><br><span class="line">│  │         ↓                               │   │</span><br><span class="line">│  │ Multi-Head Attention (Cross-Attention)  │   │</span><br><span class="line">│  │         ↓                               │   │</span><br><span class="line">│  │ Feed Forward                            │   │</span><br><span class="line">│  └─────────────────────────────────────────┘   │</span><br><span class="line">└────────────────────────┬────────────────────────┘</span><br><span class="line">                         │</span><br><span class="line">┌────────────────────────┴────────────────────────┐</span><br><span class="line">│                  ENCODER (N layers)              │</span><br><span class="line">│  ┌─────────────────────────────────────────┐   │</span><br><span class="line">│  │ Multi-Head Attention                    │   │</span><br><span class="line">│  │         ↓                               │   │</span><br><span class="line">│  │ Feed Forward                            │   │</span><br><span class="line">│  └─────────────────────────────────────────┘   │</span><br><span class="line">└────────────────────────┬────────────────────────┘</span><br><span class="line">                         │</span><br><span class="line">               Input Embedding</span><br><span class="line">                         │</span><br><span class="line">                Positional Encoding</span><br></pre></td></tr></table></figure>
+
+<p>现代LLM（如GPT）通常只用Decoder部分，我们重点分析核心组件。</p>
+<h2 id="核心组件详解"><a href="#核心组件详解" class="headerlink" title="核心组件详解"></a>核心组件详解</h2><h3 id="1-Self-Attention：自注意力机制"><a href="#1-Self-Attention：自注意力机制" class="headerlink" title="1. Self-Attention：自注意力机制"></a>1. Self-Attention：自注意力机制</h3><p>Self-Attention是Transformer的灵魂。它的核心思想是：<strong>让序列中的每个位置都能直接关注到其他所有位置</strong>。</p>
+<h4 id="数学定义"><a href="#数学定义" class="headerlink" title="数学定义"></a>数学定义</h4><p>给定输入序列 $X &#x3D; [x_1, x_2, …, x_n]$，首先通过三个权重矩阵得到Query、Key、Value：</p>
+<p>$$Q &#x3D; XW_Q, \quad K &#x3D; XW_K, \quad V &#x3D; XW_V$$</p>
+<p>Attention计算：</p>
+<p>$$\text{Attention}(Q, K, V) &#x3D; \text{softmax}\left(\frac{QK^T}{\sqrt{d_k}}\right)V$$</p>
+<p>其中 $d_k$ 是Key的维度，用于缩放以稳定梯度。</p>
+<h4 id="直觉理解"><a href="#直觉理解" class="headerlink" title="直觉理解"></a>直觉理解</h4><p>想象你在读一句话：”The animal didn’t cross the street because <strong>it</strong> was too tired”</p>
+<p>当你读到”it”时，Self-Attention让模型能够”看向”前面的”animal”，建立关联：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">Position:  The  animal  didn&#x27;t  cross  the  street  because  it   was  tired</span><br><span class="line">                                                              ↓</span><br><span class="line">it attends to:  [animal: 0.7, street: 0.1, tired: 0.15, ...]</span><br></pre></td></tr></table></figure>
+
+<h4 id="代码实现"><a href="#代码实现" class="headerlink" title="代码实现"></a>代码实现</h4><figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">import</span> torch</span><br><span class="line"><span class="keyword">import</span> torch.nn <span class="keyword">as</span> nn</span><br><span class="line"><span class="keyword">import</span> math</span><br><span class="line"></span><br><span class="line"><span class="keyword">class</span> <span class="title class_">SelfAttention</span>(nn.Module):</span><br><span class="line">    <span class="keyword">def</span> <span class="title function_">__init__</span>(<span class="params">self, embed_size, heads</span>):</span><br><span class="line">        <span class="built_in">super</span>(SelfAttention, <span class="variable language_">self</span>).__init__()</span><br><span class="line">        <span class="variable language_">self</span>.embed_size = embed_size</span><br><span class="line">        <span class="variable language_">self</span>.heads = heads</span><br><span class="line">        <span class="variable language_">self</span>.head_dim = embed_size // heads</span><br><span class="line"></span><br><span class="line">        <span class="keyword">assert</span> (<span class="variable language_">self</span>.head_dim * heads == embed_size), <span class="string">&quot;Embed size must be divisible by heads&quot;</span></span><br><span class="line"></span><br><span class="line">        <span class="variable language_">self</span>.W_q = nn.Linear(embed_size, embed_size, bias=<span class="literal">False</span>)</span><br><span class="line">        <span class="variable language_">self</span>.W_k = nn.Linear(embed_size, embed_size, bias=<span class="literal">False</span>)</span><br><span class="line">        <span class="variable language_">self</span>.W_v = nn.Linear(embed_size, embed_size, bias=<span class="literal">False</span>)</span><br><span class="line">        <span class="variable language_">self</span>.fc_out = nn.Linear(embed_size, embed_size)</span><br><span class="line"></span><br><span class="line">    <span class="keyword">def</span> <span class="title function_">forward</span>(<span class="params">self, query, key, value, mask=<span class="literal">None</span></span>):</span><br><span class="line">        N = query.shape[<span class="number">0</span>]  <span class="comment"># batch size</span></span><br><span class="line">        seq_len = query.shape[<span class="number">1</span>]</span><br><span class="line"></span><br><span class="line">        <span class="comment"># Linear projections: (N, seq_len, embed_size)</span></span><br><span class="line">        Q = <span class="variable language_">self</span>.W_q(query)</span><br><span class="line">        K = <span class="variable language_">self</span>.W_k(key)</span><br><span class="line">        V = <span class="variable language_">self</span>.W_v(value)</span><br><span class="line"></span><br><span class="line">        <span class="comment"># Reshape for multi-head: (N, seq_len, heads, head_dim) -&gt; (N, heads, seq_len, head_dim)</span></span><br><span class="line">        Q = Q.view(N, seq_len, <span class="variable language_">self</span>.heads, <span class="variable language_">self</span>.head_dim).transpose(<span class="number">1</span>, <span class="number">2</span>)</span><br><span class="line">        K = K.view(N, seq_len, <span class="variable language_">self</span>.heads, <span class="variable language_">self</span>.head_dim).transpose(<span class="number">1</span>, <span class="number">2</span>)</span><br><span class="line">        V = V.view(N, seq_len, <span class="variable language_">self</span>.heads, <span class="variable language_">self</span>.head_dim).transpose(<span class="number">1</span>, <span class="number">2</span>)</span><br><span class="line"></span><br><span class="line">        <span class="comment"># Attention scores: (N, heads, seq_len, seq_len)</span></span><br><span class="line">        scores = torch.matmul(Q, K.transpose(-<span class="number">2</span>, -<span class="number">1</span>)) / math.sqrt(<span class="variable language_">self</span>.head_dim)</span><br><span class="line"></span><br><span class="line">        <span class="comment"># Apply mask (for decoder)</span></span><br><span class="line">        <span class="keyword">if</span> mask <span class="keyword">is</span> <span class="keyword">not</span> <span class="literal">None</span>:</span><br><span class="line">            scores = scores.masked_fill(mask == <span class="number">0</span>, <span class="built_in">float</span>(<span class="string">&quot;-1e20&quot;</span>))</span><br><span class="line"></span><br><span class="line">        <span class="comment"># Softmax</span></span><br><span class="line">        attention = torch.softmax(scores, dim=-<span class="number">1</span>)</span><br><span class="line"></span><br><span class="line">        <span class="comment"># Apply attention to values: (N, heads, seq_len, head_dim)</span></span><br><span class="line">        out = torch.matmul(attention, V)</span><br><span class="line"></span><br><span class="line">        <span class="comment"># Concat heads: (N, seq_len, embed_size)</span></span><br><span class="line">        out = out.transpose(<span class="number">1</span>, <span class="number">2</span>).contiguous().view(N, seq_len, <span class="variable language_">self</span>.embed_size)</span><br><span class="line"></span><br><span class="line">        <span class="keyword">return</span> <span class="variable language_">self</span>.fc_out(out)</span><br></pre></td></tr></table></figure>
+
+<h3 id="2-Multi-Head-Attention：多头注意力"><a href="#2-Multi-Head-Attention：多头注意力" class="headerlink" title="2. Multi-Head Attention：多头注意力"></a>2. Multi-Head Attention：多头注意力</h3><p>单头Attention只能学习一种关联模式。Multi-Head让模型同时从多个”视角”学习：</p>
+<p>$$\text{MultiHead}(Q, K, V) &#x3D; \text{Concat}(\text{head}_1, …, \text{head}_h)W_O$$</p>
+<p>其中：<br>$$\text{head}_i &#x3D; \text{Attention}(QW_Q^i, KW_K^i, VW_V^i)$$</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line">┌─────────────────────────────────────────────────┐</span><br><span class="line">│              Multi-Head Attention               │</span><br><span class="line">│                                                 │</span><br><span class="line">│  Head 1    Head 2    Head 3    ...  Head h     │</span><br><span class="line">│    ↓         ↓         ↓              ↓        │</span><br><span class="line">│  Q₁K₁ᵀ    Q₂K₂ᵀ    Q₃K₃ᵀ    ...  QₕKₕᵀ       │</span><br><span class="line">│    ↓         ↓         ↓              ↓        │</span><br><span class="line">│  softmax  softmax  softmax       softmax       │</span><br><span class="line">│    ↓         ↓         ↓              ↓        │</span><br><span class="line">│   V₁        V₂        V₃            Vₕ         │</span><br><span class="line">│    ↓         ↓         ↓              ↓        │</span><br><span class="line">│  └───────────── Concat ─────────────────┘      │</span><br><span class="line">│                     ↓                          │</span><br><span class="line">│               Linear (W_O)                     │</span><br><span class="line">└─────────────────────────────────────────────────┘</span><br></pre></td></tr></table></figure>
+
+<p><strong>为什么需要多头？</strong></p>
+<p>不同Head可以学习不同的关联模式：</p>
+<ul>
+<li>Head 1：关注语法结构</li>
+<li>Head 2：关注语义相似性</li>
+<li>Head 3：关注位置关系</li>
+<li>…</li>
+</ul>
+<h3 id="3-Positional-Encoding：位置编码"><a href="#3-Positional-Encoding：位置编码" class="headerlink" title="3. Positional Encoding：位置编码"></a>3. Positional Encoding：位置编码</h3><p>Self-Attention是<strong>位置无关</strong>的——打乱输入顺序，输出只是相应的打乱。为了引入位置信息，Transformer添加位置编码：</p>
+<p>$$PE_{(pos, 2i)} &#x3D; \sin(pos &#x2F; 10000^{2i&#x2F;d_{model}})$$<br>$$PE_{(pos, 2i+1)} &#x3D; \cos(pos &#x2F; 10000^{2i&#x2F;d_{model}})$$</p>
+<p>其中 $pos$ 是位置，$i$ 是维度索引。</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">class</span> <span class="title class_">PositionalEncoding</span>(nn.Module):</span><br><span class="line">    <span class="keyword">def</span> <span class="title function_">__init__</span>(<span class="params">self, embed_size, max_len=<span class="number">5000</span></span>):</span><br><span class="line">        <span class="built_in">super</span>(PositionalEncoding, <span class="variable language_">self</span>).__init__()</span><br><span class="line"></span><br><span class="line">        <span class="comment"># Create matrix of (max_len, embed_size)</span></span><br><span class="line">        pe = torch.zeros(max_len, embed_size)</span><br><span class="line">        position = torch.arange(<span class="number">0</span>, max_len, dtype=torch.<span class="built_in">float</span>).unsqueeze(<span class="number">1</span>)</span><br><span class="line"></span><br><span class="line">        <span class="comment"># Compute the positional encodings</span></span><br><span class="line">        div_term = torch.exp(</span><br><span class="line">            torch.arange(<span class="number">0</span>, embed_size, <span class="number">2</span>).<span class="built_in">float</span>() * (-math.log(<span class="number">10000.0</span>) / embed_size)</span><br><span class="line">        )</span><br><span class="line"></span><br><span class="line">        pe[:, <span class="number">0</span>::<span class="number">2</span>] = torch.sin(position * div_term)  <span class="comment"># even indices</span></span><br><span class="line">        pe[:, <span class="number">1</span>::<span class="number">2</span>] = torch.cos(position * div_term)  <span class="comment"># odd indices</span></span><br><span class="line"></span><br><span class="line">        <span class="comment"># Add batch dimension: (1, max_len, embed_size)</span></span><br><span class="line">        pe = pe.unsqueeze(<span class="number">0</span>)</span><br><span class="line"></span><br><span class="line">        <span class="variable language_">self</span>.register_buffer(<span class="string">&#x27;pe&#x27;</span>, pe)</span><br><span class="line"></span><br><span class="line">    <span class="keyword">def</span> <span class="title function_">forward</span>(<span class="params">self, x</span>):</span><br><span class="line">        <span class="comment"># x: (N, seq_len, embed_size)</span></span><br><span class="line">        <span class="keyword">return</span> x + <span class="variable language_">self</span>.pe[:, :x.shape[<span class="number">1</span>], :]</span><br></pre></td></tr></table></figure>
+
+<p><strong>为什么用sin&#x2F;cos？</strong></p>
+<ul>
+<li>可以泛化到任意长度</li>
+<li>相对位置可以通过线性变换得到：$PE_{pos+k}$ 可以表示为 $PE_{pos}$ 的函数</li>
+</ul>
+<h3 id="4-Feed-Forward-Network"><a href="#4-Feed-Forward-Network" class="headerlink" title="4. Feed-Forward Network"></a>4. Feed-Forward Network</h3><p>每个Transformer Block包含一个前馈网络：</p>
+<p>$$\text{FFN}(x) &#x3D; \max(0, xW_1 + b_1)W_2 + b_2$$</p>
+<p>通常是两层全连接，中间有ReLU激活，隐藏层维度是输入的4倍。</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">class</span> <span class="title class_">FeedForward</span>(nn.Module):</span><br><span class="line">    <span class="keyword">def</span> <span class="title function_">__init__</span>(<span class="params">self, embed_size, d_ff</span>):</span><br><span class="line">        <span class="built_in">super</span>(FeedForward, <span class="variable language_">self</span>).__init__()</span><br><span class="line">        <span class="variable language_">self</span>.linear1 = nn.Linear(embed_size, d_ff)</span><br><span class="line">        <span class="variable language_">self</span>.linear2 = nn.Linear(d_ff, embed_size)</span><br><span class="line">        <span class="variable language_">self</span>.relu = nn.ReLU()</span><br><span class="line"></span><br><span class="line">    <span class="keyword">def</span> <span class="title function_">forward</span>(<span class="params">self, x</span>):</span><br><span class="line">        <span class="keyword">return</span> <span class="variable language_">self</span>.linear2(<span class="variable language_">self</span>.relu(<span class="variable language_">self</span>.linear1(x)))</span><br></pre></td></tr></table></figure>
+
+<h3 id="5-Layer-Normalization-Residual-Connection"><a href="#5-Layer-Normalization-Residual-Connection" class="headerlink" title="5. Layer Normalization &amp; Residual Connection"></a>5. Layer Normalization &amp; Residual Connection</h3><p>每个子层后都有残差连接和LayerNorm：</p>
+<p>$$\text{LayerNorm}(x + \text{Sublayer}(x))$$</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">class</span> <span class="title class_">LayerNorm</span>(nn.Module):</span><br><span class="line">    <span class="keyword">def</span> <span class="title function_">__init__</span>(<span class="params">self, embed_size, eps=<span class="number">1e-6</span></span>):</span><br><span class="line">        <span class="built_in">super</span>(LayerNorm, <span class="variable language_">self</span>).__init__()</span><br><span class="line">        <span class="variable language_">self</span>.gamma = nn.Parameter(torch.ones(embed_size))</span><br><span class="line">        <span class="variable language_">self</span>.beta = nn.Parameter(torch.zeros(embed_size))</span><br><span class="line">        <span class="variable language_">self</span>.eps = eps</span><br><span class="line"></span><br><span class="line">    <span class="keyword">def</span> <span class="title function_">forward</span>(<span class="params">self, x</span>):</span><br><span class="line">        mean = x.mean(-<span class="number">1</span>, keepdim=<span class="literal">True</span>)</span><br><span class="line">        std = x.std(-<span class="number">1</span>, keepdim=<span class="literal">True</span>)</span><br><span class="line">        <span class="keyword">return</span> <span class="variable language_">self</span>.gamma * (x - mean) / (std + <span class="variable language_">self</span>.eps) + <span class="variable language_">self</span>.beta</span><br></pre></td></tr></table></figure>
+
+<p><strong>残差连接的作用</strong>：</p>
+<ul>
+<li>缓解梯度消失</li>
+<li>允许训练更深的网络</li>
+<li>保留原始信息流</li>
+</ul>
+<h2 id="完整的Transformer-Block"><a href="#完整的Transformer-Block" class="headerlink" title="完整的Transformer Block"></a>完整的Transformer Block</h2><figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">class</span> <span class="title class_">TransformerBlock</span>(nn.Module):</span><br><span class="line">    <span class="keyword">def</span> <span class="title function_">__init__</span>(<span class="params">self, embed_size, heads, d_ff, dropout=<span class="number">0.1</span></span>):</span><br><span class="line">        <span class="built_in">super</span>(TransformerBlock, <span class="variable language_">self</span>).__init__()</span><br><span class="line"></span><br><span class="line">        <span class="variable language_">self</span>.attention = SelfAttention(embed_size, heads)</span><br><span class="line">        <span class="variable language_">self</span>.norm1 = LayerNorm(embed_size)</span><br><span class="line">        <span class="variable language_">self</span>.norm2 = LayerNorm(embed_size)</span><br><span class="line"></span><br><span class="line">        <span class="variable language_">self</span>.feed_forward = FeedForward(embed_size, d_ff)</span><br><span class="line"></span><br><span class="line">        <span class="variable language_">self</span>.dropout = nn.Dropout(dropout)</span><br><span class="line"></span><br><span class="line">    <span class="keyword">def</span> <span class="title function_">forward</span>(<span class="params">self, x, mask=<span class="literal">None</span></span>):</span><br><span class="line">        <span class="comment"># Self-Attention with residual + norm</span></span><br><span class="line">        attention = <span class="variable language_">self</span>.attention(x, x, x, mask)</span><br><span class="line">        x = <span class="variable language_">self</span>.norm1(x + <span class="variable language_">self</span>.dropout(attention))</span><br><span class="line"></span><br><span class="line">        <span class="comment"># Feed-Forward with residual + norm</span></span><br><span class="line">        forward = <span class="variable language_">self</span>.feed_forward(x)</span><br><span class="line">        x = <span class="variable language_">self</span>.norm2(x + <span class="variable language_">self</span>.dropout(forward))</span><br><span class="line"></span><br><span class="line">        <span class="keyword">return</span> x</span><br></pre></td></tr></table></figure>
+
+<h2 id="Encoder完整实现"><a href="#Encoder完整实现" class="headerlink" title="Encoder完整实现"></a>Encoder完整实现</h2><figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">class</span> <span class="title class_">Encoder</span>(nn.Module):</span><br><span class="line">    <span class="keyword">def</span> <span class="title function_">__init__</span>(<span class="params"></span></span><br><span class="line"><span class="params">        self,</span></span><br><span class="line"><span class="params">        vocab_size,</span></span><br><span class="line"><span class="params">        embed_size,</span></span><br><span class="line"><span class="params">        num_layers,</span></span><br><span class="line"><span class="params">        heads,</span></span><br><span class="line"><span class="params">        d_ff,</span></span><br><span class="line"><span class="params">        max_len=<span class="number">5000</span>,</span></span><br><span class="line"><span class="params">        dropout=<span class="number">0.1</span></span></span><br><span class="line"><span class="params">    </span>):</span><br><span class="line">        <span class="built_in">super</span>(Encoder, <span class="variable language_">self</span>).__init__()</span><br><span class="line"></span><br><span class="line">        <span class="variable language_">self</span>.embedding = nn.Embedding(vocab_size, embed_size)</span><br><span class="line">        <span class="variable language_">self</span>.positional_encoding = PositionalEncoding(embed_size, max_len)</span><br><span class="line"></span><br><span class="line">        <span class="variable language_">self</span>.layers = nn.ModuleList([</span><br><span class="line">            TransformerBlock(embed_size, heads, d_ff, dropout)</span><br><span class="line">            <span class="keyword">for</span> _ <span class="keyword">in</span> <span class="built_in">range</span>(num_layers)</span><br><span class="line">        ])</span><br><span class="line"></span><br><span class="line">        <span class="variable language_">self</span>.dropout = nn.Dropout(dropout)</span><br><span class="line"></span><br><span class="line">    <span class="keyword">def</span> <span class="title function_">forward</span>(<span class="params">self, x, mask=<span class="literal">None</span></span>):</span><br><span class="line">        N, seq_len = x.shape</span><br><span class="line"></span><br><span class="line">        <span class="comment"># Embedding + Positional Encoding</span></span><br><span class="line">        x = <span class="variable language_">self</span>.embedding(x)</span><br><span class="line">        x = <span class="variable language_">self</span>.positional_encoding(x)</span><br><span class="line">        x = <span class="variable language_">self</span>.dropout(x)</span><br><span class="line"></span><br><span class="line">        <span class="comment"># Pass through transformer blocks</span></span><br><span class="line">        <span class="keyword">for</span> layer <span class="keyword">in</span> <span class="variable language_">self</span>.layers:</span><br><span class="line">            x = layer(x, mask)</span><br><span class="line"></span><br><span class="line">        <span class="keyword">return</span> x</span><br></pre></td></tr></table></figure>
+
+<h2 id="Decoder的特殊设计"><a href="#Decoder的特殊设计" class="headerlink" title="Decoder的特殊设计"></a>Decoder的特殊设计</h2><p>Decoder有两个关键区别：</p>
+<h3 id="1-Masked-Self-Attention"><a href="#1-Masked-Self-Attention" class="headerlink" title="1. Masked Self-Attention"></a>1. Masked Self-Attention</h3><p>在训练时，Decoder不能”看到”未来的token：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">def</span> <span class="title function_">create_mask</span>(<span class="params">seq_len</span>):</span><br><span class="line">    <span class="string">&quot;&quot;&quot;Create upper triangular mask to prevent attending to future tokens&quot;&quot;&quot;</span></span><br><span class="line">    mask = torch.tril(torch.ones(seq_len, seq_len))</span><br><span class="line">    <span class="keyword">return</span> mask.unsqueeze(<span class="number">0</span>).unsqueeze(<span class="number">0</span>)  <span class="comment"># (1, 1, seq_len, seq_len)</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># Example: seq_len = 5</span></span><br><span class="line"><span class="comment"># [[1, 0, 0, 0, 0],</span></span><br><span class="line"><span class="comment">#  [1, 1, 0, 0, 0],</span></span><br><span class="line"><span class="comment">#  [1, 1, 1, 0, 0],</span></span><br><span class="line"><span class="comment">#  [1, 1, 1, 1, 0],</span></span><br><span class="line"><span class="comment">#  [1, 1, 1, 1, 1]]</span></span><br></pre></td></tr></table></figure>
+
+<h3 id="2-Cross-Attention"><a href="#2-Cross-Attention" class="headerlink" title="2. Cross-Attention"></a>2. Cross-Attention</h3><p>Decoder的第二个Attention层使用Encoder的输出作为Key和Value：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># In Decoder block</span></span><br><span class="line"><span class="comment"># Query from Decoder, Key/Value from Encoder</span></span><br><span class="line">cross_attention = <span class="variable language_">self</span>.attention(</span><br><span class="line">    query=x,           <span class="comment"># Decoder state</span></span><br><span class="line">    key=encoder_out,   <span class="comment"># Encoder output</span></span><br><span class="line">    value=encoder_out  <span class="comment"># Encoder output</span></span><br><span class="line">)</span><br></pre></td></tr></table></figure>
+
+<h2 id="从Transformer到GPT"><a href="#从Transformer到GPT" class="headerlink" title="从Transformer到GPT"></a>从Transformer到GPT</h2><p>GPT（Generative Pre-trained Transformer）只使用Decoder部分：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br></pre></td><td class="code"><pre><span class="line">┌─────────────────────────────────────┐</span><br><span class="line">│           GPT Architecture          │</span><br><span class="line">│                                     │</span><br><span class="line">│  Token Embedding + Position Embed   │</span><br><span class="line">│              ↓                      │</span><br><span class="line">│  ┌─────────────────────────────┐   │</span><br><span class="line">│  │ Masked Multi-Head Attention │   │ ← 只能看左边</span><br><span class="line">│  │            ↓                │   │</span><br><span class="line">│  │ Add &amp; Norm                  │   │</span><br><span class="line">│  │            ↓                │   │</span><br><span class="line">│  │ Feed Forward                │   │</span><br><span class="line">│  │            ↓                │   │</span><br><span class="line">│  │ Add &amp; Norm                  │   │</span><br><span class="line">│  └─────────────────────────────┘   │</span><br><span class="line">│            × N layers               │</span><br><span class="line">│              ↓                      │</span><br><span class="line">│        Linear (vocab_size)          │</span><br><span class="line">│              ↓                      │</span><br><span class="line">│          Softmax                    │</span><br><span class="line">│              ↓                      │</span><br><span class="line">│      Next Token Probability         │</span><br><span class="line">└─────────────────────────────────────┘</span><br></pre></td></tr></table></figure>
+
+<p><strong>训练目标</strong>：预测下一个token</p>
+<p>$$\mathcal{L} &#x3D; -\sum_{t&#x3D;1}^{T} \log P(x_t | x_{&lt;t})$$</p>
+<h2 id="从Transformer到BERT"><a href="#从Transformer到BERT" class="headerlink" title="从Transformer到BERT"></a>从Transformer到BERT</h2><p>BERT（Bidirectional Encoder Representations from Transformers）只使用Encoder部分：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br></pre></td><td class="code"><pre><span class="line">┌─────────────────────────────────────┐</span><br><span class="line">│          BERT Architecture          │</span><br><span class="line">│                                     │</span><br><span class="line">│  [CLS] Token1 Token2 ... [SEP]      │</span><br><span class="line">│              ↓                      │</span><br><span class="line">│    Token + Position + Segment Embed │</span><br><span class="line">│              ↓                      │</span><br><span class="line">│  ┌─────────────────────────────┐   │</span><br><span class="line">│  │ Multi-Head Attention        │   │ ← 双向！</span><br><span class="line">│  │            ↓                │   │</span><br><span class="line">│  │ Add &amp; Norm                  │   │</span><br><span class="line">│  │            ↓                │   │</span><br><span class="line">│  │ Feed Forward                │   │</span><br><span class="line">│  │            ↓                │   │</span><br><span class="line">│  │ Add &amp; Norm                  │   │</span><br><span class="line">│  └─────────────────────────────┘   │</span><br><span class="line">│            × N layers               │</span><br><span class="line">│              ↓                      │</span><br><span class="line">│      [CLS] → Classification         │</span><br><span class="line">│      Tokens → Token Predictions     │</span><br><span class="line">└─────────────────────────────────────┘</span><br></pre></td></tr></table></figure>
+
+<p><strong>训练任务</strong>：</p>
+<ol>
+<li><strong>Masked Language Model (MLM)</strong>：随机mask 15%的token，预测原token</li>
+<li><strong>Next Sentence Prediction (NSP)</strong>：判断两句是否连续</li>
+</ol>
+<h2 id="现代LLM的架构演进"><a href="#现代LLM的架构演进" class="headerlink" title="现代LLM的架构演进"></a>现代LLM的架构演进</h2><table>
+<thead>
+<tr>
+<th>模型</th>
+<th>架构</th>
+<th>参数量</th>
+<th>关键创新</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><strong>GPT-1</strong></td>
+<td>Decoder</td>
+<td>117M</td>
+<td>无监督预训练 + 有监督微调</td>
+</tr>
+<tr>
+<td><strong>BERT</strong></td>
+<td>Encoder</td>
+<td>340M</td>
+<td>双向编码 + MLM</td>
+</tr>
+<tr>
+<td><strong>GPT-2</strong></td>
+<td>Decoder</td>
+<td>1.5B</td>
+<td>更大更多数据</td>
+</tr>
+<tr>
+<td><strong>GPT-3</strong></td>
+<td>Decoder</td>
+<td>175B</td>
+<td>In-Context Learning</td>
+</tr>
+<tr>
+<td><strong>LLaMA</strong></td>
+<td>Decoder</td>
+<td>7B-65B</td>
+<td>RMSNorm + SwiGLU + RoPE</td>
+</tr>
+<tr>
+<td><strong>GPT-4</strong></td>
+<td>Decoder</td>
+<td>未公开</td>
+<td>多模态 + MoE（推测）</td>
+</tr>
+</tbody></table>
+<h3 id="LLaMA的改进"><a href="#LLaMA的改进" class="headerlink" title="LLaMA的改进"></a>LLaMA的改进</h3><figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 1. RMSNorm (替代LayerNorm)</span></span><br><span class="line"><span class="keyword">class</span> <span class="title class_">RMSNorm</span>(nn.Module):</span><br><span class="line">    <span class="keyword">def</span> <span class="title function_">__init__</span>(<span class="params">self, dim, eps=<span class="number">1e-6</span></span>):</span><br><span class="line">        <span class="built_in">super</span>().__init__()</span><br><span class="line">        <span class="variable language_">self</span>.eps = eps</span><br><span class="line">        <span class="variable language_">self</span>.weight = nn.Parameter(torch.ones(dim))</span><br><span class="line"></span><br><span class="line">    <span class="keyword">def</span> <span class="title function_">forward</span>(<span class="params">self, x</span>):</span><br><span class="line">        norm = x.<span class="built_in">float</span>().<span class="built_in">pow</span>(<span class="number">2</span>).mean(-<span class="number">1</span>, keepdim=<span class="literal">True</span>).add(<span class="variable language_">self</span>.eps).rsqrt()</span><br><span class="line">        <span class="keyword">return</span> (x * norm).type_as(x) * <span class="variable language_">self</span>.weight</span><br><span class="line"></span><br><span class="line"><span class="comment"># 2. SwiGLU (替代ReLU FFN)</span></span><br><span class="line"><span class="keyword">class</span> <span class="title class_">SwiGLU</span>(nn.Module):</span><br><span class="line">    <span class="keyword">def</span> <span class="title function_">__init__</span>(<span class="params">self, dim, hidden_dim</span>):</span><br><span class="line">        <span class="built_in">super</span>().__init__()</span><br><span class="line">        <span class="variable language_">self</span>.w1 = nn.Linear(dim, hidden_dim, bias=<span class="literal">False</span>)</span><br><span class="line">        <span class="variable language_">self</span>.w2 = nn.Linear(hidden_dim, dim, bias=<span class="literal">False</span>)</span><br><span class="line">        <span class="variable language_">self</span>.w3 = nn.Linear(dim, hidden_dim, bias=<span class="literal">False</span>)</span><br><span class="line"></span><br><span class="line">    <span class="keyword">def</span> <span class="title function_">forward</span>(<span class="params">self, x</span>):</span><br><span class="line">        <span class="keyword">return</span> <span class="variable language_">self</span>.w2(F.silu(<span class="variable language_">self</span>.w1(x)) * <span class="variable language_">self</span>.w3(x))</span><br><span class="line"></span><br><span class="line"><span class="comment"># 3. RoPE (替代绝对位置编码)</span></span><br><span class="line"><span class="keyword">def</span> <span class="title function_">precompute_freqs_cis</span>(<span class="params">dim, max_seq_len, theta=<span class="number">10000.0</span></span>):</span><br><span class="line">    freqs = <span class="number">1.0</span> / (theta ** (torch.arange(<span class="number">0</span>, dim, <span class="number">2</span>).<span class="built_in">float</span>() / dim))</span><br><span class="line">    t = torch.arange(max_seq_len)</span><br><span class="line">    freqs = torch.outer(t, freqs)</span><br><span class="line">    freqs_cis = torch.polar(torch.ones_like(freqs), freqs)</span><br><span class="line">    <span class="keyword">return</span> freqs_cis</span><br></pre></td></tr></table></figure>
+
+<h2 id="计算复杂度分析"><a href="#计算复杂度分析" class="headerlink" title="计算复杂度分析"></a>计算复杂度分析</h2><table>
+<thead>
+<tr>
+<th>操作</th>
+<th>复杂度</th>
+<th>说明</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Self-Attention</td>
+<td>$O(n^2 \cdot d)$</td>
+<td>n是序列长度，d是维度</td>
+</tr>
+<tr>
+<td>Feed-Forward</td>
+<td>$O(n \cdot d^2)$</td>
+<td>线性于序列长度</td>
+</tr>
+<tr>
+<td>总复杂度</td>
+<td>$O(n^2 \cdot d + n \cdot d^2)$</td>
+<td></td>
+</tr>
+</tbody></table>
+<p><strong>长序列问题</strong>：Attention的 $O(n^2)$ 是主要瓶颈。</p>
+<p><strong>解决方案</strong>：</p>
+<ul>
+<li>Sparse Attention（稀疏注意力）</li>
+<li>Linear Attention</li>
+<li>Flash Attention（IO优化）</li>
+<li>Sliding Window Attention</li>
+</ul>
+<h2 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h2><p>Transformer的核心创新：</p>
+<ol>
+<li><strong>Self-Attention</strong>：任意位置直接关联，无距离限制</li>
+<li><strong>Multi-Head</strong>：多视角学习不同关联模式</li>
+<li><strong>Positional Encoding</strong>：注入位置信息</li>
+<li><strong>残差连接 + LayerNorm</strong>：训练稳定，支持深层网络</li>
+<li><strong>完全并行</strong>：摆脱RNN的顺序计算</li>
+</ol>
+<p>从Transformer到GPT&#x2F;BERT，再到LLaMA&#x2F;GPT-4，架构的演进始终围绕这些核心设计。理解Transformer，就是理解了大模型时代的基石。</p>
+<hr>
+<p><strong>参考资料</strong>：</p>
+<ul>
+<li><a target="_blank" rel="noopener" href="https://arxiv.org/abs/1706.03762">Attention Is All You Need</a> - 原始论文</li>
+<li><a target="_blank" rel="noopener" href="https://jalammar.github.io/illustrated-transformer/">The Illustrated Transformer</a> - 可视化讲解</li>
+<li><a target="_blank" rel="noopener" href="https://nlp.seas.harvard.edu/annotated-transformer/">Annotated Transformer</a> - 带注释的实现</li>
+<li><a target="_blank" rel="noopener" href="https://arxiv.org/abs/2302.13971">LLaMA Paper</a> - 现代架构改进</li>
+</ul>
+
+      
+    </div>
+
+    
+
+    
+    
+    
+
+    
+
+    
+      <div>
+        <div style="padding: 10px 0; margin: 20px auto; width: 90%; text-align: center;">
+  <div>感谢你的阅读，如果文章对你有帮助，可以请作者喝杯茶!</div>
+  <button id="rewardButton" disable="enable" onclick="var qr = document.getElementById('QR'); if (qr.style.display === 'none') {qr.style.display='block';} else {qr.style.display='none'}">
+    <span>打赏</span>
+  </button>
+  <div id="QR" style="display: none;">
+
+    
+      <div id="wechat" style="display: inline-block">
+        <img id="wechat_qr" src="/images/wechatpay.jpg" alt="Noah Sun 微信支付"/>
+        <p>微信支付</p>
+      </div>
+    
+
+    
+      <div id="alipay" style="display: inline-block">
+        <img id="alipay_qr" src="/images/alipay.jpg" alt="Noah Sun 支付宝"/>
+        <p>支付宝</p>
+      </div>
+    
+
+    
+
+  </div>
+</div>
+
+      </div>
+    
+
+    
+      <div>
+        <ul class="post-copyright">
+  <li class="post-copyright-author">
+    <strong>本文作者： </strong>Noah Sun</li>
+  <li class="post-copyright-link">
+    <strong>本文链接：</strong>
+    <a href="http://blog.noahsun.top/2026/02/26/transformer-architecture-deep-dive/" title="Transformer架构深度解析：大模型的基石">http://blog.noahsun.top/2026/02/26/transformer-architecture-deep-dive/</a>
+  </li>
+  <li class="post-copyright-license">
+    <strong>版权声明： </strong>本博客所有文章除特别声明外，均采用 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" rel="external nofollow" target="_blank">CC BY-NC-SA 4.0</a> 许可协议。转载请注明出处！</li>
+</ul>
+
+      </div>
+    
+
+    <footer class="post-footer">
+      
+        <div class="post-tags">
+          
+            <a href="/tags/AI/" rel="tag"># AI</a>
+          
+            <a href="/tags/DeepLearning/" rel="tag"># DeepLearning</a>
+          
+            <a href="/tags/Transformer/" rel="tag"># Transformer</a>
+          
+            <a href="/tags/LLM/" rel="tag"># LLM</a>
+          
+        </div>
+      
+
+      
+      
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2026/02/24/openclaw-skill-vs-mcp/" rel="next" title="OpenClaw Skill深度解析：与MCP的对比与选择">
+                <i class="fa fa-chevron-left"></i> OpenClaw Skill深度解析：与MCP的对比与选择
+              </a>
+            
+          </div>
+
+          <span class="post-nav-divider"></span>
+
+          <div class="post-nav-prev post-nav-item">
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+  </div>
+
+
+          </div>
+          
+
+  
+    <div class="comments" id="comments">
+      <div id="disqus_thread">
+        <noscript>
+          Please enable JavaScript to view the
+          <a target="_blank" rel="noopener" href="https://disqus.com/?ref_noscript">comments powered by Disqus.</a>
+        </noscript>
+      </div>
+    </div>
+
+  
+
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap">
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview-wrap">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <section class="site-overview-wrap sidebar-panel">
+        <div class="site-overview">
+          <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+            
+              <img class="site-author-image" itemprop="image"
+                src="/images/avatar.jpg"
+                alt="Noah Sun" />
+            
+              <p class="site-author-name" itemprop="name">Noah Sun</p>
+              <p class="site-description motion-element" itemprop="description">Noah Sun's Blog.</p>
+          </div>
+
+          
+            <nav class="site-state motion-element">
+              
+                <div class="site-state-item site-state-posts">
+                
+                  <a href="/archives/%20%7C%7C%20archive">
+                
+                    <span class="site-state-item-count">23</span>
+                    <span class="site-state-item-name">日志</span>
+                  </a>
+                </div>
+              
+
+              
+                
+                
+                <div class="site-state-item site-state-categories">
+                  <a href="/categories/index.html">
+                    
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                    <span class="site-state-item-count">4</span>
+                    <span class="site-state-item-name">分类</span>
+                  </a>
+                </div>
+              
+
+              
+                
+                
+                <div class="site-state-item site-state-tags">
+                  <a href="/tags/index.html">
+                    
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                    <span class="site-state-item-count">38</span>
+                    <span class="site-state-item-name">标签</span>
+                  </a>
+                </div>
+              
+            </nav>
+          
+
+          
+
+          
+            <div class="links-of-author motion-element">
+              
+                <span class="links-of-author-item">
+                  <a href="https://github.com/rukesun/" target="_blank" title="GitHub"><i class="fa fa-fw fa-github"></i>GitHub</a>
+                  
+                </span>
+              
+                <span class="links-of-author-item">
+                  <a href="https://www.facebook.com/Noah.D.Sun" target="_blank" title="Facebook"><i class="fa fa-fw fa-facebook"></i>Facebook</a>
+                  
+                </span>
+              
+            </div>
+          
+
+          
+          
+
+          
+          
+
+          
+            
+          
+          
+
+        </div>
+      </section>
+
+      
+      <!--noindex-->
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+
+            
+              
+            
+
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%89%8D%E8%A8%80"><span class="nav-number">1.</span> <span class="nav-text">前言</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%B8%BA%E4%BB%80%E4%B9%88%E9%9C%80%E8%A6%81Transformer%EF%BC%9F"><span class="nav-number">2.</span> <span class="nav-text">为什么需要Transformer？</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#RNN-LSTM%E7%9A%84%E5%B1%80%E9%99%90"><span class="nav-number">2.1.</span> <span class="nav-text">RNN&#x2F;LSTM的局限</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Transformer%E7%9A%84%E8%A7%A3%E5%86%B3%E6%96%B9%E6%A1%88"><span class="nav-number">2.2.</span> <span class="nav-text">Transformer的解决方案</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%95%B4%E4%BD%93%E6%9E%B6%E6%9E%84"><span class="nav-number">3.</span> <span class="nav-text">整体架构</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%A0%B8%E5%BF%83%E7%BB%84%E4%BB%B6%E8%AF%A6%E8%A7%A3"><span class="nav-number">4.</span> <span class="nav-text">核心组件详解</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#1-Self-Attention%EF%BC%9A%E8%87%AA%E6%B3%A8%E6%84%8F%E5%8A%9B%E6%9C%BA%E5%88%B6"><span class="nav-number">4.1.</span> <span class="nav-text">1. Self-Attention：自注意力机制</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#%E6%95%B0%E5%AD%A6%E5%AE%9A%E4%B9%89"><span class="nav-number">4.1.1.</span> <span class="nav-text">数学定义</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E7%9B%B4%E8%A7%89%E7%90%86%E8%A7%A3"><span class="nav-number">4.1.2.</span> <span class="nav-text">直觉理解</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E4%BB%A3%E7%A0%81%E5%AE%9E%E7%8E%B0"><span class="nav-number">4.1.3.</span> <span class="nav-text">代码实现</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#2-Multi-Head-Attention%EF%BC%9A%E5%A4%9A%E5%A4%B4%E6%B3%A8%E6%84%8F%E5%8A%9B"><span class="nav-number">4.2.</span> <span class="nav-text">2. Multi-Head Attention：多头注意力</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#3-Positional-Encoding%EF%BC%9A%E4%BD%8D%E7%BD%AE%E7%BC%96%E7%A0%81"><span class="nav-number">4.3.</span> <span class="nav-text">3. Positional Encoding：位置编码</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#4-Feed-Forward-Network"><span class="nav-number">4.4.</span> <span class="nav-text">4. Feed-Forward Network</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#5-Layer-Normalization-Residual-Connection"><span class="nav-number">4.5.</span> <span class="nav-text">5. Layer Normalization &amp; Residual Connection</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%AE%8C%E6%95%B4%E7%9A%84Transformer-Block"><span class="nav-number">5.</span> <span class="nav-text">完整的Transformer Block</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Encoder%E5%AE%8C%E6%95%B4%E5%AE%9E%E7%8E%B0"><span class="nav-number">6.</span> <span class="nav-text">Encoder完整实现</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Decoder%E7%9A%84%E7%89%B9%E6%AE%8A%E8%AE%BE%E8%AE%A1"><span class="nav-number">7.</span> <span class="nav-text">Decoder的特殊设计</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#1-Masked-Self-Attention"><span class="nav-number">7.1.</span> <span class="nav-text">1. Masked Self-Attention</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#2-Cross-Attention"><span class="nav-number">7.2.</span> <span class="nav-text">2. Cross-Attention</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%BB%8ETransformer%E5%88%B0GPT"><span class="nav-number">8.</span> <span class="nav-text">从Transformer到GPT</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%BB%8ETransformer%E5%88%B0BERT"><span class="nav-number">9.</span> <span class="nav-text">从Transformer到BERT</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E7%8E%B0%E4%BB%A3LLM%E7%9A%84%E6%9E%B6%E6%9E%84%E6%BC%94%E8%BF%9B"><span class="nav-number">10.</span> <span class="nav-text">现代LLM的架构演进</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#LLaMA%E7%9A%84%E6%94%B9%E8%BF%9B"><span class="nav-number">10.1.</span> <span class="nav-text">LLaMA的改进</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E8%AE%A1%E7%AE%97%E5%A4%8D%E6%9D%82%E5%BA%A6%E5%88%86%E6%9E%90"><span class="nav-number">11.</span> <span class="nav-text">计算复杂度分析</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%80%BB%E7%BB%93"><span class="nav-number">12.</span> <span class="nav-text">总结</span></a></li></ol></div>
+            
+
+          </div>
+        </section>
+      <!--/noindex-->
+      
+
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright"> &copy; <span itemprop="copyrightYear">2026</span>
+  <span class="with-love" id="animate">
+    <i class="fa fa-user"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">Noah Sun</span>
+
+  
+
+  
+</div>
+
+
+
+
+  <div class="powered-by">由 <a class="theme-link" target="_blank" href="https://hexo.io">Hexo</a> 强力驱动 v6.3.0</div>
+
+
+
+  <span class="post-meta-divider">|</span>
+
+
+
+  <div class="theme-info">主题 – <a class="theme-link" target="_blank" href="https://theme-next.org">NexT.Pisces</a> v6.4.2</div>
+
+
+
+
+        
+
+
+
+
+
+
+
+
+        
+      </div>
+    </footer>
+
+    
+      <div class="back-to-top">
+        <i class="fa fa-arrow-up"></i>
+        
+      </div>
+    
+
+    
+	
+    
+
+    
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+    <script type="text/javascript" src="//cdn.jsdelivr.net/jquery/2.1.3/jquery.min.js"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/velocity-animate@1.2.1/velocity.min.js"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="//cdnjs.cloudflare.com/ajax/libs/velocity/1.2.1/velocity.ui.min.js"></script>
+  
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/utils.js?v=6.4.2"></script>
+
+  <script type="text/javascript" src="/js/src/motion.js?v=6.4.2"></script>
+
+
+
+  
+  
+
+
+  <script type="text/javascript" src="/js/src/affix.js?v=6.4.2"></script>
+
+  <script type="text/javascript" src="/js/src/schemes/pisces.js?v=6.4.2"></script>
+
+
+
+  
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=6.4.2"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=6.4.2"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/bootstrap.js?v=6.4.2"></script>
+
+
+
+  
+
+  
+    <script id="dsq-count-scr" src="https://noahsun.disqus.com/count.js" async></script>
+  
+
+  
+    <script type="text/javascript">
+      var disqus_config = function () {
+        this.page.url = 'http://blog.noahsun.top/2026/02/26/transformer-architecture-deep-dive/';
+        this.page.identifier = '2026/02/26/transformer-architecture-deep-dive/';
+        this.page.title = 'Transformer架构深度解析：大模型的基石';
+        };
+      function loadComments () {
+        var d = document, s = d.createElement('script');
+        s.src = 'https://noahsun.disqus.com/embed.js';
+        s.setAttribute('data-timestamp', '' + +new Date());
+        (d.head || d.body).appendChild(s);
+      }
+      
+        loadComments();
+      
+    </script>
+  
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  <script type="text/javascript">
+    // Popup Window;
+    var isfetched = false;
+    var isXml = true;
+    // Search DB path;
+    var search_path = "search.xml";
+    if (search_path.length === 0) {
+      search_path = "search.xml";
+    } else if (/json$/i.test(search_path)) {
+      isXml = false;
+    }
+    var path = "/" + search_path;
+    // monitor main search box;
+
+    var onPopupClose = function (e) {
+      $('.popup').hide();
+      $('#local-search-input').val('');
+      $('.search-result-list').remove();
+      $('#no-result').remove();
+      $(".local-search-pop-overlay").remove();
+      $('body').css('overflow', '');
+    }
+
+    function proceedsearch() {
+      $("body")
+        .append('<div class="search-popup-overlay local-search-pop-overlay"></div>')
+        .css('overflow', 'hidden');
+      $('.search-popup-overlay').click(onPopupClose);
+      $('.popup').toggle();
+      var $localSearchInput = $('#local-search-input');
+      $localSearchInput.attr("autocapitalize", "none");
+      $localSearchInput.attr("autocorrect", "off");
+      $localSearchInput.focus();
+    }
+
+    // search function;
+    var searchFunc = function(path, search_id, content_id) {
+      'use strict';
+
+      // start loading animation
+      $("body")
+        .append('<div class="search-popup-overlay local-search-pop-overlay">' +
+          '<div id="search-loading-icon">' +
+          '<i class="fa fa-spinner fa-pulse fa-5x fa-fw"></i>' +
+          '</div>' +
+          '</div>')
+        .css('overflow', 'hidden');
+      $("#search-loading-icon").css('margin', '20% auto 0 auto').css('text-align', 'center');
+
+      
+
+      $.ajax({
+        url: path,
+        dataType: isXml ? "xml" : "json",
+        async: true,
+        success: function(res) {
+          // get the contents from search data
+          isfetched = true;
+          $('.popup').detach().appendTo('.header-inner');
+          var datas = isXml ? $("entry", res).map(function() {
+            return {
+              title: $("title", this).text(),
+              content: $("content",this).text(),
+              url: $("url" , this).text()
+            };
+          }).get() : res;
+          var input = document.getElementById(search_id);
+          var resultContent = document.getElementById(content_id);
+          var inputEventFunction = function() {
+            var searchText = input.value.trim().toLowerCase();
+            var keywords = searchText.split(/[\s\-]+/);
+            if (keywords.length > 1) {
+              keywords.push(searchText);
+            }
+            var resultItems = [];
+            if (searchText.length > 0) {
+              // perform local searching
+              datas.forEach(function(data) {
+                var isMatch = false;
+                var hitCount = 0;
+                var searchTextCount = 0;
+                var title = data.title.trim();
+                var titleInLowerCase = title.toLowerCase();
+                var content = data.content.trim().replace(/<[^>]+>/g,"");
+                
+                var contentInLowerCase = content.toLowerCase();
+                var articleUrl = decodeURIComponent(data.url);
+                var indexOfTitle = [];
+                var indexOfContent = [];
+                // only match articles with not empty titles
+                if(title != '') {
+                  keywords.forEach(function(keyword) {
+                    function getIndexByWord(word, text, caseSensitive) {
+                      var wordLen = word.length;
+                      if (wordLen === 0) {
+                        return [];
+                      }
+                      var startPosition = 0, position = [], index = [];
+                      if (!caseSensitive) {
+                        text = text.toLowerCase();
+                        word = word.toLowerCase();
+                      }
+                      while ((position = text.indexOf(word, startPosition)) > -1) {
+                        index.push({position: position, word: word});
+                        startPosition = position + wordLen;
+                      }
+                      return index;
+                    }
+
+                    indexOfTitle = indexOfTitle.concat(getIndexByWord(keyword, titleInLowerCase, false));
+                    indexOfContent = indexOfContent.concat(getIndexByWord(keyword, contentInLowerCase, false));
+                  });
+                  if (indexOfTitle.length > 0 || indexOfContent.length > 0) {
+                    isMatch = true;
+                    hitCount = indexOfTitle.length + indexOfContent.length;
+                  }
+                }
+
+                // show search results
+
+                if (isMatch) {
+                  // sort index by position of keyword
+
+                  [indexOfTitle, indexOfContent].forEach(function (index) {
+                    index.sort(function (itemLeft, itemRight) {
+                      if (itemRight.position !== itemLeft.position) {
+                        return itemRight.position - itemLeft.position;
+                      } else {
+                        return itemLeft.word.length - itemRight.word.length;
+                      }
+                    });
+                  });
+
+                  // merge hits into slices
+
+                  function mergeIntoSlice(text, start, end, index) {
+                    var item = index[index.length - 1];
+                    var position = item.position;
+                    var word = item.word;
+                    var hits = [];
+                    var searchTextCountInSlice = 0;
+                    while (position + word.length <= end && index.length != 0) {
+                      if (word === searchText) {
+                        searchTextCountInSlice++;
+                      }
+                      hits.push({position: position, length: word.length});
+                      var wordEnd = position + word.length;
+
+                      // move to next position of hit
+
+                      index.pop();
+                      while (index.length != 0) {
+                        item = index[index.length - 1];
+                        position = item.position;
+                        word = item.word;
+                        if (wordEnd > position) {
+                          index.pop();
+                        } else {
+                          break;
+                        }
+                      }
+                    }
+                    searchTextCount += searchTextCountInSlice;
+                    return {
+                      hits: hits,
+                      start: start,
+                      end: end,
+                      searchTextCount: searchTextCountInSlice
+                    };
+                  }
+
+                  var slicesOfTitle = [];
+                  if (indexOfTitle.length != 0) {
+                    slicesOfTitle.push(mergeIntoSlice(title, 0, title.length, indexOfTitle));
+                  }
+
+                  var slicesOfContent = [];
+                  while (indexOfContent.length != 0) {
+                    var item = indexOfContent[indexOfContent.length - 1];
+                    var position = item.position;
+                    var word = item.word;
+                    // cut out 100 characters
+                    var start = position - 20;
+                    var end = position + 80;
+                    if(start < 0){
+                      start = 0;
+                    }
+                    if (end < position + word.length) {
+                      end = position + word.length;
+                    }
+                    if(end > content.length){
+                      end = content.length;
+                    }
+                    slicesOfContent.push(mergeIntoSlice(content, start, end, indexOfContent));
+                  }
+
+                  // sort slices in content by search text's count and hits' count
+
+                  slicesOfContent.sort(function (sliceLeft, sliceRight) {
+                    if (sliceLeft.searchTextCount !== sliceRight.searchTextCount) {
+                      return sliceRight.searchTextCount - sliceLeft.searchTextCount;
+                    } else if (sliceLeft.hits.length !== sliceRight.hits.length) {
+                      return sliceRight.hits.length - sliceLeft.hits.length;
+                    } else {
+                      return sliceLeft.start - sliceRight.start;
+                    }
+                  });
+
+                  // select top N slices in content
+
+                  var upperBound = parseInt('1');
+                  if (upperBound >= 0) {
+                    slicesOfContent = slicesOfContent.slice(0, upperBound);
+                  }
+
+                  // highlight title and content
+
+                  function highlightKeyword(text, slice) {
+                    var result = '';
+                    var prevEnd = slice.start;
+                    slice.hits.forEach(function (hit) {
+                      result += text.substring(prevEnd, hit.position);
+                      var end = hit.position + hit.length;
+                      result += '<b class="search-keyword">' + text.substring(hit.position, end) + '</b>';
+                      prevEnd = end;
+                    });
+                    result += text.substring(prevEnd, slice.end);
+                    return result;
+                  }
+
+                  var resultItem = '';
+
+                  if (slicesOfTitle.length != 0) {
+                    resultItem += "<li><a href='" + articleUrl + "' class='search-result-title'>" + highlightKeyword(title, slicesOfTitle[0]) + "</a>";
+                  } else {
+                    resultItem += "<li><a href='" + articleUrl + "' class='search-result-title'>" + title + "</a>";
+                  }
+
+                  slicesOfContent.forEach(function (slice) {
+                    resultItem += "<a href='" + articleUrl + "'>" +
+                      "<p class=\"search-result\">" + highlightKeyword(content, slice) +
+                      "...</p>" + "</a>";
+                  });
+
+                  resultItem += "</li>";
+                  resultItems.push({
+                    item: resultItem,
+                    searchTextCount: searchTextCount,
+                    hitCount: hitCount,
+                    id: resultItems.length
+                  });
+                }
+              })
+            };
+            if (keywords.length === 1 && keywords[0] === "") {
+              resultContent.innerHTML = '<div id="no-result"><i class="fa fa-search fa-5x" /></div>'
+            } else if (resultItems.length === 0) {
+              resultContent.innerHTML = '<div id="no-result"><i class="fa fa-frown-o fa-5x" /></div>'
+            } else {
+              resultItems.sort(function (resultLeft, resultRight) {
+                if (resultLeft.searchTextCount !== resultRight.searchTextCount) {
+                  return resultRight.searchTextCount - resultLeft.searchTextCount;
+                } else if (resultLeft.hitCount !== resultRight.hitCount) {
+                  return resultRight.hitCount - resultLeft.hitCount;
+                } else {
+                  return resultRight.id - resultLeft.id;
+                }
+              });
+              var searchResultList = '<ul class=\"search-result-list\">';
+              resultItems.forEach(function (result) {
+                searchResultList += result.item;
+              })
+              searchResultList += "</ul>";
+              resultContent.innerHTML = searchResultList;
+            }
+          }
+
+          if ('auto' === 'auto') {
+            input.addEventListener('input', inputEventFunction);
+          } else {
+            $('.search-icon').click(inputEventFunction);
+            input.addEventListener('keypress', function (event) {
+              if (event.keyCode === 13) {
+                inputEventFunction();
+              }
+            });
+          }
+
+          // remove loading animation
+          $(".local-search-pop-overlay").remove();
+          $('body').css('overflow', '');
+
+          proceedsearch();
+        }
+      });
+    }
+
+    // handle and trigger popup window;
+    $('.popup-trigger').click(function(e) {
+      e.stopPropagation();
+      if (isfetched === false) {
+        searchFunc(path, 'local-search-input', 'local-search-result');
+      } else {
+        proceedsearch();
+      };
+    });
+
+    $('.popup-btn-close').click(onPopupClose);
+    $('.popup').click(function(e){
+      e.stopPropagation();
+    });
+    $(document).on('keyup', function (event) {
+      var shouldDismissSearchPopup = event.which === 27 &&
+        $('.search-popup').is(':visible');
+      if (shouldDismissSearchPopup) {
+        onPopupClose();
+      }
+    });
+  </script>
+
+
+
+
+
+  
+
+  
+  <script>
+    
+    function addCount(Counter) {
+      var $visitors = $(".leancloud_visitors");
+      var url = $visitors.attr('id').trim();
+      var title = $visitors.attr('data-flag-title').trim();
+
+      Counter('get', '/classes/Counter', { where: JSON.stringify({ url }) })
+        .done(function ({ results }) {
+          if (results.length > 0) {
+            var counter = results[0];
+            
+            Counter('put', `/classes/Counter/${counter.objectId}`, JSON.stringify({ time: { "__op":"Increment", "amount":1 } }))
+            
+            .done(function () {
+                  var $element = $(document.getElementById(url));
+                  $element.find('.leancloud-visitors-count').text(counter.time + 1);
+            })
+            
+            .fail(function ({ responseJSON }) {
+                console.log('Failed to save Visitor num, with error message: ' + responseJSON.error);
+            })
+          } else {
+            
+              Counter('post', '/classes/Counter', JSON.stringify({ title: title, url: url, time: 1}))
+                .done(function () {
+                  var $element = $(document.getElementById(url));
+                  $element.find('.leancloud-visitors-count').text(1);
+                })
+                .fail(function () {
+                  console.log('Failed to create');
+                });
+            
+          }
+        })
+      .fail(function ({ responseJSON }) {
+        console.log('LeanCloud Counter Error:' + responseJSON.code + " " + responseJSON.error);
+      });
+    }
+    
+
+    $(function() {
+      $.get('https://app-router.leancloud.cn/2/route?appId=' + "Cz56UW3FvEkwHB689nG2jLGm-gzGzoHsz")
+        .done(function ({ api_server }) {
+          var Counter = function (method, url, data) {
+            return $.ajax({
+              method: method,
+              url: `https://${api_server}/1.1${url}`,
+              headers: {
+                'X-LC-Id': "Cz56UW3FvEkwHB689nG2jLGm-gzGzoHsz",
+                'X-LC-Key': "zuFQDzA0SxPUkEfqOisL54YJ",
+                'Content-Type': 'application/json',
+              },
+              data: data,
+            });
+          };
+          
+          addCount(Counter);
+          
+        })
+    });
+  </script>
+
+
+
+  
+
+  
+
+  
+
+  
+
+  
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+</body>
+</html>
