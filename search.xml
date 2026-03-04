@@ -2220,7 +2220,8 @@ attachments/1114283/amf3_spec_05_05_08.pdf>.
 <ul>
 <li>MCP规范：<a href="https://modelcontextprotocol.io/specification">modelcontextprotocol.io&#x2F;specification</a></li>
 <li>GitHub：<a href="https://github.com/modelcontextprotocol">github.com&#x2F;modelcontextprotocol</a></li>
-<li>SDK：<a href="https://github.com/modelcontextprotocol/python-sdk">Python SDK</a></li>
+<li>Go SDK：<a href="https://github.com/modelcontextprotocol/go-sdk">github.com&#x2F;modelcontextprotocol&#x2F;go-sdk</a></li>
+<li>官方服务器仓库：<a href="https://github.com/modelcontextprotocol/servers">github.com&#x2F;modelcontextprotocol&#x2F;servers</a></li>
 </ul>
 ]]></content>
       <categories>
