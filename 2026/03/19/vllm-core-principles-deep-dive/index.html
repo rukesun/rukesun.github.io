@@ -1,0 +1,1834 @@
+<!DOCTYPE html>
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+
+<html class="theme-next pisces use-motion" lang="zh-CN,en,default">
+<head>
+  <meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2"/>
+<meta name="theme-color" content="#222">
+
+
+
+
+
+
+
+
+
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+<link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet" type="text/css" />
+
+<link href="/css/main.css?v=6.4.2" rel="stylesheet" type="text/css" />
+
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png?v=6.4.2">
+
+
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png?v=6.4.2">
+
+
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png?v=6.4.2">
+
+
+  <link rel="mask-icon" href="/images/logo.svg?v=6.4.2" color="#222">
+
+
+
+
+
+
+
+
+
+<script type="text/javascript" id="hexo.configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    root: '',
+    scheme: 'Pisces',
+    version: '6.4.2',
+    sidebar: {"position":"left","display":"post","offset":12,"b2t":false,"scrollpercent":false,"onmobile":false},
+    fancybox: false,
+    fastclick: false,
+    lazyload: false,
+    tabs: true,
+    motion: {"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},
+    algolia: {
+      applicationID: '',
+      apiKey: '',
+      indexName: '',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    }
+  };
+</script>
+
+
+  
+
+
+
+
+  <meta name="description" content="前言2025-2026 年，大模型推理已成为 AI 应用的”最后一公里”。无论是聊天机器人、代码助手，还是智能客服，都需要在低延迟、高吞吐、低成本的约束下提供优质服务。 然而，传统推理框架面临着严峻挑战： 1234❌ 显存利用率低（30-50%）❌ 批处理效率差（动态序列长度导致碎片化）❌ 延迟波动大（长序列阻塞短序列）❌ 成本高企（需要大量 GPU 支撑生产负载）  vLLM 的出现，彻底改变了">
+<meta property="og:type" content="article">
+<meta property="og:title" content="深度解析 vLLM：重新定义大模型推理的性能革命">
+<meta property="og:url" content="http://blog.noahsun.top/2026/03/19/vllm-core-principles-deep-dive/index.html">
+<meta property="og:site_name" content="Noah Sun&#39;s Home">
+<meta property="og:description" content="前言2025-2026 年，大模型推理已成为 AI 应用的”最后一公里”。无论是聊天机器人、代码助手，还是智能客服，都需要在低延迟、高吞吐、低成本的约束下提供优质服务。 然而，传统推理框架面临着严峻挑战： 1234❌ 显存利用率低（30-50%）❌ 批处理效率差（动态序列长度导致碎片化）❌ 延迟波动大（长序列阻塞短序列）❌ 成本高企（需要大量 GPU 支撑生产负载）  vLLM 的出现，彻底改变了">
+<meta property="og:locale" content="zh_CN">
+<meta property="article:published_time" content="2026-03-19T06:50:00.000Z">
+<meta property="article:modified_time" content="2026-03-23T10:37:27.631Z">
+<meta property="article:author" content="Noah Sun">
+<meta property="article:tag" content="AI 工程化">
+<meta property="article:tag" content="vLLM">
+<meta property="article:tag" content="大模型推理">
+<meta property="article:tag" content="PagedAttention">
+<meta property="article:tag" content="高性能计算">
+<meta name="twitter:card" content="summary">
+
+
+
+
+
+
+  <link rel="canonical" href="http://blog.noahsun.top/2026/03/19/vllm-core-principles-deep-dive/"/>
+
+
+
+<script type="text/javascript" id="page.configurations">
+  CONFIG.page = {
+    sidebar: "",
+  };
+</script>
+
+  <title>深度解析 vLLM：重新定义大模型推理的性能革命 | Noah Sun's Home</title>
+  
+
+
+
+
+<script async src="https://www.googletagmanager.com/gtag/js?id=UA-102233237-1"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+
+  gtag('config', 'UA-102233237-1');
+</script>
+
+
+
+  <script type="text/javascript">
+    var _hmt = _hmt || [];
+    (function() {
+      var hm = document.createElement("script");
+      hm.src = "https://hm.baidu.com/hm.js?07c7e0461feabfd55d89458a5c4ae94b";
+      var s = document.getElementsByTagName("script")[0];
+      s.parentNode.insertBefore(hm, s);
+    })();
+  </script>
+
+
+
+
+
+
+  <noscript>
+  <style type="text/css">
+    .use-motion .motion-element,
+    .use-motion .brand,
+    .use-motion .menu-item,
+    .sidebar-inner,
+    .use-motion .post-block,
+    .use-motion .pagination,
+    .use-motion .comments,
+    .use-motion .post-header,
+    .use-motion .post-body,
+    .use-motion .collection-title { opacity: initial; }
+
+    .use-motion .logo,
+    .use-motion .site-title,
+    .use-motion .site-subtitle {
+      opacity: initial;
+      top: initial;
+    }
+
+    .use-motion {
+      .logo-line-before i { left: initial; }
+      .logo-line-after i { right: initial; }
+    }
+  </style>
+</noscript>
+
+<meta name="generator" content="Hexo 6.3.0"></head>
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="zh-CN">
+
+  
+  
+    
+  
+
+  <div class="container sidebar-position-left page-post-detail">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-wrapper">
+  <div class="site-meta ">
+    
+
+    <div class="custom-logo-site-title">
+      <a href="/" class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title">Noah Sun's Home</span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+    
+  </div>
+
+  <div class="site-nav-toggle">
+    <button aria-label="切换导航栏">
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+    </button>
+  </div>
+</div>
+
+
+
+<nav class="site-nav">
+  
+    <ul id="menu" class="menu">
+      
+        
+        
+        
+          
+          <li class="menu-item menu-item-home">
+    <a href="/" rel="section">
+      <i class="menu-item-icon fa fa-fw fa-home"></i> <br />首页</a>
+  </li>
+        
+        
+        
+          
+          <li class="menu-item menu-item-archives">
+    <a href="/archives/" rel="section">
+      <i class="menu-item-icon fa fa-fw fa-archive"></i> <br />归档</a>
+  </li>
+        
+        
+        
+          
+          <li class="menu-item menu-item-categories">
+    <a href="/categories/" rel="section">
+      <i class="menu-item-icon fa fa-fw fa-th"></i> <br />分类</a>
+  </li>
+        
+        
+        
+          
+          <li class="menu-item menu-item-tags">
+    <a href="/tags/" rel="section">
+      <i class="menu-item-icon fa fa-fw fa-tags"></i> <br />标签</a>
+  </li>
+        
+        
+        
+          
+          <li class="menu-item menu-item-about">
+    <a href="/about/" rel="section">
+      <i class="menu-item-icon fa fa-fw fa-user"></i> <br />关于</a>
+  </li>
+
+      
+      
+        <li class="menu-item menu-item-search">
+          
+            <a href="javascript:;" class="popup-trigger">
+          
+            
+              <i class="menu-item-icon fa fa-search fa-fw"></i> <br />搜索</a>
+        </li>
+      
+    </ul>
+  
+
+  
+
+  
+    <div class="site-search">
+      
+  <div class="popup search-popup local-search-popup">
+  <div class="local-search-header clearfix">
+    <span class="search-icon">
+      <i class="fa fa-search"></i>
+    </span>
+    <span class="popup-btn-close">
+      <i class="fa fa-times-circle"></i>
+    </span>
+    <div class="local-search-input-wrapper">
+      <input autocomplete="off"
+             placeholder="搜索..." spellcheck="false"
+             type="text" id="local-search-input">
+    </div>
+  </div>
+  <div id="local-search-result"></div>
+</div>
+
+
+
+    </div>
+  
+</nav>
+
+
+
+  
+
+
+
+</div>
+    </header>
+
+    
+
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+            
+
+          
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+
+  
+  
+  
+
+  
+
+  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="http://blog.noahsun.top/2026/03/19/vllm-core-principles-deep-dive/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="Noah Sun">
+      <meta itemprop="description" content="Noah Sun's Blog.">
+      <meta itemprop="image" content="/images/avatar.jpg">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Noah Sun's Home">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">深度解析 vLLM：重新定义大模型推理的性能革命
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+
+            
+            
+            
+
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+
+              
+                
+              
+
+              <time title="创建时间：2026-03-19 14:50:00" itemprop="dateCreated datePublished" datetime="2026-03-19T14:50:00+08:00">2026-03-19</time>
+            
+
+            
+              
+
+              
+                
+                <span class="post-meta-divider">|</span>
+                
+
+                <span class="post-meta-item-icon">
+                  <i class="fa fa-calendar-check-o"></i>
+                </span>
+                
+                  <span class="post-meta-item-text">更新于</span>
+                
+                <time title="修改时间：2026-03-23 18:37:27" itemprop="dateModified" datetime="2026-03-23T18:37:27+08:00">2026-03-23</time>
+              
+            
+          </span>
+
+          
+            <span class="post-category" >
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing"><a href="/categories/Technology/" itemprop="url" rel="index"><span itemprop="name">Technology</span></a></span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+              <span class="post-comments-count">
+                <span class="post-meta-divider">|</span>
+                <span class="post-meta-item-icon">
+                  <i class="fa fa-comment-o"></i>
+                </span>
+                <a href="/2026/03/19/vllm-core-principles-deep-dive/#comments" itemprop="discussionUrl">
+                  <span class="post-meta-item-text">评论数：</span> <span class="post-comments-count fb-comments-count" data-href="http://blog.noahsun.top/2026/03/19/vllm-core-principles-deep-dive/" itemprop="commentCount">0</span>
+                </a>
+              </span>
+            
+          
+
+          
+          
+             <span id="/2026/03/19/vllm-core-principles-deep-dive/" class="leancloud_visitors" data-flag-title="深度解析 vLLM：重新定义大模型推理的性能革命">
+               <span class="post-meta-divider">|</span>
+               <span class="post-meta-item-icon">
+                 <i class="fa fa-eye"></i>
+               </span>
+               
+                 <span class="post-meta-item-text">阅读次数：</span>
+               
+                 <span class="leancloud-visitors-count"></span>
+             </span>
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <h2 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h2><p>2025-2026 年，大模型推理已成为 AI 应用的”最后一公里”。无论是聊天机器人、代码助手，还是智能客服，都需要在<strong>低延迟、高吞吐、低成本</strong>的约束下提供优质服务。</p>
+<p>然而，传统推理框架面临着严峻挑战：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">❌ 显存利用率低（30-50%）</span><br><span class="line">❌ 批处理效率差（动态序列长度导致碎片化）</span><br><span class="line">❌ 延迟波动大（长序列阻塞短序列）</span><br><span class="line">❌ 成本高企（需要大量 GPU 支撑生产负载）</span><br></pre></td></tr></table></figure>
+
+<p><strong>vLLM</strong> 的出现，彻底改变了这一局面。</p>
+<p>凭借创新的 <strong>PagedAttention</strong> 技术和一系列系统优化，vLLM 实现了：</p>
+<ul>
+<li>✅ <strong>24 倍吞吐提升</strong>（相比 HuggingFace Transformers）</li>
+<li>✅ <strong>零浪费显存管理</strong>（页式内存分配）</li>
+<li>✅ <strong>稳定低延迟</strong>（连续批处理 + 抢占式调度）</li>
+<li>✅ <strong>生产级就绪</strong>（OpenAI 兼容 API、多 GPU 支持）</li>
+</ul>
+<p>本文将从<strong>核心原理、关键技术、性能优化、实战部署</strong>四个维度，深度解析 vLLM 的技术实现。无论你是想优化推理性能的工程师，还是希望理解系统设计的架构师，都能从中获得启发。</p>
+<h2 id="vLLM-是什么？"><a href="#vLLM-是什么？" class="headerlink" title="vLLM 是什么？"></a>vLLM 是什么？</h2><h3 id="定位与背景"><a href="#定位与背景" class="headerlink" title="定位与背景"></a>定位与背景</h3><p><strong>vLLM</strong> 是由 UC Berkeley 团队于 2023 年开源的高性能 LLM 推理框架，论文《Efficient Memory Management for Large Language Model Serving with PagedAttention》发表于 SOSP 2023（操作系统领域顶级会议）。</p>
+<p><strong>核心目标：</strong> 解决大模型推理中的<strong>显存瓶颈</strong>和<strong>吞吐效率</strong>问题。</p>
+<h3 id="性能对比"><a href="#性能对比" class="headerlink" title="性能对比"></a>性能对比</h3><p>以 Llama-3-70B 为例（A100 80GB × 4）：</p>
+<table>
+<thead>
+<tr>
+<th>框架</th>
+<th>吞吐 (tokens&#x2F;s)</th>
+<th>显存利用率</th>
+<th>P99 延迟</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>HuggingFace Transformers</td>
+<td>1,200</td>
+<td>45%</td>
+<td>850ms</td>
+</tr>
+<tr>
+<td>TensorRT-LLM</td>
+<td>8,500</td>
+<td>70%</td>
+<td>320ms</td>
+</tr>
+<tr>
+<td><strong>vLLM</strong></td>
+<td><strong>28,000</strong></td>
+<td><strong>95%+</strong></td>
+<td><strong>180ms</strong></td>
+</tr>
+</tbody></table>
+<p><strong>关键优势：</strong></p>
+<ul>
+<li>吞吐量是 HF 的 <strong>23 倍</strong></li>
+<li>显存利用率接近理论上限</li>
+<li>延迟稳定性更好（P99&#x2F;P50 比值更低）</li>
+</ul>
+<h2 id="核心技术一：PagedAttention（页式注意力）"><a href="#核心技术一：PagedAttention（页式注意力）" class="headerlink" title="核心技术一：PagedAttention（页式注意力）"></a>核心技术一：PagedAttention（页式注意力）</h2><h3 id="传统-Attention-的显存困境"><a href="#传统-Attention-的显存困境" class="headerlink" title="传统 Attention 的显存困境"></a>传统 Attention 的显存困境</h3><p>理解 PagedAttention 之前，先看传统实现的问题。</p>
+<p><strong>KV Cache 是什么？</strong></p>
+<p>在 Transformer 解码过程中，为了避免重复计算，会将每个 token 的 Key 和 Value 向量缓存起来：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 伪代码：传统 Attention</span></span><br><span class="line"><span class="keyword">def</span> <span class="title function_">forward</span>(<span class="params">token_id, past_kv_cache</span>):</span><br><span class="line">    <span class="comment"># 计算当前 token 的 Q, K, V</span></span><br><span class="line">    q, k, v = compute_qkv(token_id)</span><br><span class="line">    </span><br><span class="line">    <span class="comment"># 拼接历史 KV</span></span><br><span class="line">    all_k = torch.cat([past_kv_cache.k, k])  <span class="comment"># 问题：需要连续内存！</span></span><br><span class="line">    all_v = torch.cat([past_kv_cache.v, v])</span><br><span class="line">    </span><br><span class="line">    <span class="comment"># 计算注意力</span></span><br><span class="line">    output = attention(q, all_k, all_v)</span><br><span class="line">    </span><br><span class="line">    <span class="comment"># 更新缓存</span></span><br><span class="line">    new_kv_cache = KVCache(all_k, all_v)</span><br><span class="line">    </span><br><span class="line">    <span class="keyword">return</span> output, new_kv_cache</span><br></pre></td></tr></table></figure>
+
+<p><strong>显存分配问题：</strong></p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line">传统方式：为每个序列预分配连续显存</span><br><span class="line"></span><br><span class="line">序列 1: [████████████████████] 2048 tokens (实际用 320)</span><br><span class="line">序列 2: [████████████████████] 2048 tokens (实际用 890)</span><br><span class="line">序列 3: [████████████████████] 2048 tokens (实际用 1500)</span><br><span class="line">序列 4: [████████████████████] 2048 tokens (实际用 210)</span><br><span class="line"></span><br><span class="line">显存浪费 = (2048-320) + (2048-890) + (2048-1500) + (2048-210)</span><br><span class="line">         = 1728 + 1158 + 548 + 1838 = 5,272 tokens 空间被浪费！</span><br><span class="line">浪费率 ≈ 64%</span><br></pre></td></tr></table></figure>
+
+<p><strong>为什么必须预分配？</strong></p>
+<ol>
+<li><strong>GPU 显存特性</strong>：动态分配开销大，碎片化严重</li>
+<li><strong>注意力计算需求</strong>：传统实现要求 KV 在连续内存中</li>
+<li><strong>无法预测序列长度</strong>：生成任务是自回归的，事先不知道会生成多少 token</li>
+</ol>
+<h3 id="PagedAttention-的革命性设计"><a href="#PagedAttention-的革命性设计" class="headerlink" title="PagedAttention 的革命性设计"></a>PagedAttention 的革命性设计</h3><p><strong>核心洞察：</strong> 借鉴操作系统的<strong>虚拟内存 + 分页</strong>思想，将 KV Cache 非连续存储。</p>
+<p><strong>设计原理：</strong></p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line">┌─────────────────────────────────────────────────────────────┐</span><br><span class="line">│                    虚拟内存视角                              │</span><br><span class="line">│  每个序列看到一个&quot;连续&quot;的 KV 空间                             │</span><br><span class="line">│  [Block 0] → [Block 1] → [Block 2] → ...                    │</span><br><span class="line">└─────────────────────────────────────────────────────────────┘</span><br><span class="line">                          ↓ 页表映射</span><br><span class="line">┌─────────────────────────────────────────────────────────────┐</span><br><span class="line">│                    物理内存实际布局                          │</span><br><span class="line">│  Block 0: 物理地址 0x1A2B (GPU 显存任意位置)                 │</span><br><span class="line">│  Block 1: 物理地址 0x8F3C (不需要连续！)                     │</span><br><span class="line">│  Block 2: 物理地址 0x4D5E                                   │</span><br><span class="line">│  Block 3: 物理地址 0x9A1B                                   │</span><br><span class="line">└─────────────────────────────────────────────────────────────┘</span><br></pre></td></tr></table></figure>
+
+<p><strong>关键创新：</strong></p>
+<ol>
+<li><strong>分块存储</strong>：将 KV Cache 切分为固定大小的 Block（如 16 个 token 一块）</li>
+<li><strong>页表映射</strong>：维护<code>序列 ID → Block 表 → 物理地址</code>的映射关系</li>
+<li><strong>按需分配</strong>：序列生成时动态申请 Block，用完释放</li>
+<li><strong>非连续计算</strong>：Attention 计算时通过页表间接访问，无需物理连续</li>
+</ol>
+<p><strong>代码示意（简化版）：</strong></p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">class</span> <span class="title class_">PagedAttention</span>:</span><br><span class="line">    <span class="keyword">def</span> <span class="title function_">__init__</span>(<span class="params">self, block_size=<span class="number">16</span></span>):</span><br><span class="line">        <span class="variable language_">self</span>.block_size = block_size</span><br><span class="line">        <span class="variable language_">self</span>.block_tables = &#123;&#125;  <span class="comment"># seq_id -&gt; [block_id, block_id, ...]</span></span><br><span class="line">        <span class="variable language_">self</span>.physical_blocks = &#123;&#125;  <span class="comment"># block_id -&gt; GPU 显存地址</span></span><br><span class="line">    </span><br><span class="line">    <span class="keyword">def</span> <span class="title function_">allocate_block</span>(<span class="params">self, seq_id</span>):</span><br><span class="line">        <span class="string">&quot;&quot;&quot;为序列分配新 Block&quot;&quot;&quot;</span></span><br><span class="line">        block_id = <span class="variable language_">self</span>.free_list.pop()  <span class="comment"># 从空闲列表获取</span></span><br><span class="line">        <span class="keyword">if</span> seq_id <span class="keyword">not</span> <span class="keyword">in</span> <span class="variable language_">self</span>.block_tables:</span><br><span class="line">            <span class="variable language_">self</span>.block_tables[seq_id] = []</span><br><span class="line">        <span class="variable language_">self</span>.block_tables[seq_id].append(block_id)</span><br><span class="line">        <span class="keyword">return</span> block_id</span><br><span class="line">    </span><br><span class="line">    <span class="keyword">def</span> <span class="title function_">attention</span>(<span class="params">self, seq_id, q, k, v, current_len</span>):</span><br><span class="line">        <span class="string">&quot;&quot;&quot;带页表映射的注意力计算&quot;&quot;&quot;</span></span><br><span class="line">        block_table = <span class="variable language_">self</span>.block_tables[seq_id]</span><br><span class="line">        </span><br><span class="line">        <span class="comment"># 通过 block_table 间接访问物理显存</span></span><br><span class="line">        <span class="comment"># CUDA kernel 内部处理非连续内存访问</span></span><br><span class="line">        output = paged_attention_kernel(</span><br><span class="line">            q, k, v,</span><br><span class="line">            block_table,      <span class="comment"># 页表</span></span><br><span class="line">            <span class="variable language_">self</span>.physical_blocks,  <span class="comment"># 物理地址映射</span></span><br><span class="line">            current_len</span><br><span class="line">        )</span><br><span class="line">        </span><br><span class="line">        <span class="keyword">return</span> output</span><br></pre></td></tr></table></figure>
+
+<p><strong>显存利用率对比：</strong></p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line">PagedAttention 方式：按需分配，零浪费</span><br><span class="line"></span><br><span class="line">序列 1: [██░░] 2 Block (320 tokens，实际分配 2×16=32 token 容量 → 动态增长)</span><br><span class="line">序列 2: [██████████████░░] 14 Block (890 tokens)</span><br><span class="line">序列 3: [████████████████████████] 24 Block (1500 tokens)</span><br><span class="line">序列 4: [██░░] 2 Block (210 tokens)</span><br><span class="line"></span><br><span class="line">实际分配 = 2 + 14 + 24 + 2 = 42 Block</span><br><span class="line">理论需求 = ceil(320/16) + ceil(890/16) + ceil(1500/16) + ceil(210/16)</span><br><span class="line">         = 20 + 56 + 94 + 14 = 184 Block 容量（但只占用实际需要的）</span><br><span class="line"></span><br><span class="line">浪费率 &lt; 5%（仅块内碎片）</span><br></pre></td></tr></table></figure>
+
+<h3 id="PagedAttention-的额外优势"><a href="#PagedAttention-的额外优势" class="headerlink" title="PagedAttention 的额外优势"></a>PagedAttention 的额外优势</h3><h4 id="1-显存共享（Memory-Sharing）"><a href="#1-显存共享（Memory-Sharing）" class="headerlink" title="1. 显存共享（Memory Sharing）"></a>1. 显存共享（Memory Sharing）</h4><p><strong>场景：</strong> 多个序列共享相同的前缀（如系统提示词、Few-shot 示例）</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">传统方式：每个序列独立存储，重复内容多份拷贝</span><br><span class="line"></span><br><span class="line">序列 1: [系统提示][用户问题 1][生成内容 1]</span><br><span class="line">序列 2: [系统提示][用户问题 2][生成内容 2]  ← 系统提示重复存储！</span><br><span class="line">序列 3: [系统提示][用户问题 3][生成内容 3]</span><br><span class="line"></span><br><span class="line">显存浪费：系统提示 × (N-1) 份</span><br></pre></td></tr></table></figure>
+
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">PagedAttention：Block 级别去重，共享只读 Block</span><br><span class="line"></span><br><span class="line">序列 1: [Block A: 系统提示] → [Block B: 问题 1] → [Block C: 生成 1]</span><br><span class="line">序列 2: [Block A: 系统提示] → [Block D: 问题 2] → [Block E: 生成 2]  ← 共享！</span><br><span class="line">序列 3: [Block A: 系统提示] → [Block F: 问题 3] → [Block G: 生成 3]</span><br><span class="line"></span><br><span class="line">显存节省：系统提示只存 1 份</span><br></pre></td></tr></table></figure>
+
+<p><strong>应用价值：</strong></p>
+<ul>
+<li>Parallel Sampling：同一提示词生成多个候选，共享前缀</li>
+<li>Beam Search：搜索树中共享公共路径</li>
+<li>多轮对话：系统指令只加载一次</li>
+</ul>
+<h4 id="2-快速交换（Swapping）"><a href="#2-快速交换（Swapping）" class="headerlink" title="2. 快速交换（Swapping）"></a>2. 快速交换（Swapping）</h4><p><strong>场景：</strong> 显存不足时，将不活跃序列交换到 CPU 内存</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># vLLM 的交换机制</span></span><br><span class="line"><span class="keyword">def</span> <span class="title function_">swap_out</span>(<span class="params">seq_id</span>):</span><br><span class="line">    <span class="comment"># 1. 读取序列的 block_table</span></span><br><span class="line">    blocks = block_tables[seq_id]</span><br><span class="line">    </span><br><span class="line">    <span class="comment"># 2. 将 Block 数据从 GPU 拷贝到 CPU</span></span><br><span class="line">    <span class="keyword">for</span> block_id <span class="keyword">in</span> blocks:</span><br><span class="line">        cpu_memory[block_id] = gpu_memory[block_id]  <span class="comment"># 异步拷贝</span></span><br><span class="line">        gpu_free_list.append(block_id)  <span class="comment"># 释放 GPU 显存</span></span><br><span class="line">    </span><br><span class="line">    <span class="comment"># 3. 标记序列为&quot;交换出&quot;状态</span></span><br><span class="line">    swapped_out_seqs.add(seq_id)</span><br><span class="line"></span><br><span class="line"><span class="keyword">def</span> <span class="title function_">swap_in</span>(<span class="params">seq_id</span>):</span><br><span class="line">    <span class="comment"># 反向操作，从 CPU 恢复到 GPU</span></span><br><span class="line">    blocks = block_tables[seq_id]</span><br><span class="line">    <span class="keyword">for</span> block_id <span class="keyword">in</span> blocks:</span><br><span class="line">        gpu_memory[block_id] = cpu_memory[block_id]</span><br></pre></td></tr></table></figure>
+
+<p><strong>优势：</strong></p>
+<ul>
+<li>支持<strong>超卖</strong>（Oversubscription）：管理比显存容量更多的序列</li>
+<li>类似操作系统的 Swap 机制，提升 GPU 利用率</li>
+<li>块级别交换，粒度细，效率高</li>
+</ul>
+<h2 id="核心技术二：连续批处理（Continuous-Batching）"><a href="#核心技术二：连续批处理（Continuous-Batching）" class="headerlink" title="核心技术二：连续批处理（Continuous Batching）"></a>核心技术二：连续批处理（Continuous Batching）</h2><h3 id="传统批处理的缺陷"><a href="#传统批处理的缺陷" class="headerlink" title="传统批处理的缺陷"></a>传统批处理的缺陷</h3><p><strong>静态批处理（Static Batching）：</strong></p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line">传统方式：批次大小固定，所有序列同步前进</span><br><span class="line"></span><br><span class="line">Batch 1:</span><br><span class="line">  序列 1: [token1] [token2] [token3] [EOS] ← 已完成，但必须等待</span><br><span class="line">  序列 2: [token1] [token2] [token3] [token4]</span><br><span class="line">  序列 3: [token1] [token2] [token3] [token4]</span><br><span class="line">                                    ↑</span><br><span class="line">                              空转等待！</span><br><span class="line"></span><br><span class="line">问题：</span><br><span class="line">- 已完成的序列占用批次槽位，无法加入新请求</span><br><span class="line">- 必须等批次内所有序列完成才能更新</span><br><span class="line">- GPU 利用率波动大</span><br></pre></td></tr></table></figure>
+
+<h3 id="vLLM-的连续批处理"><a href="#vLLM-的连续批处理" class="headerlink" title="vLLM 的连续批处理"></a>vLLM 的连续批处理</h3><p><strong>核心思想：</strong> 在<strong>token 级别</strong>调度，而非序列级别。</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br></pre></td><td class="code"><pre><span class="line">vLLM 方式：每生成一个 token 就检查并完成/替换</span><br><span class="line"></span><br><span class="line">Iteration 1:</span><br><span class="line">  [seq1: t1] [seq2: t1] [seq3: t1] [seq4: t1]</span><br><span class="line"></span><br><span class="line">Iteration 2:</span><br><span class="line">  [seq1: t2] [seq2: t2] [seq3: t2] [seq4: t2]</span><br><span class="line"></span><br><span class="line">Iteration 3:</span><br><span class="line">  [seq1: EOS] ← 完成！立即释放槽位</span><br><span class="line">  [seq2: t3]</span><br><span class="line">  [seq3: t3]</span><br><span class="line">  [seq4: t3]</span><br><span class="line">  [seq5: t1] ← 新请求立即插入！</span><br><span class="line"></span><br><span class="line">Iteration 4:</span><br><span class="line">  [seq2: t4]</span><br><span class="line">  [seq3: t4]</span><br><span class="line">  [seq4: t4]</span><br><span class="line">  [seq5: t2]</span><br><span class="line">  [seq6: t1] ← 又有新请求加入</span><br><span class="line"></span><br><span class="line">GPU 始终满负荷运转！</span><br></pre></td></tr></table></figure>
+
+<p><strong>实现要点：</strong></p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">class</span> <span class="title class_">ContinuousBatchScheduler</span>:</span><br><span class="line">    <span class="keyword">def</span> <span class="title function_">__init__</span>(<span class="params">self, max_batch_size=<span class="number">256</span></span>):</span><br><span class="line">        <span class="variable language_">self</span>.running_seqs = []  <span class="comment"># 当前运行的序列</span></span><br><span class="line">        <span class="variable language_">self</span>.waiting_seqs = []  <span class="comment"># 等待队列</span></span><br><span class="line">        <span class="variable language_">self</span>.max_batch_size = max_batch_size</span><br><span class="line">    </span><br><span class="line">    <span class="keyword">def</span> <span class="title function_">step</span>(<span class="params">self</span>):</span><br><span class="line">        <span class="string">&quot;&quot;&quot;执行一个 token 的生成&quot;&quot;&quot;</span></span><br><span class="line">        <span class="comment"># 1. 运行当前批次</span></span><br><span class="line">        outputs = <span class="variable language_">self</span>.model.generate_one_token(<span class="variable language_">self</span>.running_seqs)</span><br><span class="line">        </span><br><span class="line">        <span class="comment"># 2. 检查完成的序列</span></span><br><span class="line">        completed = []</span><br><span class="line">        <span class="keyword">for</span> i, seq <span class="keyword">in</span> <span class="built_in">enumerate</span>(<span class="variable language_">self</span>.running_seqs):</span><br><span class="line">            <span class="keyword">if</span> outputs[i].is_eos:</span><br><span class="line">                completed.append(i)</span><br><span class="line">                <span class="variable language_">self</span>.finish_sequence(seq)</span><br><span class="line">        </span><br><span class="line">        <span class="comment"># 3. 移除完成的，加入等待的</span></span><br><span class="line">        <span class="keyword">for</span> i <span class="keyword">in</span> <span class="built_in">reversed</span>(completed):</span><br><span class="line">            <span class="variable language_">self</span>.running_seqs.pop(i)</span><br><span class="line">        </span><br><span class="line">        <span class="comment"># 4. 填充空位</span></span><br><span class="line">        <span class="keyword">while</span> <span class="built_in">len</span>(<span class="variable language_">self</span>.running_seqs) &lt; <span class="variable language_">self</span>.max_batch_size <span class="keyword">and</span> <span class="variable language_">self</span>.waiting_seqs:</span><br><span class="line">            new_seq = <span class="variable language_">self</span>.waiting_seqs.pop(<span class="number">0</span>)</span><br><span class="line">            <span class="variable language_">self</span>.running_seqs.append(new_seq)</span><br><span class="line">        </span><br><span class="line">        <span class="keyword">return</span> outputs</span><br></pre></td></tr></table></figure>
+
+<p><strong>性能收益：</strong></p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line">假设：</span><br><span class="line">- 平均序列长度：500 tokens</span><br><span class="line">- 批次大小：32</span><br><span class="line">- 请求到达率：100 requests/s</span><br><span class="line"></span><br><span class="line">静态批处理：</span><br><span class="line">- 平均每批完成时间：500 × 50ms = 25s</span><br><span class="line">- 吞吐：32 / 25s = 1.28 req/s</span><br><span class="line">- GPU 利用率：~60%（等待时间）</span><br><span class="line"></span><br><span class="line">连续批处理：</span><br><span class="line">- 每 50ms 完成 ~0.64 个序列（32/500）</span><br><span class="line">- 同时每 50ms 插入 ~0.64 个新序列</span><br><span class="line">- 吞吐：32 / 50ms = 640 req/s（理论峰值）</span><br><span class="line">- GPU 利用率：~95%+</span><br></pre></td></tr></table></figure>
+
+<h2 id="核心技术三：调度与优化"><a href="#核心技术三：调度与优化" class="headerlink" title="核心技术三：调度与优化"></a>核心技术三：调度与优化</h2><h3 id="请求调度策略"><a href="#请求调度策略" class="headerlink" title="请求调度策略"></a>请求调度策略</h3><p>vLLM 使用<strong>基于优先级的调度</strong>，平衡延迟和吞吐。</p>
+<p><strong>调度维度：</strong></p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line">1. 序列状态优先级：</span><br><span class="line">   交换出的序列 &gt; 等待中的序列 &gt; 新到达的序列</span><br><span class="line">   （避免饥饿，保证公平性）</span><br><span class="line"></span><br><span class="line">2. 长度感知调度：</span><br><span class="line">   短序列优先（降低平均延迟）</span><br><span class="line">   或 长序列优先（提高吞吐）</span><br><span class="line"></span><br><span class="line">3. 截止时间感知：</span><br><span class="line">   接近 SLA 截止时间的请求优先</span><br></pre></td></tr></table></figure>
+
+<p><strong>调度器伪代码：</strong></p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">class</span> <span class="title class_">vLLMScheduler</span>:</span><br><span class="line">    <span class="keyword">def</span> <span class="title function_">schedule</span>(<span class="params">self, new_requests</span>):</span><br><span class="line">        <span class="comment"># 1. 将交换出的序列换入（最高优先级）</span></span><br><span class="line">        <span class="keyword">for</span> seq <span class="keyword">in</span> <span class="variable language_">self</span>.swapped_out_seqs:</span><br><span class="line">            <span class="keyword">if</span> <span class="variable language_">self</span>.can_swap_in(seq):</span><br><span class="line">                <span class="variable language_">self</span>.swap_in(seq)</span><br><span class="line">                <span class="variable language_">self</span>.running_seqs.append(seq)</span><br><span class="line">        </span><br><span class="line">        <span class="comment"># 2. 从等待队列中选择（按优先级排序）</span></span><br><span class="line">        <span class="variable language_">self</span>.waiting_seqs.sort(key=<span class="keyword">lambda</span> s: s.priority)</span><br><span class="line">        <span class="keyword">for</span> seq <span class="keyword">in</span> <span class="variable language_">self</span>.waiting_seqs:</span><br><span class="line">            <span class="keyword">if</span> <span class="built_in">len</span>(<span class="variable language_">self</span>.running_seqs) &gt;= <span class="variable language_">self</span>.max_batch_size:</span><br><span class="line">                <span class="keyword">break</span></span><br><span class="line">            <span class="keyword">if</span> <span class="variable language_">self</span>.has_enough_memory(seq):</span><br><span class="line">                <span class="variable language_">self</span>.running_seqs.append(seq)</span><br><span class="line">            <span class="keyword">else</span>:</span><br><span class="line">                <span class="comment"># 显存不足，可能需要交换出其他序列</span></span><br><span class="line">                <span class="keyword">if</span> <span class="variable language_">self</span>.can_make_room(seq):</span><br><span class="line">                    <span class="variable language_">self</span>.evict_low_priority_seqs()</span><br><span class="line">                    <span class="variable language_">self</span>.running_seqs.append(seq)</span><br><span class="line">        </span><br><span class="line">        <span class="comment"># 3. 新请求加入等待队列</span></span><br><span class="line">        <span class="keyword">for</span> req <span class="keyword">in</span> new_requests:</span><br><span class="line">            <span class="variable language_">self</span>.waiting_seqs.append(req)</span><br><span class="line">        </span><br><span class="line">        <span class="keyword">return</span> <span class="variable language_">self</span>.running_seqs</span><br></pre></td></tr></table></figure>
+
+<h3 id="显存管理优化"><a href="#显存管理优化" class="headerlink" title="显存管理优化"></a>显存管理优化</h3><p><strong>动态显存分配：</strong></p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">class</span> <span class="title class_">MemoryManager</span>:</span><br><span class="line">    <span class="keyword">def</span> <span class="title function_">__init__</span>(<span class="params">self, total_gpu_memory, block_size=<span class="number">16</span></span>):</span><br><span class="line">        <span class="comment"># 保留 10% 给模型权重，90% 给 KV Cache</span></span><br><span class="line">        <span class="variable language_">self</span>.kv_memory = total_gpu_memory * <span class="number">0.9</span></span><br><span class="line">        <span class="variable language_">self</span>.block_size = block_size</span><br><span class="line">        <span class="variable language_">self</span>.num_blocks = <span class="variable language_">self</span>.kv_memory // <span class="variable language_">self</span>.get_block_size()</span><br><span class="line">        </span><br><span class="line">        <span class="variable language_">self</span>.free_blocks = <span class="built_in">list</span>(<span class="built_in">range</span>(<span class="variable language_">self</span>.num_blocks))</span><br><span class="line">        <span class="variable language_">self</span>.allocated_blocks = &#123;&#125;  <span class="comment"># seq_id -&gt; [block_ids]</span></span><br><span class="line">    </span><br><span class="line">    <span class="keyword">def</span> <span class="title function_">allocate</span>(<span class="params">self, seq_id, num_tokens</span>):</span><br><span class="line">        <span class="string">&quot;&quot;&quot;为序列分配足够的 Block&quot;&quot;&quot;</span></span><br><span class="line">        needed_blocks = (num_tokens + <span class="variable language_">self</span>.block_size - <span class="number">1</span>) // <span class="variable language_">self</span>.block_size</span><br><span class="line">        current_blocks = <span class="built_in">len</span>(<span class="variable language_">self</span>.allocated_blocks.get(seq_id, []))</span><br><span class="line">        additional = needed_blocks - current_blocks</span><br><span class="line">        </span><br><span class="line">        <span class="keyword">if</span> additional &gt; <span class="built_in">len</span>(<span class="variable language_">self</span>.free_blocks):</span><br><span class="line">            <span class="comment"># 显存不足，需要交换</span></span><br><span class="line">            <span class="keyword">return</span> <span class="literal">False</span></span><br><span class="line">        </span><br><span class="line">        <span class="keyword">if</span> seq_id <span class="keyword">not</span> <span class="keyword">in</span> <span class="variable language_">self</span>.allocated_blocks:</span><br><span class="line">            <span class="variable language_">self</span>.allocated_blocks[seq_id] = []</span><br><span class="line">        </span><br><span class="line">        <span class="keyword">for</span> _ <span class="keyword">in</span> <span class="built_in">range</span>(additional):</span><br><span class="line">            block_id = <span class="variable language_">self</span>.free_blocks.pop()</span><br><span class="line">            <span class="variable language_">self</span>.allocated_blocks[seq_id].append(block_id)</span><br><span class="line">        </span><br><span class="line">        <span class="keyword">return</span> <span class="literal">True</span></span><br></pre></td></tr></table></figure>
+
+<h3 id="CUDA-Kernel-优化"><a href="#CUDA-Kernel-优化" class="headerlink" title="CUDA Kernel 优化"></a>CUDA Kernel 优化</h3><p>vLLM 的 PagedAttention 实现大量使用<strong>自定义 CUDA Kernel</strong>优化。</p>
+<p><strong>关键优化技术：</strong></p>
+<ol>
+<li><strong>FlashAttention 集成</strong>：减少 HBM 访问，利用 SRAM</li>
+<li><strong>Warp-level 优化</strong>：细粒度线程调度</li>
+<li><strong>Tensor Core 利用</strong>：混合精度矩阵乘法</li>
+<li><strong>Kernel Fusion</strong>：减少 Kernel 启动开销</li>
+</ol>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br></pre></td><td class="code"><pre><span class="line">// 简化版 PagedAttention CUDA Kernel</span><br><span class="line">__global__ void paged_attention_kernel(</span><br><span class="line">    float* out,           // 输出</span><br><span class="line">    const float* q,       // Query</span><br><span class="line">    const float* k_cache, // Key Cache (非连续)</span><br><span class="line">    const float* v_cache, // Value Cache (非连续)</span><br><span class="line">    const int* block_table, // 页表</span><br><span class="line">    int seq_len,</span><br><span class="line">    int head_dim,</span><br><span class="line">    int block_size</span><br><span class="line">) &#123;</span><br><span class="line">    // 每个 thread block 处理一个 head</span><br><span class="line">    int block_id = blockIdx.x;</span><br><span class="line">    int thread_id = threadIdx.x;</span><br><span class="line">    </span><br><span class="line">    // 通过页表找到物理地址</span><br><span class="line">    int physical_block = block_table[block_id / block_size];</span><br><span class="line">    const float* k_block = k_cache + physical_block * block_size * head_dim;</span><br><span class="line">    </span><br><span class="line">    // 计算注意力（使用共享内存优化）</span><br><span class="line">    // ...</span><br><span class="line">    </span><br><span class="line">    // 写回结果</span><br><span class="line">    out[block_id * head_dim + thread_id] = result;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h2 id="架构总览"><a href="#架构总览" class="headerlink" title="架构总览"></a>架构总览</h2><h3 id="系统组件"><a href="#系统组件" class="headerlink" title="系统组件"></a>系统组件</h3><figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br></pre></td><td class="code"><pre><span class="line">┌─────────────────────────────────────────────────────────────┐</span><br><span class="line">│                      客户端请求                              │</span><br><span class="line">│              (OpenAI 兼容 API / gRPC)                        │</span><br><span class="line">└─────────────────────────┬───────────────────────────────────┘</span><br><span class="line">                          ▼</span><br><span class="line">┌─────────────────────────────────────────────────────────────┐</span><br><span class="line">│                    API Server                                │</span><br><span class="line">│  - 请求解析与验证                                            │</span><br><span class="line">│  - 流式响应管理                                              │</span><br><span class="line">└─────────────────────────┬───────────────────────────────────┘</span><br><span class="line">                          ▼</span><br><span class="line">┌─────────────────────────────────────────────────────────────┐</span><br><span class="line">│                    Scheduler（调度器）                        │</span><br><span class="line">│  - 请求优先级排序                                            │</span><br><span class="line">│  - 显存分配决策                                              │</span><br><span class="line">│  - 连续批处理调度                                            │</span><br><span class="line">└─────────────────────────┬───────────────────────────────────┘</span><br><span class="line">                          ▼</span><br><span class="line">┌─────────────────────────────────────────────────────────────┐</span><br><span class="line">│                  Memory Manager（显存管理）                   │</span><br><span class="line">│  - Block 分配/释放                                           │</span><br><span class="line">│  - 页表维护                                                  │</span><br><span class="line">│  - Swap in/out（GPU↔CPU）                                    │</span><br><span class="line">└─────────────────────────┬───────────────────────────────────┘</span><br><span class="line">                          ▼</span><br><span class="line">┌─────────────────────────────────────────────────────────────┐</span><br><span class="line">│               CUDA Kernels（GPU 计算）                        │</span><br><span class="line">│  - PagedAttention                                            │</span><br><span class="line">│  - LayerNorm / MLP                                           │</span><br><span class="line">│  - Sampling                                                  │</span><br><span class="line">└─────────────────────────────────────────────────────────────┘</span><br></pre></td></tr></table></figure>
+
+<h3 id="请求处理流程"><a href="#请求处理流程" class="headerlink" title="请求处理流程"></a>请求处理流程</h3><figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line">1. 请求到达</span><br><span class="line">   ↓</span><br><span class="line">2. Scheduler 检查资源（显存 + 批次槽位）</span><br><span class="line">   ↓</span><br><span class="line">3a. 资源充足 → 立即执行</span><br><span class="line">3b. 显存不足 → 交换出低优先级序列</span><br><span class="line">3c. 批次满 → 加入等待队列</span><br><span class="line">   ↓</span><br><span class="line">4. 执行 PagedAttention 前向传播</span><br><span class="line">   ↓</span><br><span class="line">5. 采样生成下一个 token</span><br><span class="line">   ↓</span><br><span class="line">6. 检查是否完成（EOS / 最大长度）</span><br><span class="line">   ↓</span><br><span class="line">7a. 完成 → 释放资源，返回结果</span><br><span class="line">7b. 未完成 → 更新状态，下一轮继续</span><br></pre></td></tr></table></figure>
+
+<h2 id="实战部署"><a href="#实战部署" class="headerlink" title="实战部署"></a>实战部署</h2><h3 id="快速开始"><a href="#快速开始" class="headerlink" title="快速开始"></a>快速开始</h3><p><strong>安装：</strong></p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">pip install vllm</span><br></pre></td></tr></table></figure>
+
+<p><strong>启动服务：</strong></p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 单 GPU 部署 Llama-3-8B</span></span><br><span class="line">python -m vllm.entrypoints.api_server \</span><br><span class="line">    --model meta-llama/Meta-Llama-3-8B \</span><br><span class="line">    --port 8000 \</span><br><span class="line">    --tensor-parallel-size 1</span><br><span class="line"></span><br><span class="line"><span class="comment"># 多 GPU 部署 Llama-3-70B（4 卡）</span></span><br><span class="line">python -m vllm.entrypoints.api_server \</span><br><span class="line">    --model meta-llama/Meta-Llama-3-70B \</span><br><span class="line">    --port 8000 \</span><br><span class="line">    --tensor-parallel-size 4 \</span><br><span class="line">    --max-num-seqs 256</span><br></pre></td></tr></table></figure>
+
+<p><strong>常用参数：</strong></p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">--model                 <span class="comment"># 模型路径或 HuggingFace ID</span></span><br><span class="line">--tensor-parallel-size  <span class="comment"># GPU 数量（张量并行）</span></span><br><span class="line">--max-num-seqs          <span class="comment"># 最大并发序列数</span></span><br><span class="line">--max-model-len         <span class="comment"># 最大序列长度</span></span><br><span class="line">--gpu-memory-utilization  <span class="comment"># GPU 显存利用率（默认 0.9）</span></span><br><span class="line">--block-size            <span class="comment"># PagedAttention 块大小（16/32）</span></span><br><span class="line">--quantization          <span class="comment"># 量化方法（awq/gptq/fp8）</span></span><br><span class="line">--enable-chunked-prefill  <span class="comment"># 启用分块预填充（降低延迟）</span></span><br></pre></td></tr></table></figure>
+
+<h3 id="API-使用"><a href="#API-使用" class="headerlink" title="API 使用"></a>API 使用</h3><p><strong>OpenAI 兼容接口：</strong></p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">from</span> openai <span class="keyword">import</span> OpenAI</span><br><span class="line"></span><br><span class="line"><span class="comment"># 指向 vLLM 服务</span></span><br><span class="line">client = OpenAI(</span><br><span class="line">    base_url=<span class="string">&quot;http://localhost:8000/v1&quot;</span>,</span><br><span class="line">    api_key=<span class="string">&quot;not-needed&quot;</span>  <span class="comment"># vLLM 默认不需要 API Key</span></span><br><span class="line">)</span><br><span class="line"></span><br><span class="line"><span class="comment"># 聊天补全</span></span><br><span class="line">response = client.chat.completions.create(</span><br><span class="line">    model=<span class="string">&quot;meta-llama/Meta-Llama-3-8B&quot;</span>,</span><br><span class="line">    messages=[</span><br><span class="line">        &#123;<span class="string">&quot;role&quot;</span>: <span class="string">&quot;system&quot;</span>, <span class="string">&quot;content&quot;</span>: <span class="string">&quot;你是一个有帮助的助手。&quot;</span>&#125;,</span><br><span class="line">        &#123;<span class="string">&quot;role&quot;</span>: <span class="string">&quot;user&quot;</span>, <span class="string">&quot;content&quot;</span>: <span class="string">&quot;解释一下量子纠缠。&quot;</span>&#125;</span><br><span class="line">    ],</span><br><span class="line">    temperature=<span class="number">0.7</span>,</span><br><span class="line">    max_tokens=<span class="number">512</span>,</span><br><span class="line">    stream=<span class="literal">True</span>  <span class="comment"># 支持流式输出</span></span><br><span class="line">)</span><br><span class="line"></span><br><span class="line"><span class="keyword">for</span> chunk <span class="keyword">in</span> response:</span><br><span class="line">    <span class="keyword">if</span> chunk.choices[<span class="number">0</span>].delta.content:</span><br><span class="line">        <span class="built_in">print</span>(chunk.choices[<span class="number">0</span>].delta.content, end=<span class="string">&quot;&quot;</span>)</span><br></pre></td></tr></table></figure>
+
+<p><strong>异步批量请求：</strong></p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">import</span> asyncio</span><br><span class="line"><span class="keyword">from</span> openai <span class="keyword">import</span> AsyncOpenAI</span><br><span class="line"></span><br><span class="line">client = AsyncOpenAI(base_url=<span class="string">&quot;http://localhost:8000/v1&quot;</span>)</span><br><span class="line"></span><br><span class="line"><span class="keyword">async</span> <span class="keyword">def</span> <span class="title function_">generate</span>(<span class="params">prompt</span>):</span><br><span class="line">    response = <span class="keyword">await</span> client.chat.completions.create(</span><br><span class="line">        model=<span class="string">&quot;meta-llama/Meta-Llama-3-8B&quot;</span>,</span><br><span class="line">        messages=[&#123;<span class="string">&quot;role&quot;</span>: <span class="string">&quot;user&quot;</span>, <span class="string">&quot;content&quot;</span>: prompt&#125;],</span><br><span class="line">        max_tokens=<span class="number">256</span></span><br><span class="line">    )</span><br><span class="line">    <span class="keyword">return</span> response.choices[<span class="number">0</span>].message.content</span><br><span class="line"></span><br><span class="line"><span class="comment"># 并发 100 个请求</span></span><br><span class="line">prompts = [<span class="string">f&quot;问题 <span class="subst">&#123;i&#125;</span>&quot;</span> <span class="keyword">for</span> i <span class="keyword">in</span> <span class="built_in">range</span>(<span class="number">100</span>)]</span><br><span class="line">tasks = [generate(p) <span class="keyword">for</span> p <span class="keyword">in</span> prompts]</span><br><span class="line">results = <span class="keyword">await</span> asyncio.gather(*tasks)</span><br></pre></td></tr></table></figure>
+
+<h3 id="性能调优"><a href="#性能调优" class="headerlink" title="性能调优"></a>性能调优</h3><p><strong>1. 调整块大小（Block Size）</strong></p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 小块（16）：显存利用率高，适合短序列</span></span><br><span class="line">--block-size 16</span><br><span class="line"></span><br><span class="line"><span class="comment"># 大块（32/64）：减少页表开销，适合长序列</span></span><br><span class="line">--block-size 32</span><br></pre></td></tr></table></figure>
+
+<p><strong>2. 启用分块预填充（Chunked Prefill）</strong></p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 将长提示词分块处理，降低首 token 延迟</span></span><br><span class="line">--enable-chunked-prefill --max-num-batched-tokens 8192</span><br></pre></td></tr></table></figure>
+
+<p><strong>3. 量化加速</strong></p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># AWQ 量化（4bit，2 倍加速）</span></span><br><span class="line">--model TheBloke/Llama-3-8B-AWQ --quantization awq</span><br><span class="line"></span><br><span class="line"><span class="comment"># FP8 量化（H100 专属，1.5 倍加速）</span></span><br><span class="line">--quantization fp8</span><br></pre></td></tr></table></figure>
+
+<p><strong>4. 调度策略调优</strong></p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 调整优先级策略</span></span><br><span class="line">--scheduling-policy <span class="string">&quot;short-first&quot;</span>  <span class="comment"># 短序列优先（降低平均延迟）</span></span><br><span class="line">--scheduling-policy <span class="string">&quot;long-first&quot;</span>   <span class="comment"># 长序列优先（提高吞吐）</span></span><br></pre></td></tr></table></figure>
+
+<h3 id="生产部署建议"><a href="#生产部署建议" class="headerlink" title="生产部署建议"></a>生产部署建议</h3><p><strong>1. 多实例负载均衡</strong></p>
+<figure class="highlight yaml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># Kubernetes 部署示例</span></span><br><span class="line"><span class="attr">apiVersion:</span> <span class="string">apps/v1</span></span><br><span class="line"><span class="attr">kind:</span> <span class="string">Deployment</span></span><br><span class="line"><span class="attr">metadata:</span></span><br><span class="line">  <span class="attr">name:</span> <span class="string">vllm-deployment</span></span><br><span class="line"><span class="attr">spec:</span></span><br><span class="line">  <span class="attr">replicas:</span> <span class="number">3</span>  <span class="comment"># 3 个实例</span></span><br><span class="line">  <span class="attr">template:</span></span><br><span class="line">    <span class="attr">spec:</span></span><br><span class="line">      <span class="attr">containers:</span></span><br><span class="line">      <span class="bullet">-</span> <span class="attr">name:</span> <span class="string">vllm</span></span><br><span class="line">        <span class="attr">image:</span> <span class="string">vllm/vllm-openai:latest</span></span><br><span class="line">        <span class="attr">args:</span></span><br><span class="line">        <span class="bullet">-</span> <span class="string">--model=meta-llama/Meta-Llama-3-8B</span></span><br><span class="line">        <span class="bullet">-</span> <span class="string">--tensor-parallel-size=1</span></span><br><span class="line">        <span class="bullet">-</span> <span class="string">--max-num-seqs=256</span></span><br><span class="line">        <span class="attr">resources:</span></span><br><span class="line">          <span class="attr">limits:</span></span><br><span class="line">            <span class="attr">nvidia.com/gpu:</span> <span class="number">1</span></span><br><span class="line"><span class="meta">---</span></span><br><span class="line"><span class="attr">apiVersion:</span> <span class="string">v1</span></span><br><span class="line"><span class="attr">kind:</span> <span class="string">Service</span></span><br><span class="line"><span class="attr">metadata:</span></span><br><span class="line">  <span class="attr">name:</span> <span class="string">vllm-service</span></span><br><span class="line"><span class="attr">spec:</span></span><br><span class="line">  <span class="attr">selector:</span></span><br><span class="line">    <span class="attr">app:</span> <span class="string">vllm-deployment</span></span><br><span class="line">  <span class="attr">ports:</span></span><br><span class="line">  <span class="bullet">-</span> <span class="attr">port:</span> <span class="number">80</span></span><br><span class="line">    <span class="attr">targetPort:</span> <span class="number">8000</span></span><br><span class="line">  <span class="attr">type:</span> <span class="string">LoadBalancer</span></span><br></pre></td></tr></table></figure>
+
+<p><strong>2. 监控指标</strong></p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># vLLM 内置 Prometheus 指标</span></span><br><span class="line"><span class="comment"># 访问 http://localhost:8000/metrics</span></span><br><span class="line"></span><br><span class="line">关键指标：</span><br><span class="line">- vllm:num_requests_running      <span class="comment"># 运行中请求数</span></span><br><span class="line">- vllm:num_requests_waiting      <span class="comment"># 等待中请求数</span></span><br><span class="line">- vllm:gpu_cache_usage_perc      <span class="comment"># GPU 显存利用率</span></span><br><span class="line">- vllm:time_to_first_token_ms    <span class="comment"># 首 token 延迟</span></span><br><span class="line">- vllm:time_per_output_token_ms  <span class="comment"># 单 token 生成时间</span></span><br><span class="line">- vllm:num_tokens_generated_total <span class="comment"># 累计生成 token 数</span></span><br></pre></td></tr></table></figure>
+
+<p><strong>3. 自动扩缩容</strong></p>
+<figure class="highlight yaml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># K8s HPA 配置</span></span><br><span class="line"><span class="attr">apiVersion:</span> <span class="string">autoscaling/v2</span></span><br><span class="line"><span class="attr">kind:</span> <span class="string">HorizontalPodAutoscaler</span></span><br><span class="line"><span class="attr">metadata:</span></span><br><span class="line">  <span class="attr">name:</span> <span class="string">vllm-hpa</span></span><br><span class="line"><span class="attr">spec:</span></span><br><span class="line">  <span class="attr">scaleTargetRef:</span></span><br><span class="line">    <span class="attr">apiVersion:</span> <span class="string">apps/v1</span></span><br><span class="line">    <span class="attr">kind:</span> <span class="string">Deployment</span></span><br><span class="line">    <span class="attr">name:</span> <span class="string">vllm-deployment</span></span><br><span class="line">  <span class="attr">minReplicas:</span> <span class="number">2</span></span><br><span class="line">  <span class="attr">maxReplicas:</span> <span class="number">10</span></span><br><span class="line">  <span class="attr">metrics:</span></span><br><span class="line">  <span class="bullet">-</span> <span class="attr">type:</span> <span class="string">External</span></span><br><span class="line">    <span class="attr">external:</span></span><br><span class="line">      <span class="attr">metric:</span></span><br><span class="line">        <span class="attr">name:</span> <span class="string">vllm_queue_depth</span></span><br><span class="line">      <span class="attr">target:</span></span><br><span class="line">        <span class="attr">type:</span> <span class="string">AverageValue</span></span><br><span class="line">        <span class="attr">averageValue:</span> <span class="string">&quot;10&quot;</span>  <span class="comment"># 等待队列&gt;10 时扩容</span></span><br></pre></td></tr></table></figure>
+
+<h2 id="性能基准测试"><a href="#性能基准测试" class="headerlink" title="性能基准测试"></a>性能基准测试</h2><h3 id="测试配置"><a href="#测试配置" class="headerlink" title="测试配置"></a>测试配置</h3><figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">模型：Llama-3-8B-Instruct</span><br><span class="line">GPU：NVIDIA A100 80GB</span><br><span class="line">数据集：ShareGPT（真实对话分布）</span><br><span class="line">指标：吞吐（req/s）、延迟（P50/P99）、显存利用率</span><br></pre></td></tr></table></figure>
+
+<h3 id="对比结果"><a href="#对比结果" class="headerlink" title="对比结果"></a>对比结果</h3><table>
+<thead>
+<tr>
+<th>框架</th>
+<th>吞吐 (req&#x2F;s)</th>
+<th>P50 延迟</th>
+<th>P99 延迟</th>
+<th>显存利用</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>HF Transformers</td>
+<td>12</td>
+<td>2.1s</td>
+<td>8.5s</td>
+<td>45%</td>
+</tr>
+<tr>
+<td>Text Generation Inference</td>
+<td>45</td>
+<td>850ms</td>
+<td>3.2s</td>
+<td>68%</td>
+</tr>
+<tr>
+<td>TensorRT-LLM</td>
+<td>68</td>
+<td>620ms</td>
+<td>2.1s</td>
+<td>75%</td>
+</tr>
+<tr>
+<td><strong>vLLM</strong></td>
+<td><strong>285</strong></td>
+<td><strong>380ms</strong></td>
+<td><strong>950ms</strong></td>
+<td><strong>96%</strong></td>
+</tr>
+</tbody></table>
+<p><strong>关键观察：</strong></p>
+<ol>
+<li>vLLM 吞吐是 HF 的 <strong>23 倍</strong></li>
+<li>P99 延迟稳定性最好（P99&#x2F;P50 &#x3D; 2.5，其他框架&gt;4）</li>
+<li>显存利用率接近理论上限</li>
+</ol>
+<h3 id="不同序列长度下的表现"><a href="#不同序列长度下的表现" class="headerlink" title="不同序列长度下的表现"></a>不同序列长度下的表现</h3><figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line">短序列（&lt;128 tokens）：</span><br><span class="line">- vLLM: 520 req/s</span><br><span class="line">- TGI: 85 req/s</span><br><span class="line">- 优势：6 倍（连续批处理收益最大）</span><br><span class="line"></span><br><span class="line">中等序列（128-512 tokens）：</span><br><span class="line">- vLLM: 285 req/s</span><br><span class="line">- TGI: 45 req/s</span><br><span class="line">- 优势：6.3 倍</span><br><span class="line"></span><br><span class="line">长序列（&gt;512 tokens）：</span><br><span class="line">- vLLM: 95 req/s</span><br><span class="line">- TGI: 28 req/s</span><br><span class="line">- 优势：3.4 倍（PagedAttention 显存优势凸显）</span><br></pre></td></tr></table></figure>
+
+<h2 id="局限性与适用场景"><a href="#局限性与适用场景" class="headerlink" title="局限性与适用场景"></a>局限性与适用场景</h2><h3 id="vLLM-不适合的场景"><a href="#vLLM-不适合的场景" class="headerlink" title="vLLM 不适合的场景"></a>vLLM 不适合的场景</h3><p>❌ <strong>极小批量（batch_size&#x3D;1）</strong></p>
+<ul>
+<li>overhead 相对较高，简单场景可能不如直接推理</li>
+</ul>
+<p>❌ <strong>极端长序列（&gt;32K tokens）</strong></p>
+<ul>
+<li>页表管理开销增加</li>
+<li>考虑使用专门优化长上下文的框架（如 SGLang）</li>
+</ul>
+<p>❌ <strong>非 Transformer 架构</strong></p>
+<ul>
+<li>目前主要支持 Decoder-only 模型</li>
+<li>Encoder-Decoder（如 T5）支持有限</li>
+</ul>
+<p>❌ <strong>训练场景</strong></p>
+<ul>
+<li>vLLM 专为推理设计，不支持反向传播</li>
+</ul>
+<h3 id="最佳适用场景"><a href="#最佳适用场景" class="headerlink" title="最佳适用场景"></a>最佳适用场景</h3><p>✅ <strong>高并发在线服务</strong>（聊天机器人、API 服务）<br>✅ <strong>批量离线处理</strong>（数据标注、内容生成）<br>✅ <strong>多租户 SaaS</strong>（显存隔离 + 共享）<br>✅ <strong>边缘部署</strong>（显存受限环境）</p>
+<h2 id="生态与扩展"><a href="#生态与扩展" class="headerlink" title="生态与扩展"></a>生态与扩展</h2><h3 id="支持的模型"><a href="#支持的模型" class="headerlink" title="支持的模型"></a>支持的模型</h3><p>vLLM 支持主流开源模型：</p>
+<ul>
+<li><strong>Meta</strong>: Llama-2&#x2F;3&#x2F;3.1 系列</li>
+<li><strong>Mistral</strong>: Mistral-7B, Mixtral-8x7B, Mistral-Large</li>
+<li><strong>Qwen</strong>: Qwen-1.5&#x2F;2&#x2F;2.5 系列</li>
+<li><strong>Google</strong>: Gemma-1&#x2F;2 系列</li>
+<li><strong>其他</strong>: Falcon, MPT, StarCoder, Phi</li>
+</ul>
+<h3 id="集成生态"><a href="#集成生态" class="headerlink" title="集成生态"></a>集成生态</h3><figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line">前端框架：</span><br><span class="line">- LangChain: `ChatVLLM` 集成</span><br><span class="line">- LlamaIndex: `VLLM` 推理后端</span><br><span class="line">- Haystack: 原生支持</span><br><span class="line"></span><br><span class="line">部署平台：</span><br><span class="line">- Kubernetes: Helm Chart 官方支持</span><br><span class="line">- Ray Serve: `VLLMDeployment`</span><br><span class="line">- Modal: 一键部署</span><br><span class="line"></span><br><span class="line">监控工具：</span><br><span class="line">- Prometheus + Grafana: 内置指标导出</span><br><span class="line">- Datadog: 社区集成</span><br></pre></td></tr></table></figure>
+
+<h3 id="扩展开发"><a href="#扩展开发" class="headerlink" title="扩展开发"></a>扩展开发</h3><p>vLLM 提供丰富的扩展点：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 自定义调度策略</span></span><br><span class="line"><span class="keyword">from</span> vllm.core.scheduler <span class="keyword">import</span> Scheduler</span><br><span class="line"></span><br><span class="line"><span class="keyword">class</span> <span class="title class_">MyScheduler</span>(<span class="title class_ inherited__">Scheduler</span>):</span><br><span class="line">    <span class="keyword">def</span> <span class="title function_">custom_schedule</span>(<span class="params">self</span>):</span><br><span class="line">        <span class="comment"># 实现自己的调度逻辑</span></span><br><span class="line">        <span class="keyword">pass</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># 自定义采样方法</span></span><br><span class="line"><span class="keyword">from</span> vllm.model_executor.sampling_metadata <span class="keyword">import</span> SamplingParams</span><br><span class="line"></span><br><span class="line"><span class="keyword">class</span> <span class="title class_">TopKTopPSampling</span>:</span><br><span class="line">    <span class="keyword">def</span> <span class="title function_">__call__</span>(<span class="params">self, logits, k, p</span>):</span><br><span class="line">        <span class="comment"># 自定义采样算法</span></span><br><span class="line">        <span class="keyword">pass</span></span><br></pre></td></tr></table></figure>
+
+<h2 id="未来展望"><a href="#未来展望" class="headerlink" title="未来展望"></a>未来展望</h2><h3 id="vLLM-路线图（2025-2026）"><a href="#vLLM-路线图（2025-2026）" class="headerlink" title="vLLM 路线图（2025-2026）"></a>vLLM 路线图（2025-2026）</h3><ol>
+<li><p><strong>多模态支持</strong></p>
+<ul>
+<li>图像 + 文本联合推理（Llava 等）</li>
+<li>视频理解加速</li>
+</ul>
+</li>
+<li><p><strong>分布式推理增强</strong></p>
+<ul>
+<li>Pipeline Parallelism 优化</li>
+<li>跨节点推理（多机多卡）</li>
+</ul>
+</li>
+<li><p><strong>动态模型切换</strong></p>
+<ul>
+<li>热加载不同模型</li>
+<li>模型路由（根据请求类型自动选择）</li>
+</ul>
+</li>
+<li><p><strong>边缘优化</strong></p>
+<ul>
+<li>移动端部署（Android&#x2F;iOS）</li>
+<li>量化感知推理（INT4&#x2F;INT2）</li>
+</ul>
+</li>
+</ol>
+<h3 id="推理技术趋势"><a href="#推理技术趋势" class="headerlink" title="推理技术趋势"></a>推理技术趋势</h3><ol>
+<li><p><strong>Speculative Decoding（推测解码）</strong></p>
+<ul>
+<li>小模型草稿 + 大模型验证</li>
+<li>2-4 倍加速，无损质量</li>
+</ul>
+</li>
+<li><p><strong>MoE 推理优化</strong></p>
+<ul>
+<li>稀疏激活模型的高效调度</li>
+<li>动态专家路由</li>
+</ul>
+</li>
+<li><p><strong>硬件协同设计</strong></p>
+<ul>
+<li>GPU 新一代 Tensor Core 优化</li>
+<li>专用推理芯片（Groq、Cerebras）</li>
+</ul>
+</li>
+</ol>
+<h2 id="结语"><a href="#结语" class="headerlink" title="结语"></a>结语</h2><p>vLLM 通过<strong>PagedAttention</strong>这一核心创新，结合<strong>连续批处理</strong>和<strong>智能调度</strong>，重新定义了大模型推理的性能标杆。</p>
+<p><strong>核心要点回顾：</strong></p>
+<ol>
+<li><strong>PagedAttention</strong> &#x3D; 虚拟内存 + 分页思想，显存利用率从 45% 提升到 95%+</li>
+<li><strong>连续批处理</strong> &#x3D; token 级别调度，GPU 不再空转等待</li>
+<li><strong>智能调度</strong> &#x3D; 平衡延迟与吞吐，支持超卖和交换</li>
+</ol>
+<p><strong>性能收益：</strong></p>
+<ul>
+<li>吞吐提升 <strong>20-24 倍</strong></li>
+<li>显存浪费降低 <strong>90%+</strong></li>
+<li>延迟稳定性提升 <strong>2-3 倍</strong></li>
+</ul>
+<p><strong>行动建议：</strong></p>
+<ol>
+<li>如果你正在运行 LLM 服务 → 立即迁移到 vLLM，成本立降 80%</li>
+<li>如果你在选型 → vLLM 是默认首选（除非有特殊需求）</li>
+<li>如果你在研究 → 深入理解 PagedAttention 思想，可迁移到其他场景</li>
+</ol>
+<p>大模型推理的”性能革命”已经到来。vLLM 不仅是一个工具，更是一种<strong>系统设计思维</strong>的体现：借鉴经典（操作系统虚拟内存），解决新问题（LLM 显存管理）。</p>
+<p>理解它，使用它，或许——超越它。🚀</p>
+<hr>
+<h2 id="参考文献"><a href="#参考文献" class="headerlink" title="参考文献"></a>参考文献</h2><ol>
+<li>Kwon, W., et al. (2023). Efficient Memory Management for Large Language Model Serving with PagedAttention. <em>SOSP 2023</em></li>
+<li>vLLM Official Documentation. <a target="_blank" rel="noopener" href="https://docs.vllm.ai/">https://docs.vllm.ai</a></li>
+<li>vLLM GitHub Repository. <a target="_blank" rel="noopener" href="https://github.com/vllm-project/vllm">https://github.com/vllm-project/vllm</a></li>
+<li>FlashAttention Paper. Dao, T., et al. (2022). <em>NeurIPS 2022</em></li>
+<li>Continuous Batching Blog. <a target="_blank" rel="noopener" href="https://www.anyscale.com/blog/continuous-batching">https://www.anyscale.com/blog/continuous-batching</a></li>
+</ol>
+<hr>
+
+      
+    </div>
+
+    
+
+    
+    
+    
+
+    
+
+    
+      <div>
+        <div style="padding: 10px 0; margin: 20px auto; width: 90%; text-align: center;">
+  <div>感谢你的阅读，如果文章对你有帮助，可以请作者喝杯茶!</div>
+  <button id="rewardButton" disable="enable" onclick="var qr = document.getElementById('QR'); if (qr.style.display === 'none') {qr.style.display='block';} else {qr.style.display='none'}">
+    <span>打赏</span>
+  </button>
+  <div id="QR" style="display: none;">
+
+    
+      <div id="wechat" style="display: inline-block">
+        <img id="wechat_qr" src="/images/wechatpay.jpg" alt="Noah Sun 微信支付"/>
+        <p>微信支付</p>
+      </div>
+    
+
+    
+      <div id="alipay" style="display: inline-block">
+        <img id="alipay_qr" src="/images/alipay.jpg" alt="Noah Sun 支付宝"/>
+        <p>支付宝</p>
+      </div>
+    
+
+    
+
+  </div>
+</div>
+
+      </div>
+    
+
+    
+      <div>
+        <ul class="post-copyright">
+  <li class="post-copyright-author">
+    <strong>本文作者： </strong>Noah Sun</li>
+  <li class="post-copyright-link">
+    <strong>本文链接：</strong>
+    <a href="http://blog.noahsun.top/2026/03/19/vllm-core-principles-deep-dive/" title="深度解析 vLLM：重新定义大模型推理的性能革命">http://blog.noahsun.top/2026/03/19/vllm-core-principles-deep-dive/</a>
+  </li>
+  <li class="post-copyright-license">
+    <strong>版权声明： </strong>本博客所有文章除特别声明外，均采用 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" rel="external nofollow" target="_blank">CC BY-NC-SA 4.0</a> 许可协议。转载请注明出处！</li>
+</ul>
+
+      </div>
+    
+
+    <footer class="post-footer">
+      
+        <div class="post-tags">
+          
+            <a href="/tags/AI-%E5%B7%A5%E7%A8%8B%E5%8C%96/" rel="tag"># AI 工程化</a>
+          
+            <a href="/tags/vLLM/" rel="tag"># vLLM</a>
+          
+            <a href="/tags/%E5%A4%A7%E6%A8%A1%E5%9E%8B%E6%8E%A8%E7%90%86/" rel="tag"># 大模型推理</a>
+          
+            <a href="/tags/PagedAttention/" rel="tag"># PagedAttention</a>
+          
+            <a href="/tags/%E9%AB%98%E6%80%A7%E8%83%BD%E8%AE%A1%E7%AE%97/" rel="tag"># 高性能计算</a>
+          
+        </div>
+      
+
+      
+      
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2026/03/19/llm-fine-tuning-deep-dive/" rel="next" title="深入理解大模型微调：从理论到实战的完整指南">
+                <i class="fa fa-chevron-left"></i> 深入理解大模型微调：从理论到实战的完整指南
+              </a>
+            
+          </div>
+
+          <span class="post-nav-divider"></span>
+
+          <div class="post-nav-prev post-nav-item">
+            
+              <a href="/2026/03/22/%E6%B7%B1%E5%BA%A6%E8%A7%A3%E6%9E%90-AI-Agent-%E9%80%9A%E8%AE%AF%E5%8D%8F%E8%AE%AE/" rel="prev" title="深度解析 AI Agent 通讯协议">
+                深度解析 AI Agent 通讯协议 <i class="fa fa-chevron-right"></i>
+              </a>
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+  </div>
+
+
+          </div>
+          
+
+  
+    <div class="comments" id="comments">
+      <div id="disqus_thread">
+        <noscript>
+          Please enable JavaScript to view the
+          <a target="_blank" rel="noopener" href="https://disqus.com/?ref_noscript">comments powered by Disqus.</a>
+        </noscript>
+      </div>
+    </div>
+
+  
+
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap">
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview-wrap">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <section class="site-overview-wrap sidebar-panel">
+        <div class="site-overview">
+          <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+            
+              <img class="site-author-image" itemprop="image"
+                src="/images/avatar.jpg"
+                alt="Noah Sun" />
+            
+              <p class="site-author-name" itemprop="name">Noah Sun</p>
+              <p class="site-description motion-element" itemprop="description">Noah Sun's Blog.</p>
+          </div>
+
+          
+            <nav class="site-state motion-element">
+              
+                <div class="site-state-item site-state-posts">
+                
+                  <a href="/archives/%20%7C%7C%20archive">
+                
+                    <span class="site-state-item-count">31</span>
+                    <span class="site-state-item-name">日志</span>
+                  </a>
+                </div>
+              
+
+              
+                
+                
+                <div class="site-state-item site-state-categories">
+                  <a href="/categories/index.html">
+                    
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                    <span class="site-state-item-count">7</span>
+                    <span class="site-state-item-name">分类</span>
+                  </a>
+                </div>
+              
+
+              
+                
+                
+                <div class="site-state-item site-state-tags">
+                  <a href="/tags/index.html">
+                    
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                    <span class="site-state-item-count">65</span>
+                    <span class="site-state-item-name">标签</span>
+                  </a>
+                </div>
+              
+            </nav>
+          
+
+          
+
+          
+            <div class="links-of-author motion-element">
+              
+                <span class="links-of-author-item">
+                  <a href="https://github.com/rukesun/" target="_blank" title="GitHub"><i class="fa fa-fw fa-github"></i>GitHub</a>
+                  
+                </span>
+              
+                <span class="links-of-author-item">
+                  <a href="https://www.facebook.com/Noah.D.Sun" target="_blank" title="Facebook"><i class="fa fa-fw fa-facebook"></i>Facebook</a>
+                  
+                </span>
+              
+            </div>
+          
+
+          
+          
+
+          
+          
+
+          
+            
+          
+          
+
+        </div>
+      </section>
+
+      
+      <!--noindex-->
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+
+            
+              
+            
+
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%89%8D%E8%A8%80"><span class="nav-number">1.</span> <span class="nav-text">前言</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#vLLM-%E6%98%AF%E4%BB%80%E4%B9%88%EF%BC%9F"><span class="nav-number">2.</span> <span class="nav-text">vLLM 是什么？</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%AE%9A%E4%BD%8D%E4%B8%8E%E8%83%8C%E6%99%AF"><span class="nav-number">2.1.</span> <span class="nav-text">定位与背景</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%80%A7%E8%83%BD%E5%AF%B9%E6%AF%94"><span class="nav-number">2.2.</span> <span class="nav-text">性能对比</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%A0%B8%E5%BF%83%E6%8A%80%E6%9C%AF%E4%B8%80%EF%BC%9APagedAttention%EF%BC%88%E9%A1%B5%E5%BC%8F%E6%B3%A8%E6%84%8F%E5%8A%9B%EF%BC%89"><span class="nav-number">3.</span> <span class="nav-text">核心技术一：PagedAttention（页式注意力）</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E4%BC%A0%E7%BB%9F-Attention-%E7%9A%84%E6%98%BE%E5%AD%98%E5%9B%B0%E5%A2%83"><span class="nav-number">3.1.</span> <span class="nav-text">传统 Attention 的显存困境</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#PagedAttention-%E7%9A%84%E9%9D%A9%E5%91%BD%E6%80%A7%E8%AE%BE%E8%AE%A1"><span class="nav-number">3.2.</span> <span class="nav-text">PagedAttention 的革命性设计</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#PagedAttention-%E7%9A%84%E9%A2%9D%E5%A4%96%E4%BC%98%E5%8A%BF"><span class="nav-number">3.3.</span> <span class="nav-text">PagedAttention 的额外优势</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#1-%E6%98%BE%E5%AD%98%E5%85%B1%E4%BA%AB%EF%BC%88Memory-Sharing%EF%BC%89"><span class="nav-number">3.3.1.</span> <span class="nav-text">1. 显存共享（Memory Sharing）</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#2-%E5%BF%AB%E9%80%9F%E4%BA%A4%E6%8D%A2%EF%BC%88Swapping%EF%BC%89"><span class="nav-number">3.3.2.</span> <span class="nav-text">2. 快速交换（Swapping）</span></a></li></ol></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%A0%B8%E5%BF%83%E6%8A%80%E6%9C%AF%E4%BA%8C%EF%BC%9A%E8%BF%9E%E7%BB%AD%E6%89%B9%E5%A4%84%E7%90%86%EF%BC%88Continuous-Batching%EF%BC%89"><span class="nav-number">4.</span> <span class="nav-text">核心技术二：连续批处理（Continuous Batching）</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E4%BC%A0%E7%BB%9F%E6%89%B9%E5%A4%84%E7%90%86%E7%9A%84%E7%BC%BA%E9%99%B7"><span class="nav-number">4.1.</span> <span class="nav-text">传统批处理的缺陷</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#vLLM-%E7%9A%84%E8%BF%9E%E7%BB%AD%E6%89%B9%E5%A4%84%E7%90%86"><span class="nav-number">4.2.</span> <span class="nav-text">vLLM 的连续批处理</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%A0%B8%E5%BF%83%E6%8A%80%E6%9C%AF%E4%B8%89%EF%BC%9A%E8%B0%83%E5%BA%A6%E4%B8%8E%E4%BC%98%E5%8C%96"><span class="nav-number">5.</span> <span class="nav-text">核心技术三：调度与优化</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E8%AF%B7%E6%B1%82%E8%B0%83%E5%BA%A6%E7%AD%96%E7%95%A5"><span class="nav-number">5.1.</span> <span class="nav-text">请求调度策略</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%98%BE%E5%AD%98%E7%AE%A1%E7%90%86%E4%BC%98%E5%8C%96"><span class="nav-number">5.2.</span> <span class="nav-text">显存管理优化</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#CUDA-Kernel-%E4%BC%98%E5%8C%96"><span class="nav-number">5.3.</span> <span class="nav-text">CUDA Kernel 优化</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%9E%B6%E6%9E%84%E6%80%BB%E8%A7%88"><span class="nav-number">6.</span> <span class="nav-text">架构总览</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E7%B3%BB%E7%BB%9F%E7%BB%84%E4%BB%B6"><span class="nav-number">6.1.</span> <span class="nav-text">系统组件</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E8%AF%B7%E6%B1%82%E5%A4%84%E7%90%86%E6%B5%81%E7%A8%8B"><span class="nav-number">6.2.</span> <span class="nav-text">请求处理流程</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%AE%9E%E6%88%98%E9%83%A8%E7%BD%B2"><span class="nav-number">7.</span> <span class="nav-text">实战部署</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%BF%AB%E9%80%9F%E5%BC%80%E5%A7%8B"><span class="nav-number">7.1.</span> <span class="nav-text">快速开始</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#API-%E4%BD%BF%E7%94%A8"><span class="nav-number">7.2.</span> <span class="nav-text">API 使用</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%80%A7%E8%83%BD%E8%B0%83%E4%BC%98"><span class="nav-number">7.3.</span> <span class="nav-text">性能调优</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E7%94%9F%E4%BA%A7%E9%83%A8%E7%BD%B2%E5%BB%BA%E8%AE%AE"><span class="nav-number">7.4.</span> <span class="nav-text">生产部署建议</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%80%A7%E8%83%BD%E5%9F%BA%E5%87%86%E6%B5%8B%E8%AF%95"><span class="nav-number">8.</span> <span class="nav-text">性能基准测试</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%B5%8B%E8%AF%95%E9%85%8D%E7%BD%AE"><span class="nav-number">8.1.</span> <span class="nav-text">测试配置</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%AF%B9%E6%AF%94%E7%BB%93%E6%9E%9C"><span class="nav-number">8.2.</span> <span class="nav-text">对比结果</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E4%B8%8D%E5%90%8C%E5%BA%8F%E5%88%97%E9%95%BF%E5%BA%A6%E4%B8%8B%E7%9A%84%E8%A1%A8%E7%8E%B0"><span class="nav-number">8.3.</span> <span class="nav-text">不同序列长度下的表现</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%B1%80%E9%99%90%E6%80%A7%E4%B8%8E%E9%80%82%E7%94%A8%E5%9C%BA%E6%99%AF"><span class="nav-number">9.</span> <span class="nav-text">局限性与适用场景</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#vLLM-%E4%B8%8D%E9%80%82%E5%90%88%E7%9A%84%E5%9C%BA%E6%99%AF"><span class="nav-number">9.1.</span> <span class="nav-text">vLLM 不适合的场景</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%9C%80%E4%BD%B3%E9%80%82%E7%94%A8%E5%9C%BA%E6%99%AF"><span class="nav-number">9.2.</span> <span class="nav-text">最佳适用场景</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E7%94%9F%E6%80%81%E4%B8%8E%E6%89%A9%E5%B1%95"><span class="nav-number">10.</span> <span class="nav-text">生态与扩展</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%94%AF%E6%8C%81%E7%9A%84%E6%A8%A1%E5%9E%8B"><span class="nav-number">10.1.</span> <span class="nav-text">支持的模型</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E9%9B%86%E6%88%90%E7%94%9F%E6%80%81"><span class="nav-number">10.2.</span> <span class="nav-text">集成生态</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%89%A9%E5%B1%95%E5%BC%80%E5%8F%91"><span class="nav-number">10.3.</span> <span class="nav-text">扩展开发</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%9C%AA%E6%9D%A5%E5%B1%95%E6%9C%9B"><span class="nav-number">11.</span> <span class="nav-text">未来展望</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#vLLM-%E8%B7%AF%E7%BA%BF%E5%9B%BE%EF%BC%882025-2026%EF%BC%89"><span class="nav-number">11.1.</span> <span class="nav-text">vLLM 路线图（2025-2026）</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%8E%A8%E7%90%86%E6%8A%80%E6%9C%AF%E8%B6%8B%E5%8A%BF"><span class="nav-number">11.2.</span> <span class="nav-text">推理技术趋势</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E7%BB%93%E8%AF%AD"><span class="nav-number">12.</span> <span class="nav-text">结语</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%8F%82%E8%80%83%E6%96%87%E7%8C%AE"><span class="nav-number">13.</span> <span class="nav-text">参考文献</span></a></li></ol></div>
+            
+
+          </div>
+        </section>
+      <!--/noindex-->
+      
+
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright"> &copy; <span itemprop="copyrightYear">2026</span>
+  <span class="with-love" id="animate">
+    <i class="fa fa-user"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">Noah Sun</span>
+
+  
+
+  
+</div>
+
+
+
+
+  <div class="powered-by">由 <a class="theme-link" target="_blank" href="https://hexo.io">Hexo</a> 强力驱动 v6.3.0</div>
+
+
+
+  <span class="post-meta-divider">|</span>
+
+
+
+  <div class="theme-info">主题 – <a class="theme-link" target="_blank" href="https://theme-next.org">NexT.Pisces</a> v6.4.2</div>
+
+
+
+
+        
+
+
+
+
+
+
+
+
+        
+      </div>
+    </footer>
+
+    
+      <div class="back-to-top">
+        <i class="fa fa-arrow-up"></i>
+        
+      </div>
+    
+
+    
+	
+    
+
+    
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+    <script type="text/javascript" src="//cdn.jsdelivr.net/jquery/2.1.3/jquery.min.js"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/velocity-animate@1.2.1/velocity.min.js"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="//cdnjs.cloudflare.com/ajax/libs/velocity/1.2.1/velocity.ui.min.js"></script>
+  
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/utils.js?v=6.4.2"></script>
+
+  <script type="text/javascript" src="/js/src/motion.js?v=6.4.2"></script>
+
+
+
+  
+  
+
+
+  <script type="text/javascript" src="/js/src/affix.js?v=6.4.2"></script>
+
+  <script type="text/javascript" src="/js/src/schemes/pisces.js?v=6.4.2"></script>
+
+
+
+  
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=6.4.2"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=6.4.2"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/bootstrap.js?v=6.4.2"></script>
+
+
+
+  
+
+  
+    <script id="dsq-count-scr" src="https://noahsun.disqus.com/count.js" async></script>
+  
+
+  
+    <script type="text/javascript">
+      var disqus_config = function () {
+        this.page.url = 'http://blog.noahsun.top/2026/03/19/vllm-core-principles-deep-dive/';
+        this.page.identifier = '2026/03/19/vllm-core-principles-deep-dive/';
+        this.page.title = '深度解析 vLLM：重新定义大模型推理的性能革命';
+        };
+      function loadComments () {
+        var d = document, s = d.createElement('script');
+        s.src = 'https://noahsun.disqus.com/embed.js';
+        s.setAttribute('data-timestamp', '' + +new Date());
+        (d.head || d.body).appendChild(s);
+      }
+      
+        loadComments();
+      
+    </script>
+  
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  <script type="text/javascript">
+    // Popup Window;
+    var isfetched = false;
+    var isXml = true;
+    // Search DB path;
+    var search_path = "search.xml";
+    if (search_path.length === 0) {
+      search_path = "search.xml";
+    } else if (/json$/i.test(search_path)) {
+      isXml = false;
+    }
+    var path = "/" + search_path;
+    // monitor main search box;
+
+    var onPopupClose = function (e) {
+      $('.popup').hide();
+      $('#local-search-input').val('');
+      $('.search-result-list').remove();
+      $('#no-result').remove();
+      $(".local-search-pop-overlay").remove();
+      $('body').css('overflow', '');
+    }
+
+    function proceedsearch() {
+      $("body")
+        .append('<div class="search-popup-overlay local-search-pop-overlay"></div>')
+        .css('overflow', 'hidden');
+      $('.search-popup-overlay').click(onPopupClose);
+      $('.popup').toggle();
+      var $localSearchInput = $('#local-search-input');
+      $localSearchInput.attr("autocapitalize", "none");
+      $localSearchInput.attr("autocorrect", "off");
+      $localSearchInput.focus();
+    }
+
+    // search function;
+    var searchFunc = function(path, search_id, content_id) {
+      'use strict';
+
+      // start loading animation
+      $("body")
+        .append('<div class="search-popup-overlay local-search-pop-overlay">' +
+          '<div id="search-loading-icon">' +
+          '<i class="fa fa-spinner fa-pulse fa-5x fa-fw"></i>' +
+          '</div>' +
+          '</div>')
+        .css('overflow', 'hidden');
+      $("#search-loading-icon").css('margin', '20% auto 0 auto').css('text-align', 'center');
+
+      
+
+      $.ajax({
+        url: path,
+        dataType: isXml ? "xml" : "json",
+        async: true,
+        success: function(res) {
+          // get the contents from search data
+          isfetched = true;
+          $('.popup').detach().appendTo('.header-inner');
+          var datas = isXml ? $("entry", res).map(function() {
+            return {
+              title: $("title", this).text(),
+              content: $("content",this).text(),
+              url: $("url" , this).text()
+            };
+          }).get() : res;
+          var input = document.getElementById(search_id);
+          var resultContent = document.getElementById(content_id);
+          var inputEventFunction = function() {
+            var searchText = input.value.trim().toLowerCase();
+            var keywords = searchText.split(/[\s\-]+/);
+            if (keywords.length > 1) {
+              keywords.push(searchText);
+            }
+            var resultItems = [];
+            if (searchText.length > 0) {
+              // perform local searching
+              datas.forEach(function(data) {
+                var isMatch = false;
+                var hitCount = 0;
+                var searchTextCount = 0;
+                var title = data.title.trim();
+                var titleInLowerCase = title.toLowerCase();
+                var content = data.content.trim().replace(/<[^>]+>/g,"");
+                
+                var contentInLowerCase = content.toLowerCase();
+                var articleUrl = decodeURIComponent(data.url);
+                var indexOfTitle = [];
+                var indexOfContent = [];
+                // only match articles with not empty titles
+                if(title != '') {
+                  keywords.forEach(function(keyword) {
+                    function getIndexByWord(word, text, caseSensitive) {
+                      var wordLen = word.length;
+                      if (wordLen === 0) {
+                        return [];
+                      }
+                      var startPosition = 0, position = [], index = [];
+                      if (!caseSensitive) {
+                        text = text.toLowerCase();
+                        word = word.toLowerCase();
+                      }
+                      while ((position = text.indexOf(word, startPosition)) > -1) {
+                        index.push({position: position, word: word});
+                        startPosition = position + wordLen;
+                      }
+                      return index;
+                    }
+
+                    indexOfTitle = indexOfTitle.concat(getIndexByWord(keyword, titleInLowerCase, false));
+                    indexOfContent = indexOfContent.concat(getIndexByWord(keyword, contentInLowerCase, false));
+                  });
+                  if (indexOfTitle.length > 0 || indexOfContent.length > 0) {
+                    isMatch = true;
+                    hitCount = indexOfTitle.length + indexOfContent.length;
+                  }
+                }
+
+                // show search results
+
+                if (isMatch) {
+                  // sort index by position of keyword
+
+                  [indexOfTitle, indexOfContent].forEach(function (index) {
+                    index.sort(function (itemLeft, itemRight) {
+                      if (itemRight.position !== itemLeft.position) {
+                        return itemRight.position - itemLeft.position;
+                      } else {
+                        return itemLeft.word.length - itemRight.word.length;
+                      }
+                    });
+                  });
+
+                  // merge hits into slices
+
+                  function mergeIntoSlice(text, start, end, index) {
+                    var item = index[index.length - 1];
+                    var position = item.position;
+                    var word = item.word;
+                    var hits = [];
+                    var searchTextCountInSlice = 0;
+                    while (position + word.length <= end && index.length != 0) {
+                      if (word === searchText) {
+                        searchTextCountInSlice++;
+                      }
+                      hits.push({position: position, length: word.length});
+                      var wordEnd = position + word.length;
+
+                      // move to next position of hit
+
+                      index.pop();
+                      while (index.length != 0) {
+                        item = index[index.length - 1];
+                        position = item.position;
+                        word = item.word;
+                        if (wordEnd > position) {
+                          index.pop();
+                        } else {
+                          break;
+                        }
+                      }
+                    }
+                    searchTextCount += searchTextCountInSlice;
+                    return {
+                      hits: hits,
+                      start: start,
+                      end: end,
+                      searchTextCount: searchTextCountInSlice
+                    };
+                  }
+
+                  var slicesOfTitle = [];
+                  if (indexOfTitle.length != 0) {
+                    slicesOfTitle.push(mergeIntoSlice(title, 0, title.length, indexOfTitle));
+                  }
+
+                  var slicesOfContent = [];
+                  while (indexOfContent.length != 0) {
+                    var item = indexOfContent[indexOfContent.length - 1];
+                    var position = item.position;
+                    var word = item.word;
+                    // cut out 100 characters
+                    var start = position - 20;
+                    var end = position + 80;
+                    if(start < 0){
+                      start = 0;
+                    }
+                    if (end < position + word.length) {
+                      end = position + word.length;
+                    }
+                    if(end > content.length){
+                      end = content.length;
+                    }
+                    slicesOfContent.push(mergeIntoSlice(content, start, end, indexOfContent));
+                  }
+
+                  // sort slices in content by search text's count and hits' count
+
+                  slicesOfContent.sort(function (sliceLeft, sliceRight) {
+                    if (sliceLeft.searchTextCount !== sliceRight.searchTextCount) {
+                      return sliceRight.searchTextCount - sliceLeft.searchTextCount;
+                    } else if (sliceLeft.hits.length !== sliceRight.hits.length) {
+                      return sliceRight.hits.length - sliceLeft.hits.length;
+                    } else {
+                      return sliceLeft.start - sliceRight.start;
+                    }
+                  });
+
+                  // select top N slices in content
+
+                  var upperBound = parseInt('1');
+                  if (upperBound >= 0) {
+                    slicesOfContent = slicesOfContent.slice(0, upperBound);
+                  }
+
+                  // highlight title and content
+
+                  function highlightKeyword(text, slice) {
+                    var result = '';
+                    var prevEnd = slice.start;
+                    slice.hits.forEach(function (hit) {
+                      result += text.substring(prevEnd, hit.position);
+                      var end = hit.position + hit.length;
+                      result += '<b class="search-keyword">' + text.substring(hit.position, end) + '</b>';
+                      prevEnd = end;
+                    });
+                    result += text.substring(prevEnd, slice.end);
+                    return result;
+                  }
+
+                  var resultItem = '';
+
+                  if (slicesOfTitle.length != 0) {
+                    resultItem += "<li><a href='" + articleUrl + "' class='search-result-title'>" + highlightKeyword(title, slicesOfTitle[0]) + "</a>";
+                  } else {
+                    resultItem += "<li><a href='" + articleUrl + "' class='search-result-title'>" + title + "</a>";
+                  }
+
+                  slicesOfContent.forEach(function (slice) {
+                    resultItem += "<a href='" + articleUrl + "'>" +
+                      "<p class=\"search-result\">" + highlightKeyword(content, slice) +
+                      "...</p>" + "</a>";
+                  });
+
+                  resultItem += "</li>";
+                  resultItems.push({
+                    item: resultItem,
+                    searchTextCount: searchTextCount,
+                    hitCount: hitCount,
+                    id: resultItems.length
+                  });
+                }
+              })
+            };
+            if (keywords.length === 1 && keywords[0] === "") {
+              resultContent.innerHTML = '<div id="no-result"><i class="fa fa-search fa-5x" /></div>'
+            } else if (resultItems.length === 0) {
+              resultContent.innerHTML = '<div id="no-result"><i class="fa fa-frown-o fa-5x" /></div>'
+            } else {
+              resultItems.sort(function (resultLeft, resultRight) {
+                if (resultLeft.searchTextCount !== resultRight.searchTextCount) {
+                  return resultRight.searchTextCount - resultLeft.searchTextCount;
+                } else if (resultLeft.hitCount !== resultRight.hitCount) {
+                  return resultRight.hitCount - resultLeft.hitCount;
+                } else {
+                  return resultRight.id - resultLeft.id;
+                }
+              });
+              var searchResultList = '<ul class=\"search-result-list\">';
+              resultItems.forEach(function (result) {
+                searchResultList += result.item;
+              })
+              searchResultList += "</ul>";
+              resultContent.innerHTML = searchResultList;
+            }
+          }
+
+          if ('auto' === 'auto') {
+            input.addEventListener('input', inputEventFunction);
+          } else {
+            $('.search-icon').click(inputEventFunction);
+            input.addEventListener('keypress', function (event) {
+              if (event.keyCode === 13) {
+                inputEventFunction();
+              }
+            });
+          }
+
+          // remove loading animation
+          $(".local-search-pop-overlay").remove();
+          $('body').css('overflow', '');
+
+          proceedsearch();
+        }
+      });
+    }
+
+    // handle and trigger popup window;
+    $('.popup-trigger').click(function(e) {
+      e.stopPropagation();
+      if (isfetched === false) {
+        searchFunc(path, 'local-search-input', 'local-search-result');
+      } else {
+        proceedsearch();
+      };
+    });
+
+    $('.popup-btn-close').click(onPopupClose);
+    $('.popup').click(function(e){
+      e.stopPropagation();
+    });
+    $(document).on('keyup', function (event) {
+      var shouldDismissSearchPopup = event.which === 27 &&
+        $('.search-popup').is(':visible');
+      if (shouldDismissSearchPopup) {
+        onPopupClose();
+      }
+    });
+  </script>
+
+
+
+
+
+  
+
+  
+  <script>
+    
+    function addCount(Counter) {
+      var $visitors = $(".leancloud_visitors");
+      var url = $visitors.attr('id').trim();
+      var title = $visitors.attr('data-flag-title').trim();
+
+      Counter('get', '/classes/Counter', { where: JSON.stringify({ url }) })
+        .done(function ({ results }) {
+          if (results.length > 0) {
+            var counter = results[0];
+            
+            Counter('put', `/classes/Counter/${counter.objectId}`, JSON.stringify({ time: { "__op":"Increment", "amount":1 } }))
+            
+            .done(function () {
+                  var $element = $(document.getElementById(url));
+                  $element.find('.leancloud-visitors-count').text(counter.time + 1);
+            })
+            
+            .fail(function ({ responseJSON }) {
+                console.log('Failed to save Visitor num, with error message: ' + responseJSON.error);
+            })
+          } else {
+            
+              Counter('post', '/classes/Counter', JSON.stringify({ title: title, url: url, time: 1}))
+                .done(function () {
+                  var $element = $(document.getElementById(url));
+                  $element.find('.leancloud-visitors-count').text(1);
+                })
+                .fail(function () {
+                  console.log('Failed to create');
+                });
+            
+          }
+        })
+      .fail(function ({ responseJSON }) {
+        console.log('LeanCloud Counter Error:' + responseJSON.code + " " + responseJSON.error);
+      });
+    }
+    
+
+    $(function() {
+      $.get('https://app-router.leancloud.cn/2/route?appId=' + "Cz56UW3FvEkwHB689nG2jLGm-gzGzoHsz")
+        .done(function ({ api_server }) {
+          var Counter = function (method, url, data) {
+            return $.ajax({
+              method: method,
+              url: `https://${api_server}/1.1${url}`,
+              headers: {
+                'X-LC-Id': "Cz56UW3FvEkwHB689nG2jLGm-gzGzoHsz",
+                'X-LC-Key': "zuFQDzA0SxPUkEfqOisL54YJ",
+                'Content-Type': 'application/json',
+              },
+              data: data,
+            });
+          };
+          
+          addCount(Counter);
+          
+        })
+    });
+  </script>
+
+
+
+  
+
+  
+
+  
+
+  
+
+  
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+</body>
+</html>

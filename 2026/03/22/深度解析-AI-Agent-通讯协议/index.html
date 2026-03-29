@@ -1,0 +1,1798 @@
+<!DOCTYPE html>
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+
+<html class="theme-next pisces use-motion" lang="zh-CN,en,default">
+<head>
+  <meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2"/>
+<meta name="theme-color" content="#222">
+
+
+
+
+
+
+
+
+
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+<link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet" type="text/css" />
+
+<link href="/css/main.css?v=6.4.2" rel="stylesheet" type="text/css" />
+
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png?v=6.4.2">
+
+
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png?v=6.4.2">
+
+
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png?v=6.4.2">
+
+
+  <link rel="mask-icon" href="/images/logo.svg?v=6.4.2" color="#222">
+
+
+
+
+
+
+
+
+
+<script type="text/javascript" id="hexo.configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    root: '',
+    scheme: 'Pisces',
+    version: '6.4.2',
+    sidebar: {"position":"left","display":"post","offset":12,"b2t":false,"scrollpercent":false,"onmobile":false},
+    fancybox: false,
+    fastclick: false,
+    lazyload: false,
+    tabs: true,
+    motion: {"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},
+    algolia: {
+      applicationID: '',
+      apiKey: '',
+      indexName: '',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    }
+  };
+</script>
+
+
+  
+
+
+
+
+  <meta name="description" content="深度解析 AI Agent 通讯协议随着 AI Agent 技术的快速发展，多个 Agent 之间的协作与通信成为了关键问题。本文深入解析当前主流的 AI Agent 通讯协议，包括 MCP、A2A、ACP 等，帮助开发者理解协议设计原理并选择合适的方案。 目录 为什么需要 Agent 通讯协议 主流协议概览 MCP (Model Context Protocol) 深度解析 A2A (Agent">
+<meta property="og:type" content="article">
+<meta property="og:title" content="深度解析 AI Agent 通讯协议">
+<meta property="og:url" content="http://blog.noahsun.top/2026/03/22/%E6%B7%B1%E5%BA%A6%E8%A7%A3%E6%9E%90-AI-Agent-%E9%80%9A%E8%AE%AF%E5%8D%8F%E8%AE%AE/index.html">
+<meta property="og:site_name" content="Noah Sun&#39;s Home">
+<meta property="og:description" content="深度解析 AI Agent 通讯协议随着 AI Agent 技术的快速发展，多个 Agent 之间的协作与通信成为了关键问题。本文深入解析当前主流的 AI Agent 通讯协议，包括 MCP、A2A、ACP 等，帮助开发者理解协议设计原理并选择合适的方案。 目录 为什么需要 Agent 通讯协议 主流协议概览 MCP (Model Context Protocol) 深度解析 A2A (Agent">
+<meta property="og:locale" content="zh_CN">
+<meta property="article:published_time" content="2026-03-22T15:55:00.000Z">
+<meta property="article:modified_time" content="2026-03-22T15:54:31.254Z">
+<meta property="article:author" content="Noah Sun">
+<meta property="article:tag" content="MCP">
+<meta property="article:tag" content="AI">
+<meta property="article:tag" content="Protocol">
+<meta property="article:tag" content="Agent">
+<meta property="article:tag" content="A2A">
+<meta property="article:tag" content="ACP">
+<meta property="article:tag" content="技术解析">
+<meta name="twitter:card" content="summary">
+
+
+
+
+
+
+  <link rel="canonical" href="http://blog.noahsun.top/2026/03/22/深度解析-AI-Agent-通讯协议/"/>
+
+
+
+<script type="text/javascript" id="page.configurations">
+  CONFIG.page = {
+    sidebar: "",
+  };
+</script>
+
+  <title>深度解析 AI Agent 通讯协议 | Noah Sun's Home</title>
+  
+
+
+
+
+<script async src="https://www.googletagmanager.com/gtag/js?id=UA-102233237-1"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+
+  gtag('config', 'UA-102233237-1');
+</script>
+
+
+
+  <script type="text/javascript">
+    var _hmt = _hmt || [];
+    (function() {
+      var hm = document.createElement("script");
+      hm.src = "https://hm.baidu.com/hm.js?07c7e0461feabfd55d89458a5c4ae94b";
+      var s = document.getElementsByTagName("script")[0];
+      s.parentNode.insertBefore(hm, s);
+    })();
+  </script>
+
+
+
+
+
+
+  <noscript>
+  <style type="text/css">
+    .use-motion .motion-element,
+    .use-motion .brand,
+    .use-motion .menu-item,
+    .sidebar-inner,
+    .use-motion .post-block,
+    .use-motion .pagination,
+    .use-motion .comments,
+    .use-motion .post-header,
+    .use-motion .post-body,
+    .use-motion .collection-title { opacity: initial; }
+
+    .use-motion .logo,
+    .use-motion .site-title,
+    .use-motion .site-subtitle {
+      opacity: initial;
+      top: initial;
+    }
+
+    .use-motion {
+      .logo-line-before i { left: initial; }
+      .logo-line-after i { right: initial; }
+    }
+  </style>
+</noscript>
+
+<meta name="generator" content="Hexo 6.3.0"></head>
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="zh-CN">
+
+  
+  
+    
+  
+
+  <div class="container sidebar-position-left page-post-detail">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-wrapper">
+  <div class="site-meta ">
+    
+
+    <div class="custom-logo-site-title">
+      <a href="/" class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title">Noah Sun's Home</span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+    
+  </div>
+
+  <div class="site-nav-toggle">
+    <button aria-label="切换导航栏">
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+    </button>
+  </div>
+</div>
+
+
+
+<nav class="site-nav">
+  
+    <ul id="menu" class="menu">
+      
+        
+        
+        
+          
+          <li class="menu-item menu-item-home">
+    <a href="/" rel="section">
+      <i class="menu-item-icon fa fa-fw fa-home"></i> <br />首页</a>
+  </li>
+        
+        
+        
+          
+          <li class="menu-item menu-item-archives">
+    <a href="/archives/" rel="section">
+      <i class="menu-item-icon fa fa-fw fa-archive"></i> <br />归档</a>
+  </li>
+        
+        
+        
+          
+          <li class="menu-item menu-item-categories">
+    <a href="/categories/" rel="section">
+      <i class="menu-item-icon fa fa-fw fa-th"></i> <br />分类</a>
+  </li>
+        
+        
+        
+          
+          <li class="menu-item menu-item-tags">
+    <a href="/tags/" rel="section">
+      <i class="menu-item-icon fa fa-fw fa-tags"></i> <br />标签</a>
+  </li>
+        
+        
+        
+          
+          <li class="menu-item menu-item-about">
+    <a href="/about/" rel="section">
+      <i class="menu-item-icon fa fa-fw fa-user"></i> <br />关于</a>
+  </li>
+
+      
+      
+        <li class="menu-item menu-item-search">
+          
+            <a href="javascript:;" class="popup-trigger">
+          
+            
+              <i class="menu-item-icon fa fa-search fa-fw"></i> <br />搜索</a>
+        </li>
+      
+    </ul>
+  
+
+  
+
+  
+    <div class="site-search">
+      
+  <div class="popup search-popup local-search-popup">
+  <div class="local-search-header clearfix">
+    <span class="search-icon">
+      <i class="fa fa-search"></i>
+    </span>
+    <span class="popup-btn-close">
+      <i class="fa fa-times-circle"></i>
+    </span>
+    <div class="local-search-input-wrapper">
+      <input autocomplete="off"
+             placeholder="搜索..." spellcheck="false"
+             type="text" id="local-search-input">
+    </div>
+  </div>
+  <div id="local-search-result"></div>
+</div>
+
+
+
+    </div>
+  
+</nav>
+
+
+
+  
+
+
+
+</div>
+    </header>
+
+    
+
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+            
+
+          
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+
+  
+  
+  
+
+  
+
+  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="http://blog.noahsun.top/2026/03/22/%E6%B7%B1%E5%BA%A6%E8%A7%A3%E6%9E%90-AI-Agent-%E9%80%9A%E8%AE%AF%E5%8D%8F%E8%AE%AE/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="Noah Sun">
+      <meta itemprop="description" content="Noah Sun's Blog.">
+      <meta itemprop="image" content="/images/avatar.jpg">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Noah Sun's Home">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">深度解析 AI Agent 通讯协议
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+
+            
+            
+            
+
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+
+              
+                
+              
+
+              <time title="创建时间：2026-03-22 23:55:00 / 修改时间：23:54:31" itemprop="dateCreated datePublished" datetime="2026-03-22T23:55:00+08:00">2026-03-22</time>
+            
+
+            
+              
+
+              
+            
+          </span>
+
+          
+            <span class="post-category" >
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing"><a href="/categories/%E6%8A%80%E6%9C%AF/" itemprop="url" rel="index"><span itemprop="name">技术</span></a></span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+              <span class="post-comments-count">
+                <span class="post-meta-divider">|</span>
+                <span class="post-meta-item-icon">
+                  <i class="fa fa-comment-o"></i>
+                </span>
+                <a href="/2026/03/22/%E6%B7%B1%E5%BA%A6%E8%A7%A3%E6%9E%90-AI-Agent-%E9%80%9A%E8%AE%AF%E5%8D%8F%E8%AE%AE/#comments" itemprop="discussionUrl">
+                  <span class="post-meta-item-text">评论数：</span> <span class="post-comments-count fb-comments-count" data-href="http://blog.noahsun.top/2026/03/22/%E6%B7%B1%E5%BA%A6%E8%A7%A3%E6%9E%90-AI-Agent-%E9%80%9A%E8%AE%AF%E5%8D%8F%E8%AE%AE/" itemprop="commentCount">0</span>
+                </a>
+              </span>
+            
+          
+
+          
+          
+             <span id="/2026/03/22/%E6%B7%B1%E5%BA%A6%E8%A7%A3%E6%9E%90-AI-Agent-%E9%80%9A%E8%AE%AF%E5%8D%8F%E8%AE%AE/" class="leancloud_visitors" data-flag-title="深度解析 AI Agent 通讯协议">
+               <span class="post-meta-divider">|</span>
+               <span class="post-meta-item-icon">
+                 <i class="fa fa-eye"></i>
+               </span>
+               
+                 <span class="post-meta-item-text">阅读次数：</span>
+               
+                 <span class="leancloud-visitors-count"></span>
+             </span>
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <h1 id="深度解析-AI-Agent-通讯协议"><a href="#深度解析-AI-Agent-通讯协议" class="headerlink" title="深度解析 AI Agent 通讯协议"></a>深度解析 AI Agent 通讯协议</h1><p>随着 AI Agent 技术的快速发展，多个 Agent 之间的协作与通信成为了关键问题。本文深入解析当前主流的 AI Agent 通讯协议，包括 MCP、A2A、ACP 等，帮助开发者理解协议设计原理并选择合适的方案。</p>
+<h2 id="目录"><a href="#目录" class="headerlink" title="目录"></a>目录</h2><ol>
+<li><a href="#%E4%B8%BA%E4%BB%80%E4%B9%88%E9%9C%80%E8%A6%81-agent-%E9%80%9A%E8%AE%AF%E5%8D%8F%E8%AE%AE">为什么需要 Agent 通讯协议</a></li>
+<li><a href="#%E4%B8%BB%E6%B5%81%E5%8D%8F%E8%AE%AE%E6%A6%82%E8%A7%88">主流协议概览</a></li>
+<li><a href="#mcp-model-context-protocol-%E6%B7%B1%E5%BA%A6%E8%A7%A3%E6%9E%90">MCP (Model Context Protocol) 深度解析</a></li>
+<li><a href="#a2a-agent-to-agent-%E5%8D%8F%E8%AE%AE">A2A (Agent-to-Agent) 协议</a></li>
+<li><a href="#acp-agent-communication-protocol">ACP (Agent Communication Protocol)</a></li>
+<li><a href="#%E5%8D%8F%E8%AE%AE%E5%AF%B9%E6%AF%94%E4%B8%8E%E9%80%89%E5%9E%8B%E5%BB%BA%E8%AE%AE">协议对比与选型建议</a></li>
+<li><a href="#%E5%AE%9E%E6%88%98%E6%9E%84%E5%BB%BA%E5%A4%9A-agent-%E7%B3%BB%E7%BB%9F">实战：构建多 Agent 系统</a></li>
+<li><a href="#%E6%9C%AA%E6%9D%A5%E5%B1%95%E6%9C%9B">未来展望</a></li>
+</ol>
+<hr>
+<h2 id="为什么需要-Agent-通讯协议"><a href="#为什么需要-Agent-通讯协议" class="headerlink" title="为什么需要 Agent 通讯协议"></a>为什么需要 Agent 通讯协议</h2><h3 id="背景"><a href="#背景" class="headerlink" title="背景"></a>背景</h3><p>在单 Agent 时代，AI 模型主要与人类用户进行交互。但随着应用场景的复杂化，出现了以下需求：</p>
+<ul>
+<li><strong>多 Agent 协作</strong>：多个 specialized agent 需要协同完成复杂任务</li>
+<li><strong>工具标准化</strong>：Agent 需要与外部工具、API、数据库进行标准化交互</li>
+<li><strong>跨平台互操作</strong>：不同厂商、不同框架的 Agent 需要能够互相通信</li>
+<li><strong>安全与权限</strong>：需要标准化的认证、授权和审计机制</li>
+</ul>
+<h3 id="核心挑战"><a href="#核心挑战" class="headerlink" title="核心挑战"></a>核心挑战</h3><ol>
+<li><strong>语义对齐</strong>：不同 Agent 对同一概念的理解可能不同</li>
+<li><strong>状态同步</strong>：分布式 Agent 之间的状态一致性</li>
+<li><strong>异步通信</strong>：长任务、流式响应的处理</li>
+<li><strong>错误处理</strong>：超时、重试、回滚机制</li>
+<li><strong>安全边界</strong>：权限控制、数据隔离</li>
+</ol>
+<hr>
+<h2 id="主流协议概览"><a href="#主流协议概览" class="headerlink" title="主流协议概览"></a>主流协议概览</h2><table>
+<thead>
+<tr>
+<th>协议</th>
+<th>提出方</th>
+<th>主要用途</th>
+<th>成熟度</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>MCP</td>
+<td>Anthropic</td>
+<td>模型 - 上下文&#x2F;工具交互</td>
+<td>🟢 成熟</td>
+</tr>
+<tr>
+<td>A2A</td>
+<td>社区驱动</td>
+<td>Agent 间点对点通信</td>
+<td>🟡 发展中</td>
+</tr>
+<tr>
+<td>ACP</td>
+<td>多厂商</td>
+<td>通用 Agent 通信框架</td>
+<td>🟡 发展中</td>
+</tr>
+<tr>
+<td>FIPA ACL</td>
+<td>IEEE</td>
+<td>传统多 Agent 系统</td>
+<td>🟢 成熟但老旧</td>
+</tr>
+<tr>
+<td>LangGraph</td>
+<td>LangChain</td>
+<td>工作流编排</td>
+<td>🟢 成熟</td>
+</tr>
+</tbody></table>
+<hr>
+<h2 id="MCP-Model-Context-Protocol-深度解析"><a href="#MCP-Model-Context-Protocol-深度解析" class="headerlink" title="MCP (Model Context Protocol) 深度解析"></a>MCP (Model Context Protocol) 深度解析</h2><h3 id="概述"><a href="#概述" class="headerlink" title="概述"></a>概述</h3><p>MCP (Model Context Protocol) 是由 Anthropic 提出的开放协议，旨在标准化 AI 模型与外部数据源、工具之间的交互。它是目前最成熟的 Agent 通信协议之一。</p>
+<h3 id="核心架构"><a href="#核心架构" class="headerlink" title="核心架构"></a>核心架构</h3><figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">┌─────────────┐     ┌─────────────┐     ┌─────────────┐</span><br><span class="line">│   Client    │────▶│   Server    │────▶│   Resource  │</span><br><span class="line">│  (AI Model) │     │  (MCP Host) │     │  (Tool/API) │</span><br><span class="line">└─────────────┘     └─────────────┘     └─────────────┘</span><br></pre></td></tr></table></figure>
+
+<h3 id="协议分层"><a href="#协议分层" class="headerlink" title="协议分层"></a>协议分层</h3><h4 id="1-传输层-Transport-Layer"><a href="#1-传输层-Transport-Layer" class="headerlink" title="1. 传输层 (Transport Layer)"></a>1. 传输层 (Transport Layer)</h4><p>MCP 支持多种传输方式：</p>
+<ul>
+<li><strong>stdio</strong>：本地进程间通信，适合嵌入式场景</li>
+<li><strong>HTTP&#x2F;SSE</strong>：远程服务通信，支持流式响应</li>
+<li><strong>WebSocket</strong>：双向实时通信</li>
+</ul>
+<figure class="highlight typescript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// HTTP SSE 传输示例</span></span><br><span class="line"><span class="keyword">const</span> client = <span class="keyword">new</span> <span class="title class_">MCPClient</span>(&#123;</span><br><span class="line">  <span class="attr">transport</span>: <span class="keyword">new</span> <span class="title class_">SSEClientTransport</span>(&#123;</span><br><span class="line">    <span class="attr">url</span>: <span class="string">&quot;https://mcp-server.example.com/sse&quot;</span></span><br><span class="line">  &#125;)</span><br><span class="line">&#125;);</span><br></pre></td></tr></table></figure>
+
+<h4 id="2-消息层-Message-Layer"><a href="#2-消息层-Message-Layer" class="headerlink" title="2. 消息层 (Message Layer)"></a>2. 消息层 (Message Layer)</h4><p>MCP 定义了三种基本消息类型：</p>
+<p><strong>Request</strong> - 客户端发起请求：</p>
+<figure class="highlight json"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="punctuation">&#123;</span></span><br><span class="line">  <span class="attr">&quot;jsonrpc&quot;</span><span class="punctuation">:</span> <span class="string">&quot;2.0&quot;</span><span class="punctuation">,</span></span><br><span class="line">  <span class="attr">&quot;id&quot;</span><span class="punctuation">:</span> <span class="number">1</span><span class="punctuation">,</span></span><br><span class="line">  <span class="attr">&quot;method&quot;</span><span class="punctuation">:</span> <span class="string">&quot;tools/call&quot;</span><span class="punctuation">,</span></span><br><span class="line">  <span class="attr">&quot;params&quot;</span><span class="punctuation">:</span> <span class="punctuation">&#123;</span></span><br><span class="line">    <span class="attr">&quot;name&quot;</span><span class="punctuation">:</span> <span class="string">&quot;search&quot;</span><span class="punctuation">,</span></span><br><span class="line">    <span class="attr">&quot;arguments&quot;</span><span class="punctuation">:</span> <span class="punctuation">&#123;</span><span class="attr">&quot;query&quot;</span><span class="punctuation">:</span> <span class="string">&quot;AI agent protocol&quot;</span><span class="punctuation">&#125;</span></span><br><span class="line">  <span class="punctuation">&#125;</span></span><br><span class="line"><span class="punctuation">&#125;</span></span><br></pre></td></tr></table></figure>
+
+<p><strong>Response</strong> - 服务器响应：</p>
+<figure class="highlight json"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="punctuation">&#123;</span></span><br><span class="line">  <span class="attr">&quot;jsonrpc&quot;</span><span class="punctuation">:</span> <span class="string">&quot;2.0&quot;</span><span class="punctuation">,</span></span><br><span class="line">  <span class="attr">&quot;id&quot;</span><span class="punctuation">:</span> <span class="number">1</span><span class="punctuation">,</span></span><br><span class="line">  <span class="attr">&quot;result&quot;</span><span class="punctuation">:</span> <span class="punctuation">&#123;</span></span><br><span class="line">    <span class="attr">&quot;content&quot;</span><span class="punctuation">:</span> <span class="punctuation">[</span></span><br><span class="line">      <span class="punctuation">&#123;</span><span class="attr">&quot;type&quot;</span><span class="punctuation">:</span> <span class="string">&quot;text&quot;</span><span class="punctuation">,</span> <span class="attr">&quot;text&quot;</span><span class="punctuation">:</span> <span class="string">&quot;Search results...&quot;</span><span class="punctuation">&#125;</span></span><br><span class="line">    <span class="punctuation">]</span></span><br><span class="line">  <span class="punctuation">&#125;</span></span><br><span class="line"><span class="punctuation">&#125;</span></span><br></pre></td></tr></table></figure>
+
+<p><strong>Notification</strong> - 单向通知：</p>
+<figure class="highlight json"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="punctuation">&#123;</span></span><br><span class="line">  <span class="attr">&quot;jsonrpc&quot;</span><span class="punctuation">:</span> <span class="string">&quot;2.0&quot;</span><span class="punctuation">,</span></span><br><span class="line">  <span class="attr">&quot;method&quot;</span><span class="punctuation">:</span> <span class="string">&quot;notifications/resources/updated&quot;</span><span class="punctuation">,</span></span><br><span class="line">  <span class="attr">&quot;params&quot;</span><span class="punctuation">:</span> <span class="punctuation">&#123;</span><span class="attr">&quot;uri&quot;</span><span class="punctuation">:</span> <span class="string">&quot;file:///data/config.json&quot;</span><span class="punctuation">&#125;</span></span><br><span class="line"><span class="punctuation">&#125;</span></span><br></pre></td></tr></table></figure>
+
+<h4 id="3-能力层-Capability-Layer"><a href="#3-能力层-Capability-Layer" class="headerlink" title="3. 能力层 (Capability Layer)"></a>3. 能力层 (Capability Layer)</h4><p>MCP 定义了四大核心能力：</p>
+<p><strong>Resources</strong> - 数据资源访问：</p>
+<figure class="highlight typescript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// 读取资源</span></span><br><span class="line"><span class="keyword">const</span> resource = <span class="keyword">await</span> client.<span class="title function_">readResource</span>(&#123;</span><br><span class="line">  <span class="attr">uri</span>: <span class="string">&quot;file:///home/user/documents/report.pdf&quot;</span></span><br><span class="line">&#125;);</span><br></pre></td></tr></table></figure>
+
+<p><strong>Tools</strong> - 工具调用：</p>
+<figure class="highlight typescript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// 调用工具</span></span><br><span class="line"><span class="keyword">const</span> result = <span class="keyword">await</span> client.<span class="title function_">callTool</span>(&#123;</span><br><span class="line">  <span class="attr">name</span>: <span class="string">&quot;web_search&quot;</span>,</span><br><span class="line">  <span class="attr">arguments</span>: &#123; <span class="attr">query</span>: <span class="string">&quot;latest AI news&quot;</span> &#125;</span><br><span class="line">&#125;);</span><br></pre></td></tr></table></figure>
+
+<p><strong>Prompts</strong> - 预定义提示模板：</p>
+<figure class="highlight typescript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// 获取提示模板</span></span><br><span class="line"><span class="keyword">const</span> prompt = <span class="keyword">await</span> client.<span class="title function_">getPrompt</span>(&#123;</span><br><span class="line">  <span class="attr">name</span>: <span class="string">&quot;code_review&quot;</span>,</span><br><span class="line">  <span class="attr">arguments</span>: &#123; <span class="attr">code</span>: <span class="string">&quot;...&quot;</span> &#125;</span><br><span class="line">&#125;);</span><br></pre></td></tr></table></figure>
+
+<p><strong>Sampling</strong> - 模型采样请求（服务端请求客户端生成内容）：</p>
+<figure class="highlight typescript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// 请求采样</span></span><br><span class="line"><span class="keyword">const</span> completion = <span class="keyword">await</span> client.<span class="title function_">createMessage</span>(&#123;</span><br><span class="line">  <span class="attr">modelPreferences</span>: &#123; <span class="attr">hints</span>: [&#123; <span class="attr">name</span>: <span class="string">&quot;claude-3-5-sonnet&quot;</span> &#125;] &#125;,</span><br><span class="line">  <span class="attr">messages</span>: [&#123; <span class="attr">role</span>: <span class="string">&quot;user&quot;</span>, <span class="attr">content</span>: <span class="string">&quot;...&quot;</span> &#125;]</span><br><span class="line">&#125;);</span><br></pre></td></tr></table></figure>
+
+<h3 id="协议生命周期"><a href="#协议生命周期" class="headerlink" title="协议生命周期"></a>协议生命周期</h3><figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">┌─────────┐    ┌─────────┐    ┌─────────┐    ┌─────────┐</span><br><span class="line">│  Init   │───▶│  List   │───▶│  Call   │───▶│  Close  │</span><br><span class="line">│  初始化  │    │  能力枚举 │    │  执行调用 │    │  关闭连接 │</span><br><span class="line">└─────────┘    └─────────┘    └─────────┘    └─────────┘</span><br></pre></td></tr></table></figure>
+
+<p><strong>初始化阶段</strong>：</p>
+<figure class="highlight json"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// 客户端发送初始化请求</span></span><br><span class="line"><span class="punctuation">&#123;</span></span><br><span class="line">  <span class="attr">&quot;method&quot;</span><span class="punctuation">:</span> <span class="string">&quot;initialize&quot;</span><span class="punctuation">,</span></span><br><span class="line">  <span class="attr">&quot;params&quot;</span><span class="punctuation">:</span> <span class="punctuation">&#123;</span></span><br><span class="line">    <span class="attr">&quot;protocolVersion&quot;</span><span class="punctuation">:</span> <span class="string">&quot;2024-11-05&quot;</span><span class="punctuation">,</span></span><br><span class="line">    <span class="attr">&quot;capabilities&quot;</span><span class="punctuation">:</span> <span class="punctuation">&#123;</span></span><br><span class="line">      <span class="attr">&quot;roots&quot;</span><span class="punctuation">:</span> <span class="punctuation">&#123;</span> <span class="attr">&quot;listChanged&quot;</span><span class="punctuation">:</span> <span class="literal"><span class="keyword">true</span></span> <span class="punctuation">&#125;</span><span class="punctuation">,</span></span><br><span class="line">      <span class="attr">&quot;sampling&quot;</span><span class="punctuation">:</span> <span class="punctuation">&#123;</span><span class="punctuation">&#125;</span></span><br><span class="line">    <span class="punctuation">&#125;</span><span class="punctuation">,</span></span><br><span class="line">    <span class="attr">&quot;clientInfo&quot;</span><span class="punctuation">:</span> <span class="punctuation">&#123;</span></span><br><span class="line">      <span class="attr">&quot;name&quot;</span><span class="punctuation">:</span> <span class="string">&quot;claude-desktop&quot;</span><span class="punctuation">,</span></span><br><span class="line">      <span class="attr">&quot;version&quot;</span><span class="punctuation">:</span> <span class="string">&quot;0.1.0&quot;</span></span><br><span class="line">    <span class="punctuation">&#125;</span></span><br><span class="line">  <span class="punctuation">&#125;</span></span><br><span class="line"><span class="punctuation">&#125;</span></span><br><span class="line"></span><br><span class="line"><span class="comment">// 服务器响应</span></span><br><span class="line"><span class="punctuation">&#123;</span></span><br><span class="line">  <span class="attr">&quot;result&quot;</span><span class="punctuation">:</span> <span class="punctuation">&#123;</span></span><br><span class="line">    <span class="attr">&quot;protocolVersion&quot;</span><span class="punctuation">:</span> <span class="string">&quot;2024-11-05&quot;</span><span class="punctuation">,</span></span><br><span class="line">    <span class="attr">&quot;capabilities&quot;</span><span class="punctuation">:</span> <span class="punctuation">&#123;</span></span><br><span class="line">      <span class="attr">&quot;tools&quot;</span><span class="punctuation">:</span> <span class="punctuation">&#123;</span> <span class="attr">&quot;listChanged&quot;</span><span class="punctuation">:</span> <span class="literal"><span class="keyword">true</span></span> <span class="punctuation">&#125;</span><span class="punctuation">,</span></span><br><span class="line">      <span class="attr">&quot;resources&quot;</span><span class="punctuation">:</span> <span class="punctuation">&#123;</span> <span class="attr">&quot;subscribe&quot;</span><span class="punctuation">:</span> <span class="literal"><span class="keyword">true</span></span> <span class="punctuation">&#125;</span></span><br><span class="line">    <span class="punctuation">&#125;</span><span class="punctuation">,</span></span><br><span class="line">    <span class="attr">&quot;serverInfo&quot;</span><span class="punctuation">:</span> <span class="punctuation">&#123;</span></span><br><span class="line">      <span class="attr">&quot;name&quot;</span><span class="punctuation">:</span> <span class="string">&quot;filesystem-server&quot;</span><span class="punctuation">,</span></span><br><span class="line">      <span class="attr">&quot;version&quot;</span><span class="punctuation">:</span> <span class="string">&quot;1.0.0&quot;</span></span><br><span class="line">    <span class="punctuation">&#125;</span></span><br><span class="line">  <span class="punctuation">&#125;</span></span><br><span class="line"><span class="punctuation">&#125;</span></span><br></pre></td></tr></table></figure>
+
+<h3 id="MCP-的优势"><a href="#MCP-的优势" class="headerlink" title="MCP 的优势"></a>MCP 的优势</h3><ol>
+<li><strong>标准化</strong>：统一的接口定义，降低集成成本</li>
+<li><strong>可扩展</strong>：支持自定义工具和资源类型</li>
+<li><strong>安全</strong>：内置权限控制和审计日志</li>
+<li><strong>生态丰富</strong>：已有大量开源实现</li>
+</ol>
+<h3 id="局限性"><a href="#局限性" class="headerlink" title="局限性"></a>局限性</h3><ol>
+<li><strong>中心化倾向</strong>：通常需要中心化的 Server 协调</li>
+<li><strong>Agent-to-Agent 支持有限</strong>：主要设计为 Model-to-Tool 模式</li>
+<li><strong>复杂场景支持不足</strong>：多 Agent 协作、工作流编排需要额外设计</li>
+</ol>
+<hr>
+<h2 id="A2A-Agent-to-Agent-协议"><a href="#A2A-Agent-to-Agent-协议" class="headerlink" title="A2A (Agent-to-Agent) 协议"></a>A2A (Agent-to-Agent) 协议</h2><h3 id="概述-1"><a href="#概述-1" class="headerlink" title="概述"></a>概述</h3><p>A2A (Agent-to-Agent) 协议专注于解决多个 AI Agent 之间的直接通信问题，是 MCP 的重要补充。</p>
+<h3 id="核心设计原则"><a href="#核心设计原则" class="headerlink" title="核心设计原则"></a>核心设计原则</h3><ol>
+<li><strong>对等通信</strong>：Agent 之间地位平等，无中心协调者</li>
+<li><strong>语义互操作</strong>：基于本体论 (Ontology) 的语义对齐</li>
+<li><strong>异步优先</strong>：支持长对话、多轮交互</li>
+<li><strong>可验证</strong>：消息可追溯、可审计</li>
+</ol>
+<h3 id="消息格式"><a href="#消息格式" class="headerlink" title="消息格式"></a>消息格式</h3><figure class="highlight json"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br></pre></td><td class="code"><pre><span class="line"><span class="punctuation">&#123;</span></span><br><span class="line">  <span class="attr">&quot;messageId&quot;</span><span class="punctuation">:</span> <span class="string">&quot;msg_abc123&quot;</span><span class="punctuation">,</span></span><br><span class="line">  <span class="attr">&quot;conversationId&quot;</span><span class="punctuation">:</span> <span class="string">&quot;conv_xyz789&quot;</span><span class="punctuation">,</span></span><br><span class="line">  <span class="attr">&quot;timestamp&quot;</span><span class="punctuation">:</span> <span class="string">&quot;2026-03-22T15:30:00Z&quot;</span><span class="punctuation">,</span></span><br><span class="line">  <span class="attr">&quot;sender&quot;</span><span class="punctuation">:</span> <span class="punctuation">&#123;</span></span><br><span class="line">    <span class="attr">&quot;agentId&quot;</span><span class="punctuation">:</span> <span class="string">&quot;agent_researcher&quot;</span><span class="punctuation">,</span></span><br><span class="line">    <span class="attr">&quot;agentType&quot;</span><span class="punctuation">:</span> <span class="string">&quot;research_agent&quot;</span><span class="punctuation">,</span></span><br><span class="line">    <span class="attr">&quot;capabilities&quot;</span><span class="punctuation">:</span> <span class="punctuation">[</span><span class="string">&quot;web_search&quot;</span><span class="punctuation">,</span> <span class="string">&quot;summarization&quot;</span><span class="punctuation">]</span></span><br><span class="line">  <span class="punctuation">&#125;</span><span class="punctuation">,</span></span><br><span class="line">  <span class="attr">&quot;recipient&quot;</span><span class="punctuation">:</span> <span class="punctuation">&#123;</span></span><br><span class="line">    <span class="attr">&quot;agentId&quot;</span><span class="punctuation">:</span> <span class="string">&quot;agent_writer&quot;</span><span class="punctuation">,</span></span><br><span class="line">    <span class="attr">&quot;agentType&quot;</span><span class="punctuation">:</span> <span class="string">&quot;content_agent&quot;</span></span><br><span class="line">  <span class="punctuation">&#125;</span><span class="punctuation">,</span></span><br><span class="line">  <span class="attr">&quot;intent&quot;</span><span class="punctuation">:</span> <span class="punctuation">&#123;</span></span><br><span class="line">    <span class="attr">&quot;type&quot;</span><span class="punctuation">:</span> <span class="string">&quot;request&quot;</span><span class="punctuation">,</span></span><br><span class="line">    <span class="attr">&quot;action&quot;</span><span class="punctuation">:</span> <span class="string">&quot;provide_information&quot;</span><span class="punctuation">,</span></span><br><span class="line">    <span class="attr">&quot;parameters&quot;</span><span class="punctuation">:</span> <span class="punctuation">&#123;</span></span><br><span class="line">      <span class="attr">&quot;topic&quot;</span><span class="punctuation">:</span> <span class="string">&quot;AI agent protocols&quot;</span><span class="punctuation">,</span></span><br><span class="line">      <span class="attr">&quot;format&quot;</span><span class="punctuation">:</span> <span class="string">&quot;structured&quot;</span></span><br><span class="line">    <span class="punctuation">&#125;</span></span><br><span class="line">  <span class="punctuation">&#125;</span><span class="punctuation">,</span></span><br><span class="line">  <span class="attr">&quot;payload&quot;</span><span class="punctuation">:</span> <span class="punctuation">&#123;</span></span><br><span class="line">    <span class="attr">&quot;contentType&quot;</span><span class="punctuation">:</span> <span class="string">&quot;application/json&quot;</span><span class="punctuation">,</span></span><br><span class="line">    <span class="attr">&quot;content&quot;</span><span class="punctuation">:</span> <span class="punctuation">&#123;</span></span><br><span class="line">      <span class="attr">&quot;summary&quot;</span><span class="punctuation">:</span> <span class="string">&quot;...&quot;</span><span class="punctuation">,</span></span><br><span class="line">      <span class="attr">&quot;sources&quot;</span><span class="punctuation">:</span> <span class="punctuation">[</span><span class="string">&quot;...&quot;</span><span class="punctuation">,</span> <span class="string">&quot;...&quot;</span><span class="punctuation">]</span></span><br><span class="line">    <span class="punctuation">&#125;</span></span><br><span class="line">  <span class="punctuation">&#125;</span><span class="punctuation">,</span></span><br><span class="line">  <span class="attr">&quot;metadata&quot;</span><span class="punctuation">:</span> <span class="punctuation">&#123;</span></span><br><span class="line">    <span class="attr">&quot;priority&quot;</span><span class="punctuation">:</span> <span class="string">&quot;normal&quot;</span><span class="punctuation">,</span></span><br><span class="line">    <span class="attr">&quot;ttl&quot;</span><span class="punctuation">:</span> <span class="number">3600</span><span class="punctuation">,</span></span><br><span class="line">    <span class="attr">&quot;requiresAck&quot;</span><span class="punctuation">:</span> <span class="literal"><span class="keyword">true</span></span></span><br><span class="line">  <span class="punctuation">&#125;</span></span><br><span class="line"><span class="punctuation">&#125;</span></span><br></pre></td></tr></table></figure>
+
+<h3 id="通信模式"><a href="#通信模式" class="headerlink" title="通信模式"></a>通信模式</h3><h4 id="1-请求-响应-Request-Response"><a href="#1-请求-响应-Request-Response" class="headerlink" title="1. 请求 - 响应 (Request-Response)"></a>1. 请求 - 响应 (Request-Response)</h4><figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">Agent A ──[Request]──▶ Agent B</span><br><span class="line">Agent A ◀──[Response]── Agent B</span><br></pre></td></tr></table></figure>
+
+<p>适用于：信息查询、任务委托</p>
+<h4 id="2-发布-订阅-Pub-Sub"><a href="#2-发布-订阅-Pub-Sub" class="headerlink" title="2. 发布 - 订阅 (Pub-Sub)"></a>2. 发布 - 订阅 (Pub-Sub)</h4><figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">Agent A ──[Publish]──▶ Message Broker</span><br><span class="line">                         │</span><br><span class="line">         ┌───────────────┼───────────────┐</span><br><span class="line">         ▼               ▼               ▼</span><br><span class="line">    Agent B          Agent C         Agent D</span><br><span class="line">   (Subscriber)   (Subscriber)    (Subscriber)</span><br></pre></td></tr></table></figure>
+
+<p>适用于：事件通知、状态广播</p>
+<h4 id="3-流式对话-Streaming-Dialogue"><a href="#3-流式对话-Streaming-Dialogue" class="headerlink" title="3. 流式对话 (Streaming Dialogue)"></a>3. 流式对话 (Streaming Dialogue)</h4><figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">Agent A ──[Message 1]──▶ Agent B</span><br><span class="line">Agent A ◀──[Message 1]── Agent B</span><br><span class="line">Agent A ──[Message 2]──▶ Agent B</span><br><span class="line">         ...</span><br></pre></td></tr></table></figure>
+
+<p>适用于：多轮协商、协作创作</p>
+<h3 id="服务发现"><a href="#服务发现" class="headerlink" title="服务发现"></a>服务发现</h3><p>A2A 协议定义了 Agent 注册与发现机制：</p>
+<figure class="highlight json"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// Agent 注册</span></span><br><span class="line"><span class="punctuation">&#123;</span></span><br><span class="line">  <span class="attr">&quot;action&quot;</span><span class="punctuation">:</span> <span class="string">&quot;register&quot;</span><span class="punctuation">,</span></span><br><span class="line">  <span class="attr">&quot;agent&quot;</span><span class="punctuation">:</span> <span class="punctuation">&#123;</span></span><br><span class="line">    <span class="attr">&quot;id&quot;</span><span class="punctuation">:</span> <span class="string">&quot;agent_researcher&quot;</span><span class="punctuation">,</span></span><br><span class="line">    <span class="attr">&quot;type&quot;</span><span class="punctuation">:</span> <span class="string">&quot;research_agent&quot;</span><span class="punctuation">,</span></span><br><span class="line">    <span class="attr">&quot;capabilities&quot;</span><span class="punctuation">:</span> <span class="punctuation">[</span><span class="string">&quot;web_search&quot;</span><span class="punctuation">,</span> <span class="string">&quot;data_analysis&quot;</span><span class="punctuation">]</span><span class="punctuation">,</span></span><br><span class="line">    <span class="attr">&quot;endpoints&quot;</span><span class="punctuation">:</span> <span class="punctuation">[</span></span><br><span class="line">      <span class="punctuation">&#123;</span></span><br><span class="line">        <span class="attr">&quot;protocol&quot;</span><span class="punctuation">:</span> <span class="string">&quot;https&quot;</span><span class="punctuation">,</span></span><br><span class="line">        <span class="attr">&quot;url&quot;</span><span class="punctuation">:</span> <span class="string">&quot;https://agent.example.com/a2a&quot;</span><span class="punctuation">,</span></span><br><span class="line">        <span class="attr">&quot;auth&quot;</span><span class="punctuation">:</span> <span class="string">&quot;bearer&quot;</span></span><br><span class="line">      <span class="punctuation">&#125;</span></span><br><span class="line">    <span class="punctuation">]</span><span class="punctuation">,</span></span><br><span class="line">    <span class="attr">&quot;availability&quot;</span><span class="punctuation">:</span> <span class="string">&quot;24/7&quot;</span></span><br><span class="line">  <span class="punctuation">&#125;</span></span><br><span class="line"><span class="punctuation">&#125;</span></span><br><span class="line"></span><br><span class="line"><span class="comment">// Agent 查询</span></span><br><span class="line"><span class="punctuation">&#123;</span></span><br><span class="line">  <span class="attr">&quot;action&quot;</span><span class="punctuation">:</span> <span class="string">&quot;discover&quot;</span><span class="punctuation">,</span></span><br><span class="line">  <span class="attr">&quot;query&quot;</span><span class="punctuation">:</span> <span class="punctuation">&#123;</span></span><br><span class="line">    <span class="attr">&quot;capability&quot;</span><span class="punctuation">:</span> <span class="string">&quot;web_search&quot;</span><span class="punctuation">,</span></span><br><span class="line">    <span class="attr">&quot;minTrustLevel&quot;</span><span class="punctuation">:</span> <span class="string">&quot;verified&quot;</span></span><br><span class="line">  <span class="punctuation">&#125;</span></span><br><span class="line"><span class="punctuation">&#125;</span></span><br></pre></td></tr></table></figure>
+
+<h3 id="信任与安全"><a href="#信任与安全" class="headerlink" title="信任与安全"></a>信任与安全</h3><p>A2A 协议内置了多层安全机制：</p>
+<ol>
+<li><strong>身份认证</strong>：基于 DID (Decentralized Identifier) 的身份验证</li>
+<li><strong>消息签名</strong>：所有消息必须签名，防止篡改</li>
+<li><strong>权限委托</strong>：细粒度的能力授权</li>
+<li><strong>审计日志</strong>：完整的通信记录</li>
+</ol>
+<hr>
+<h2 id="ACP-Agent-Communication-Protocol"><a href="#ACP-Agent-Communication-Protocol" class="headerlink" title="ACP (Agent Communication Protocol)"></a>ACP (Agent Communication Protocol)</h2><h3 id="概述-2"><a href="#概述-2" class="headerlink" title="概述"></a>概述</h3><p>ACP 是一个更加通用的 Agent 通信框架，旨在统一各种 Agent 交互场景。它借鉴了 FIPA ACL 的设计，同时融入了现代 Web 技术。</p>
+<h3 id="核心概念"><a href="#核心概念" class="headerlink" title="核心概念"></a>核心概念</h3><h4 id="言语行为理论-Speech-Act-Theory"><a href="#言语行为理论-Speech-Act-Theory" class="headerlink" title="言语行为理论 (Speech Act Theory)"></a>言语行为理论 (Speech Act Theory)</h4><p>ACP 基于言语行为理论，将消息分为三类：</p>
+<table>
+<thead>
+<tr>
+<th>类别</th>
+<th>说明</th>
+<th>示例</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>断言类 (Assertives)</td>
+<td>陈述事实</td>
+<td><code>inform</code>, <code>confirm</code></td>
+</tr>
+<tr>
+<td>指令类 (Directives)</td>
+<td>请求行动</td>
+<td><code>request</code>, <code>command</code></td>
+</tr>
+<tr>
+<td>承诺类 (Commissives)</td>
+<td>承诺行动</td>
+<td><code>promise</code>, <code>agree</code></td>
+</tr>
+</tbody></table>
+<h4 id="消息结构"><a href="#消息结构" class="headerlink" title="消息结构"></a>消息结构</h4><figure class="highlight json"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br></pre></td><td class="code"><pre><span class="line"><span class="punctuation">&#123;</span></span><br><span class="line">  <span class="attr">&quot;performative&quot;</span><span class="punctuation">:</span> <span class="string">&quot;request&quot;</span><span class="punctuation">,</span></span><br><span class="line">  <span class="attr">&quot;sender&quot;</span><span class="punctuation">:</span> <span class="string">&quot;agent://org.example/researcher&quot;</span><span class="punctuation">,</span></span><br><span class="line">  <span class="attr">&quot;receiver&quot;</span><span class="punctuation">:</span> <span class="punctuation">[</span><span class="string">&quot;agent://org.example/writer&quot;</span><span class="punctuation">]</span><span class="punctuation">,</span></span><br><span class="line">  <span class="attr">&quot;content&quot;</span><span class="punctuation">:</span> <span class="punctuation">&#123;</span></span><br><span class="line">    <span class="attr">&quot;type&quot;</span><span class="punctuation">:</span> <span class="string">&quot;task&quot;</span><span class="punctuation">,</span></span><br><span class="line">    <span class="attr">&quot;description&quot;</span><span class="punctuation">:</span> <span class="string">&quot;Research AI agent protocols&quot;</span><span class="punctuation">,</span></span><br><span class="line">    <span class="attr">&quot;constraints&quot;</span><span class="punctuation">:</span> <span class="punctuation">&#123;</span></span><br><span class="line">      <span class="attr">&quot;deadline&quot;</span><span class="punctuation">:</span> <span class="string">&quot;2026-03-23T12:00:00Z&quot;</span><span class="punctuation">,</span></span><br><span class="line">      <span class="attr">&quot;quality&quot;</span><span class="punctuation">:</span> <span class="string">&quot;high&quot;</span></span><br><span class="line">    <span class="punctuation">&#125;</span></span><br><span class="line">  <span class="punctuation">&#125;</span><span class="punctuation">,</span></span><br><span class="line">  <span class="attr">&quot;ontology&quot;</span><span class="punctuation">:</span> <span class="string">&quot;task-ontology-v1&quot;</span><span class="punctuation">,</span></span><br><span class="line">  <span class="attr">&quot;language&quot;</span><span class="punctuation">:</span> <span class="string">&quot;ACL-JSON&quot;</span><span class="punctuation">,</span></span><br><span class="line">  <span class="attr">&quot;replyWith&quot;</span><span class="punctuation">:</span> <span class="string">&quot;task_123&quot;</span><span class="punctuation">,</span></span><br><span class="line">  <span class="attr">&quot;replyBy&quot;</span><span class="punctuation">:</span> <span class="string">&quot;2026-03-23T10:00:00Z&quot;</span><span class="punctuation">,</span></span><br><span class="line">  <span class="attr">&quot;inReplyTo&quot;</span><span class="punctuation">:</span> <span class="literal"><span class="keyword">null</span></span><span class="punctuation">,</span></span><br><span class="line">  <span class="attr">&quot;conversationId&quot;</span><span class="punctuation">:</span> <span class="string">&quot;conv_456&quot;</span></span><br><span class="line"><span class="punctuation">&#125;</span></span><br></pre></td></tr></table></figure>
+
+<h3 id="交互协议-Interaction-Protocols"><a href="#交互协议-Interaction-Protocols" class="headerlink" title="交互协议 (Interaction Protocols)"></a>交互协议 (Interaction Protocols)</h3><p>ACP 定义了标准化的交互协议模板：</p>
+<h4 id="合同网协议-Contract-Net-Protocol"><a href="#合同网协议-Contract-Net-Protocol" class="headerlink" title="合同网协议 (Contract Net Protocol)"></a>合同网协议 (Contract Net Protocol)</h4><figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line">Manager Agent                Bidder Agents</span><br><span class="line">     │                            │</span><br><span class="line">     │────[Call for Proposal]────▶│</span><br><span class="line">     │                            │</span><br><span class="line">     │◀───────[Proposal]──────────│</span><br><span class="line">     │◀───────[Proposal]──────────│</span><br><span class="line">     │                            │</span><br><span class="line">     │────[Accept Proposal]──────▶│</span><br><span class="line">     │                            │</span><br><span class="line">     │◀──────[Report Result]──────│</span><br></pre></td></tr></table></figure>
+
+<h4 id="询问协议-Query-Protocol"><a href="#询问协议-Query-Protocol" class="headerlink" title="询问协议 (Query Protocol)"></a>询问协议 (Query Protocol)</h4><figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">Querier                    Responder</span><br><span class="line">   │                          │</span><br><span class="line">   │──────[Query]────────────▶│</span><br><span class="line">   │                          │</span><br><span class="line">   │◀─────[Inform]────────────│</span><br><span class="line">   │    or [Refuse]           │</span><br></pre></td></tr></table></figure>
+
+<h3 id="本体论-Ontology"><a href="#本体论-Ontology" class="headerlink" title="本体论 (Ontology)"></a>本体论 (Ontology)</h3><p>ACP 使用本体论来确保语义一致性：</p>
+<figure class="highlight json"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line"><span class="punctuation">&#123;</span></span><br><span class="line">  <span class="attr">&quot;ontology&quot;</span><span class="punctuation">:</span> <span class="string">&quot;agent-task-ontology-v2&quot;</span><span class="punctuation">,</span></span><br><span class="line">  <span class="attr">&quot;concepts&quot;</span><span class="punctuation">:</span> <span class="punctuation">&#123;</span></span><br><span class="line">    <span class="attr">&quot;Task&quot;</span><span class="punctuation">:</span> <span class="punctuation">&#123;</span></span><br><span class="line">      <span class="attr">&quot;properties&quot;</span><span class="punctuation">:</span> <span class="punctuation">[</span><span class="string">&quot;id&quot;</span><span class="punctuation">,</span> <span class="string">&quot;description&quot;</span><span class="punctuation">,</span> <span class="string">&quot;priority&quot;</span><span class="punctuation">,</span> <span class="string">&quot;deadline&quot;</span><span class="punctuation">]</span><span class="punctuation">,</span></span><br><span class="line">      <span class="attr">&quot;relations&quot;</span><span class="punctuation">:</span> <span class="punctuation">[</span><span class="string">&quot;assignedTo&quot;</span><span class="punctuation">,</span> <span class="string">&quot;dependsOn&quot;</span><span class="punctuation">]</span></span><br><span class="line">    <span class="punctuation">&#125;</span><span class="punctuation">,</span></span><br><span class="line">    <span class="attr">&quot;Agent&quot;</span><span class="punctuation">:</span> <span class="punctuation">&#123;</span></span><br><span class="line">      <span class="attr">&quot;properties&quot;</span><span class="punctuation">:</span> <span class="punctuation">[</span><span class="string">&quot;id&quot;</span><span class="punctuation">,</span> <span class="string">&quot;capabilities&quot;</span><span class="punctuation">,</span> <span class="string">&quot;availability&quot;</span><span class="punctuation">]</span><span class="punctuation">,</span></span><br><span class="line">      <span class="attr">&quot;relations&quot;</span><span class="punctuation">:</span> <span class="punctuation">[</span><span class="string">&quot;collaboratesWith&quot;</span><span class="punctuation">,</span> <span class="string">&quot;reportsTo&quot;</span><span class="punctuation">]</span></span><br><span class="line">    <span class="punctuation">&#125;</span></span><br><span class="line">  <span class="punctuation">&#125;</span></span><br><span class="line"><span class="punctuation">&#125;</span></span><br></pre></td></tr></table></figure>
+
+<hr>
+<h2 id="协议对比与选型建议"><a href="#协议对比与选型建议" class="headerlink" title="协议对比与选型建议"></a>协议对比与选型建议</h2><h3 id="功能对比"><a href="#功能对比" class="headerlink" title="功能对比"></a>功能对比</h3><table>
+<thead>
+<tr>
+<th>特性</th>
+<th>MCP</th>
+<th>A2A</th>
+<th>ACP</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Model-Tool 交互</td>
+<td>✅ 优秀</td>
+<td>⚠️ 一般</td>
+<td>✅ 良好</td>
+</tr>
+<tr>
+<td>Agent-Agent 通信</td>
+<td>⚠️ 有限</td>
+<td>✅ 优秀</td>
+<td>✅ 优秀</td>
+</tr>
+<tr>
+<td>语义互操作</td>
+<td>⚠️ 基础</td>
+<td>✅ 完善</td>
+<td>✅ 完善</td>
+</tr>
+<tr>
+<td>安全性</td>
+<td>✅ 良好</td>
+<td>✅ 优秀</td>
+<td>✅ 优秀</td>
+</tr>
+<tr>
+<td>生态成熟度</td>
+<td>✅ 高</td>
+<td>⚠️ 中</td>
+<td>⚠️ 中</td>
+</tr>
+<tr>
+<td>学习曲线</td>
+<td>✅ 低</td>
+<td>⚠️ 中</td>
+<td>⚠️ 高</td>
+</tr>
+</tbody></table>
+<h3 id="选型决策树"><a href="#选型决策树" class="headerlink" title="选型决策树"></a>选型决策树</h3><figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line">你的需求是什么？</span><br><span class="line">│</span><br><span class="line">├─ 主要是 AI 模型调用工具/数据？</span><br><span class="line">│  └─▶ 选择 MCP</span><br><span class="line">│</span><br><span class="line">├─ 需要多个 Agent 对等协作？</span><br><span class="line">│  ├─ 需要语义互操作和复杂协商？</span><br><span class="line">│  │  └─▶ 选择 ACP</span><br><span class="line">│  └─ 需要简单直接的通信？</span><br><span class="line">│     └─▶ 选择 A2A</span><br><span class="line">│</span><br><span class="line">└─ 需要混合场景？</span><br><span class="line">   └─▶ MCP + A2A 组合使用</span><br></pre></td></tr></table></figure>
+
+<h3 id="实际案例"><a href="#实际案例" class="headerlink" title="实际案例"></a>实际案例</h3><h4 id="案例-1：智能客服系统"><a href="#案例-1：智能客服系统" class="headerlink" title="案例 1：智能客服系统"></a>案例 1：智能客服系统</h4><ul>
+<li><strong>场景</strong>：多个 specialized agent 协作处理客户咨询</li>
+<li><strong>选择</strong>：A2A</li>
+<li><strong>理由</strong>：需要 Agent 间直接通信、任务转派、状态同步</li>
+</ul>
+<h4 id="案例-2：代码助手"><a href="#案例-2：代码助手" class="headerlink" title="案例 2：代码助手"></a>案例 2：代码助手</h4><ul>
+<li><strong>场景</strong>：AI 模型调用各种开发工具（lint、test、deploy）</li>
+<li><strong>选择</strong>：MCP</li>
+<li><strong>理由</strong>：标准化的工具调用接口，丰富的工具生态</li>
+</ul>
+<h4 id="案例-3：企业级自动化平台"><a href="#案例-3：企业级自动化平台" class="headerlink" title="案例 3：企业级自动化平台"></a>案例 3：企业级自动化平台</h4><ul>
+<li><strong>场景</strong>：跨部门、跨系统的多 Agent 协作</li>
+<li><strong>选择</strong>：ACP</li>
+<li><strong>理由</strong>：需要严格的语义定义、审计追踪、权限控制</li>
+</ul>
+<hr>
+<h2 id="实战：构建多-Agent-系统"><a href="#实战：构建多-Agent-系统" class="headerlink" title="实战：构建多 Agent 系统"></a>实战：构建多 Agent 系统</h2><h3 id="系统架构"><a href="#系统架构" class="headerlink" title="系统架构"></a>系统架构</h3><figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br></pre></td><td class="code"><pre><span class="line">┌─────────────────────────────────────────────────────────┐</span><br><span class="line">│                    API Gateway                          │</span><br><span class="line">└─────────────────────────────────────────────────────────┘</span><br><span class="line">                            │</span><br><span class="line">        ┌───────────────────┼───────────────────┐</span><br><span class="line">        ▼                   ▼                   ▼</span><br><span class="line">┌───────────────┐   ┌───────────────┐   ┌───────────────┐</span><br><span class="line">│  Orchestrator │   │  MCP Server   │   │  A2A Broker   │</span><br><span class="line">│    Agent      │   │   (Tools)     │   │  (Msg Queue)  │</span><br><span class="line">└───────────────┘   └───────────────┘   └───────────────┘</span><br><span class="line">        │                   │                   │</span><br><span class="line">        └───────────────────┼───────────────────┘</span><br><span class="line">                            │</span><br><span class="line">        ┌───────────────────┼───────────────────┐</span><br><span class="line">        ▼                   ▼                   ▼</span><br><span class="line">┌───────────────┐   ┌───────────────┐   ┌───────────────┐</span><br><span class="line">│ Research      │   │ Writer        │   │ Reviewer      │</span><br><span class="line">│ Agent         │   │ Agent         │   │ Agent         │</span><br><span class="line">└───────────────┘   └───────────────┘   └───────────────┘</span><br></pre></td></tr></table></figure>
+
+<h3 id="实现示例"><a href="#实现示例" class="headerlink" title="实现示例"></a>实现示例</h3><h4 id="1-MCP-Server-配置"><a href="#1-MCP-Server-配置" class="headerlink" title="1. MCP Server 配置"></a>1. MCP Server 配置</h4><figure class="highlight typescript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// mcp-server.ts</span></span><br><span class="line"><span class="keyword">import</span> &#123; <span class="title class_">Server</span> &#125; <span class="keyword">from</span> <span class="string">&#x27;@modelcontextprotocol/sdk/server&#x27;</span>;</span><br><span class="line"><span class="keyword">import</span> &#123; <span class="title class_">StdioServerTransport</span> &#125; <span class="keyword">from</span> <span class="string">&#x27;@modelcontextprotocol/sdk/server/stdio&#x27;</span>;</span><br><span class="line"></span><br><span class="line"><span class="keyword">const</span> server = <span class="keyword">new</span> <span class="title class_">Server</span>(&#123;</span><br><span class="line">  <span class="attr">name</span>: <span class="string">&#x27;blog-tools-server&#x27;</span>,</span><br><span class="line">  <span class="attr">version</span>: <span class="string">&#x27;1.0.0&#x27;</span></span><br><span class="line">&#125;, &#123;</span><br><span class="line">  <span class="attr">capabilities</span>: &#123;</span><br><span class="line">    <span class="attr">tools</span>: &#123;</span><br><span class="line">      <span class="attr">web_search</span>: &#123;</span><br><span class="line">        <span class="attr">description</span>: <span class="string">&#x27;Search the web for information&#x27;</span>,</span><br><span class="line">        <span class="attr">inputSchema</span>: &#123;</span><br><span class="line">          <span class="attr">type</span>: <span class="string">&#x27;object&#x27;</span>,</span><br><span class="line">          <span class="attr">properties</span>: &#123;</span><br><span class="line">            <span class="attr">query</span>: &#123; <span class="attr">type</span>: <span class="string">&#x27;string&#x27;</span> &#125;,</span><br><span class="line">            <span class="attr">maxResults</span>: &#123; <span class="attr">type</span>: <span class="string">&#x27;number&#x27;</span>, <span class="attr">default</span>: <span class="number">10</span> &#125;</span><br><span class="line">          &#125;</span><br><span class="line">        &#125;</span><br><span class="line">      &#125;,</span><br><span class="line">      <span class="attr">file_read</span>: &#123;</span><br><span class="line">        <span class="attr">description</span>: <span class="string">&#x27;Read file contents&#x27;</span>,</span><br><span class="line">        <span class="attr">inputSchema</span>: &#123;</span><br><span class="line">          <span class="attr">type</span>: <span class="string">&#x27;object&#x27;</span>,</span><br><span class="line">          <span class="attr">properties</span>: &#123;</span><br><span class="line">            <span class="attr">path</span>: &#123; <span class="attr">type</span>: <span class="string">&#x27;string&#x27;</span> &#125;</span><br><span class="line">          &#125;</span><br><span class="line">        &#125;</span><br><span class="line">      &#125;</span><br><span class="line">    &#125;</span><br><span class="line">  &#125;</span><br><span class="line">&#125;);</span><br><span class="line"></span><br><span class="line">server.<span class="title function_">setRequestHandler</span>(<span class="string">&#x27;tools/call&#x27;</span>, <span class="title function_">async</span> (request) =&gt; &#123;</span><br><span class="line">  <span class="keyword">const</span> &#123; name, <span class="attr">arguments</span>: args &#125; = request.<span class="property">params</span>;</span><br><span class="line">  </span><br><span class="line">  <span class="keyword">if</span> (name === <span class="string">&#x27;web_search&#x27;</span>) &#123;</span><br><span class="line">    <span class="keyword">const</span> results = <span class="keyword">await</span> <span class="title function_">searchWeb</span>(args.<span class="property">query</span>, args.<span class="property">maxResults</span>);</span><br><span class="line">    <span class="keyword">return</span> &#123;</span><br><span class="line">      <span class="attr">content</span>: [&#123; <span class="attr">type</span>: <span class="string">&#x27;text&#x27;</span>, <span class="attr">text</span>: <span class="title class_">JSON</span>.<span class="title function_">stringify</span>(results) &#125;]</span><br><span class="line">    &#125;;</span><br><span class="line">  &#125;</span><br><span class="line">  </span><br><span class="line">  <span class="keyword">throw</span> <span class="keyword">new</span> <span class="title class_">Error</span>(<span class="string">`Unknown tool: <span class="subst">$&#123;name&#125;</span>`</span>);</span><br><span class="line">&#125;);</span><br><span class="line"></span><br><span class="line"><span class="keyword">const</span> transport = <span class="keyword">new</span> <span class="title class_">StdioServerTransport</span>();</span><br><span class="line"><span class="keyword">await</span> server.<span class="title function_">connect</span>(transport);</span><br></pre></td></tr></table></figure>
+
+<h4 id="2-A2A-消息处理"><a href="#2-A2A-消息处理" class="headerlink" title="2. A2A 消息处理"></a>2. A2A 消息处理</h4><figure class="highlight typescript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// a2a-agent.ts</span></span><br><span class="line"><span class="keyword">import</span> &#123; A2AClient &#125; <span class="keyword">from</span> <span class="string">&#x27;a2a-protocol&#x27;</span>;</span><br><span class="line"></span><br><span class="line"><span class="keyword">class</span> <span class="title class_">ResearchAgent</span> &#123;</span><br><span class="line">  <span class="keyword">private</span> <span class="attr">client</span>: A2AClient;</span><br><span class="line">  </span><br><span class="line">  <span class="title function_">constructor</span>(<span class="params"></span>) &#123;</span><br><span class="line">    <span class="variable language_">this</span>.<span class="property">client</span> = <span class="keyword">new</span> <span class="title function_">A2AClient</span>(&#123;</span><br><span class="line">      <span class="attr">agentId</span>: <span class="string">&#x27;researcher&#x27;</span>,</span><br><span class="line">      <span class="attr">endpoints</span>: [<span class="string">&#x27;https://a2a.example.com&#x27;</span>]</span><br><span class="line">    &#125;);</span><br><span class="line">  &#125;</span><br><span class="line">  </span><br><span class="line">  <span class="keyword">async</span> <span class="title function_">handleTask</span>(<span class="params"><span class="attr">task</span>: <span class="title class_">Task</span></span>) &#123;</span><br><span class="line">    <span class="comment">// 执行研究任务</span></span><br><span class="line">    <span class="keyword">const</span> results = <span class="keyword">await</span> <span class="variable language_">this</span>.<span class="title function_">research</span>(task.<span class="property">topic</span>);</span><br><span class="line">    </span><br><span class="line">    <span class="comment">// 将结果发送给 Writer Agent</span></span><br><span class="line">    <span class="keyword">await</span> <span class="variable language_">this</span>.<span class="property">client</span>.<span class="title function_">send</span>(&#123;</span><br><span class="line">      <span class="attr">recipient</span>: <span class="string">&#x27;writer&#x27;</span>,</span><br><span class="line">      <span class="attr">intent</span>: &#123;</span><br><span class="line">        <span class="attr">type</span>: <span class="string">&#x27;inform&#x27;</span>,</span><br><span class="line">        <span class="attr">action</span>: <span class="string">&#x27;provide_research_results&#x27;</span>,</span><br><span class="line">        <span class="attr">parameters</span>: &#123; <span class="attr">taskId</span>: task.<span class="property">id</span> &#125;</span><br><span class="line">      &#125;,</span><br><span class="line">      <span class="attr">payload</span>: &#123; results &#125;</span><br><span class="line">    &#125;);</span><br><span class="line">  &#125;</span><br><span class="line">  </span><br><span class="line">  <span class="keyword">async</span> <span class="title function_">collaborate</span>(<span class="params"><span class="attr">otherAgent</span>: <span class="built_in">string</span>, <span class="attr">topic</span>: <span class="built_in">string</span></span>) &#123;</span><br><span class="line">    <span class="comment">// 发起协作请求</span></span><br><span class="line">    <span class="keyword">const</span> response = <span class="keyword">await</span> <span class="variable language_">this</span>.<span class="property">client</span>.<span class="title function_">request</span>(&#123;</span><br><span class="line">      <span class="attr">recipient</span>: otherAgent,</span><br><span class="line">      <span class="attr">intent</span>: &#123;</span><br><span class="line">        <span class="attr">type</span>: <span class="string">&#x27;request&#x27;</span>,</span><br><span class="line">        <span class="attr">action</span>: <span class="string">&#x27;collaborate&#x27;</span>,</span><br><span class="line">        <span class="attr">parameters</span>: &#123; topic &#125;</span><br><span class="line">      &#125;,</span><br><span class="line">      <span class="attr">requiresAck</span>: <span class="literal">true</span></span><br><span class="line">    &#125;);</span><br><span class="line">    </span><br><span class="line">    <span class="keyword">return</span> response.<span class="property">payload</span>;</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h4 id="3-ACP-交互协议"><a href="#3-ACP-交互协议" class="headerlink" title="3. ACP 交互协议"></a>3. ACP 交互协议</h4><figure class="highlight typescript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// acp-orchestrator.ts</span></span><br><span class="line"><span class="keyword">import</span> &#123; <span class="title class_">ACPClient</span>, <span class="title class_">Performative</span> &#125; <span class="keyword">from</span> <span class="string">&#x27;acp-protocol&#x27;</span>;</span><br><span class="line"></span><br><span class="line"><span class="keyword">class</span> <span class="title class_">OrchestratorAgent</span> &#123;</span><br><span class="line">  <span class="keyword">private</span> <span class="attr">client</span>: <span class="title class_">ACPClient</span>;</span><br><span class="line">  </span><br><span class="line">  <span class="keyword">async</span> <span class="title function_">executeContractNet</span>(<span class="params"><span class="attr">task</span>: <span class="title class_">Task</span></span>) &#123;</span><br><span class="line">    <span class="comment">// 发布招标通知</span></span><br><span class="line">    <span class="keyword">const</span> cfp = &#123;</span><br><span class="line">      <span class="attr">performative</span>: <span class="title class_">Performative</span>.<span class="property">CFP</span>,</span><br><span class="line">      <span class="attr">content</span>: &#123;</span><br><span class="line">        <span class="attr">type</span>: <span class="string">&#x27;task&#x27;</span>,</span><br><span class="line">        <span class="attr">description</span>: task.<span class="property">description</span></span><br><span class="line">      &#125;,</span><br><span class="line">      <span class="attr">replyBy</span>: <span class="variable language_">this</span>.<span class="title function_">calculateDeadline</span>()</span><br><span class="line">    &#125;;</span><br><span class="line">    </span><br><span class="line">    <span class="keyword">const</span> proposals = <span class="keyword">await</span> <span class="variable language_">this</span>.<span class="property">client</span>.<span class="title function_">broadcast</span>(cfp);</span><br><span class="line">    </span><br><span class="line">    <span class="comment">// 评估提案</span></span><br><span class="line">    <span class="keyword">const</span> bestProposal = <span class="variable language_">this</span>.<span class="title function_">evaluate</span>(proposals);</span><br><span class="line">    </span><br><span class="line">    <span class="comment">// 接受提案</span></span><br><span class="line">    <span class="keyword">await</span> <span class="variable language_">this</span>.<span class="property">client</span>.<span class="title function_">send</span>(&#123;</span><br><span class="line">      <span class="attr">performative</span>: <span class="title class_">Performative</span>.<span class="property">ACCEPT_PROPOSAL</span>,</span><br><span class="line">      <span class="attr">receiver</span>: [bestProposal.<span class="property">sender</span>],</span><br><span class="line">      <span class="attr">content</span>: &#123; <span class="attr">taskId</span>: task.<span class="property">id</span> &#125;</span><br><span class="line">    &#125;);</span><br><span class="line">    </span><br><span class="line">    <span class="comment">// 等待结果报告</span></span><br><span class="line">    <span class="keyword">const</span> result = <span class="keyword">await</span> <span class="variable language_">this</span>.<span class="property">client</span>.<span class="title function_">waitForMessage</span>(&#123;</span><br><span class="line">      <span class="attr">performative</span>: <span class="title class_">Performative</span>.<span class="property">INFORM</span>,</span><br><span class="line">      <span class="attr">inReplyTo</span>: task.<span class="property">id</span></span><br><span class="line">    &#125;);</span><br><span class="line">    </span><br><span class="line">    <span class="keyword">return</span> result.<span class="property">content</span>;</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h3 id="部署建议"><a href="#部署建议" class="headerlink" title="部署建议"></a>部署建议</h3><ol>
+<li><strong>容器化</strong>：每个 Agent 独立容器，便于扩展和管理</li>
+<li><strong>服务网格</strong>：使用 Istio 等管理 Agent 间通信</li>
+<li><strong>监控</strong>：集成 Prometheus + Grafana 监控 Agent 健康状态</li>
+<li><strong>日志</strong>：集中式日志收集，便于调试和审计</li>
+</ol>
+<hr>
+<h2 id="未来展望"><a href="#未来展望" class="headerlink" title="未来展望"></a>未来展望</h2><h3 id="技术趋势"><a href="#技术趋势" class="headerlink" title="技术趋势"></a>技术趋势</h3><ol>
+<li><strong>协议融合</strong>：MCP、A2A、ACP 可能出现统一标准</li>
+<li><strong>语义网集成</strong>：与 RDF、OWL 等语义网技术深度融合</li>
+<li><strong>去中心化身份</strong>：DID 和可验证凭证成为标配</li>
+<li><strong>AI 原生协议</strong>：专为 LLM 特性设计的新型协议</li>
+</ol>
+<h3 id="挑战与机遇"><a href="#挑战与机遇" class="headerlink" title="挑战与机遇"></a>挑战与机遇</h3><p><strong>挑战</strong>：</p>
+<ul>
+<li>标准碎片化，互操作成本高</li>
+<li>安全性与开放性的平衡</li>
+<li>大规模 Agent 系统的性能优化</li>
+</ul>
+<p><strong>机遇</strong>：</p>
+<ul>
+<li>企业级自动化市场爆发</li>
+<li>跨组织协作的新模式</li>
+<li>Agent 经济的兴起</li>
+</ul>
+<h3 id="给开发者的建议"><a href="#给开发者的建议" class="headerlink" title="给开发者的建议"></a>给开发者的建议</h3><ol>
+<li><strong>从 MCP 入手</strong>：生态最成熟，学习资源最丰富</li>
+<li><strong>关注 A2A 发展</strong>：多 Agent 协作是必然趋势</li>
+<li><strong>重视安全设计</strong>：从第一天就考虑认证、授权、审计</li>
+<li><strong>保持协议agnostic</strong>：设计时考虑协议切换的灵活性</li>
+</ol>
+<hr>
+<h2 id="结语"><a href="#结语" class="headerlink" title="结语"></a>结语</h2><p>AI Agent 通讯协议是构建多 Agent 系统的基石。MCP、A2A、ACP 各有优势，选择合适的协议取决于具体场景。随着技术的发展，我们期待看到更加统一、安全、高效的通信标准出现。</p>
+<p>对于开发者而言，理解这些协议的设计理念和实现细节，将帮助构建更加健壮、可扩展的 AI Agent 系统。</p>
+<hr>
+<h2 id="参考资料"><a href="#参考资料" class="headerlink" title="参考资料"></a>参考资料</h2><ul>
+<li>MCP Specification: <a target="_blank" rel="noopener" href="https://modelcontextprotocol.io/">https://modelcontextprotocol.io</a></li>
+<li>A2A Protocol Draft: <a target="_blank" rel="noopener" href="https://github.com/a2a-protocol/spec">https://github.com/a2a-protocol/spec</a></li>
+<li>FIPA ACL: <a target="_blank" rel="noopener" href="https://www.fipa.org/specs/fipa00061/">https://www.fipa.org/specs/fipa00061/</a></li>
+<li>LangGraph Documentation: <a target="_blank" rel="noopener" href="https://langchain-ai.github.io/langgraph/">https://langchain-ai.github.io/langgraph/</a></li>
+</ul>
+<hr>
+<p><em>本文首发于个人博客，欢迎转载，请注明出处。</em></p>
+
+      
+    </div>
+
+    
+
+    
+    
+    
+
+    
+
+    
+      <div>
+        <div style="padding: 10px 0; margin: 20px auto; width: 90%; text-align: center;">
+  <div>感谢你的阅读，如果文章对你有帮助，可以请作者喝杯茶!</div>
+  <button id="rewardButton" disable="enable" onclick="var qr = document.getElementById('QR'); if (qr.style.display === 'none') {qr.style.display='block';} else {qr.style.display='none'}">
+    <span>打赏</span>
+  </button>
+  <div id="QR" style="display: none;">
+
+    
+      <div id="wechat" style="display: inline-block">
+        <img id="wechat_qr" src="/images/wechatpay.jpg" alt="Noah Sun 微信支付"/>
+        <p>微信支付</p>
+      </div>
+    
+
+    
+      <div id="alipay" style="display: inline-block">
+        <img id="alipay_qr" src="/images/alipay.jpg" alt="Noah Sun 支付宝"/>
+        <p>支付宝</p>
+      </div>
+    
+
+    
+
+  </div>
+</div>
+
+      </div>
+    
+
+    
+      <div>
+        <ul class="post-copyright">
+  <li class="post-copyright-author">
+    <strong>本文作者： </strong>Noah Sun</li>
+  <li class="post-copyright-link">
+    <strong>本文链接：</strong>
+    <a href="http://blog.noahsun.top/2026/03/22/%E6%B7%B1%E5%BA%A6%E8%A7%A3%E6%9E%90-AI-Agent-%E9%80%9A%E8%AE%AF%E5%8D%8F%E8%AE%AE/" title="深度解析 AI Agent 通讯协议">http://blog.noahsun.top/2026/03/22/%E6%B7%B1%E5%BA%A6%E8%A7%A3%E6%9E%90-AI-Agent-%E9%80%9A%E8%AE%AF%E5%8D%8F%E8%AE%AE/</a>
+  </li>
+  <li class="post-copyright-license">
+    <strong>版权声明： </strong>本博客所有文章除特别声明外，均采用 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" rel="external nofollow" target="_blank">CC BY-NC-SA 4.0</a> 许可协议。转载请注明出处！</li>
+</ul>
+
+      </div>
+    
+
+    <footer class="post-footer">
+      
+        <div class="post-tags">
+          
+            <a href="/tags/MCP/" rel="tag"># MCP</a>
+          
+            <a href="/tags/AI/" rel="tag"># AI</a>
+          
+            <a href="/tags/Protocol/" rel="tag"># Protocol</a>
+          
+            <a href="/tags/Agent/" rel="tag"># Agent</a>
+          
+            <a href="/tags/A2A/" rel="tag"># A2A</a>
+          
+            <a href="/tags/ACP/" rel="tag"># ACP</a>
+          
+            <a href="/tags/%E6%8A%80%E6%9C%AF%E8%A7%A3%E6%9E%90/" rel="tag"># 技术解析</a>
+          
+        </div>
+      
+
+      
+      
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2026/03/19/vllm-core-principles-deep-dive/" rel="next" title="深度解析 vLLM：重新定义大模型推理的性能革命">
+                <i class="fa fa-chevron-left"></i> 深度解析 vLLM：重新定义大模型推理的性能革命
+              </a>
+            
+          </div>
+
+          <span class="post-nav-divider"></span>
+
+          <div class="post-nav-prev post-nav-item">
+            
+              <a href="/2026/03/23/%E6%B7%B1%E5%85%A5%E7%90%86%E8%A7%A3-RAG-%E6%A3%80%E7%B4%A2%E5%A2%9E%E5%BC%BA%E7%94%9F%E6%88%90%E6%8A%80%E6%9C%AF/" rel="prev" title="深入理解 RAG 检索增强生成技术：从原理到实战">
+                深入理解 RAG 检索增强生成技术：从原理到实战 <i class="fa fa-chevron-right"></i>
+              </a>
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+  </div>
+
+
+          </div>
+          
+
+  
+    <div class="comments" id="comments">
+      <div id="disqus_thread">
+        <noscript>
+          Please enable JavaScript to view the
+          <a target="_blank" rel="noopener" href="https://disqus.com/?ref_noscript">comments powered by Disqus.</a>
+        </noscript>
+      </div>
+    </div>
+
+  
+
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap">
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview-wrap">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <section class="site-overview-wrap sidebar-panel">
+        <div class="site-overview">
+          <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+            
+              <img class="site-author-image" itemprop="image"
+                src="/images/avatar.jpg"
+                alt="Noah Sun" />
+            
+              <p class="site-author-name" itemprop="name">Noah Sun</p>
+              <p class="site-description motion-element" itemprop="description">Noah Sun's Blog.</p>
+          </div>
+
+          
+            <nav class="site-state motion-element">
+              
+                <div class="site-state-item site-state-posts">
+                
+                  <a href="/archives/%20%7C%7C%20archive">
+                
+                    <span class="site-state-item-count">31</span>
+                    <span class="site-state-item-name">日志</span>
+                  </a>
+                </div>
+              
+
+              
+                
+                
+                <div class="site-state-item site-state-categories">
+                  <a href="/categories/index.html">
+                    
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                    <span class="site-state-item-count">7</span>
+                    <span class="site-state-item-name">分类</span>
+                  </a>
+                </div>
+              
+
+              
+                
+                
+                <div class="site-state-item site-state-tags">
+                  <a href="/tags/index.html">
+                    
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                    <span class="site-state-item-count">65</span>
+                    <span class="site-state-item-name">标签</span>
+                  </a>
+                </div>
+              
+            </nav>
+          
+
+          
+
+          
+            <div class="links-of-author motion-element">
+              
+                <span class="links-of-author-item">
+                  <a href="https://github.com/rukesun/" target="_blank" title="GitHub"><i class="fa fa-fw fa-github"></i>GitHub</a>
+                  
+                </span>
+              
+                <span class="links-of-author-item">
+                  <a href="https://www.facebook.com/Noah.D.Sun" target="_blank" title="Facebook"><i class="fa fa-fw fa-facebook"></i>Facebook</a>
+                  
+                </span>
+              
+            </div>
+          
+
+          
+          
+
+          
+          
+
+          
+            
+          
+          
+
+        </div>
+      </section>
+
+      
+      <!--noindex-->
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+
+            
+              
+            
+
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#%E6%B7%B1%E5%BA%A6%E8%A7%A3%E6%9E%90-AI-Agent-%E9%80%9A%E8%AE%AF%E5%8D%8F%E8%AE%AE"><span class="nav-number">1.</span> <span class="nav-text">深度解析 AI Agent 通讯协议</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E7%9B%AE%E5%BD%95"><span class="nav-number">1.1.</span> <span class="nav-text">目录</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%B8%BA%E4%BB%80%E4%B9%88%E9%9C%80%E8%A6%81-Agent-%E9%80%9A%E8%AE%AF%E5%8D%8F%E8%AE%AE"><span class="nav-number">1.2.</span> <span class="nav-text">为什么需要 Agent 通讯协议</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E8%83%8C%E6%99%AF"><span class="nav-number">1.2.1.</span> <span class="nav-text">背景</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%A0%B8%E5%BF%83%E6%8C%91%E6%88%98"><span class="nav-number">1.2.2.</span> <span class="nav-text">核心挑战</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%B8%BB%E6%B5%81%E5%8D%8F%E8%AE%AE%E6%A6%82%E8%A7%88"><span class="nav-number">1.3.</span> <span class="nav-text">主流协议概览</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#MCP-Model-Context-Protocol-%E6%B7%B1%E5%BA%A6%E8%A7%A3%E6%9E%90"><span class="nav-number">1.4.</span> <span class="nav-text">MCP (Model Context Protocol) 深度解析</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%A6%82%E8%BF%B0"><span class="nav-number">1.4.1.</span> <span class="nav-text">概述</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%A0%B8%E5%BF%83%E6%9E%B6%E6%9E%84"><span class="nav-number">1.4.2.</span> <span class="nav-text">核心架构</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%8D%8F%E8%AE%AE%E5%88%86%E5%B1%82"><span class="nav-number">1.4.3.</span> <span class="nav-text">协议分层</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#1-%E4%BC%A0%E8%BE%93%E5%B1%82-Transport-Layer"><span class="nav-number">1.4.3.1.</span> <span class="nav-text">1. 传输层 (Transport Layer)</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#2-%E6%B6%88%E6%81%AF%E5%B1%82-Message-Layer"><span class="nav-number">1.4.3.2.</span> <span class="nav-text">2. 消息层 (Message Layer)</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#3-%E8%83%BD%E5%8A%9B%E5%B1%82-Capability-Layer"><span class="nav-number">1.4.3.3.</span> <span class="nav-text">3. 能力层 (Capability Layer)</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%8D%8F%E8%AE%AE%E7%94%9F%E5%91%BD%E5%91%A8%E6%9C%9F"><span class="nav-number">1.4.4.</span> <span class="nav-text">协议生命周期</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#MCP-%E7%9A%84%E4%BC%98%E5%8A%BF"><span class="nav-number">1.4.5.</span> <span class="nav-text">MCP 的优势</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%B1%80%E9%99%90%E6%80%A7"><span class="nav-number">1.4.6.</span> <span class="nav-text">局限性</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#A2A-Agent-to-Agent-%E5%8D%8F%E8%AE%AE"><span class="nav-number">1.5.</span> <span class="nav-text">A2A (Agent-to-Agent) 协议</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%A6%82%E8%BF%B0-1"><span class="nav-number">1.5.1.</span> <span class="nav-text">概述</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%A0%B8%E5%BF%83%E8%AE%BE%E8%AE%A1%E5%8E%9F%E5%88%99"><span class="nav-number">1.5.2.</span> <span class="nav-text">核心设计原则</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%B6%88%E6%81%AF%E6%A0%BC%E5%BC%8F"><span class="nav-number">1.5.3.</span> <span class="nav-text">消息格式</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E9%80%9A%E4%BF%A1%E6%A8%A1%E5%BC%8F"><span class="nav-number">1.5.4.</span> <span class="nav-text">通信模式</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#1-%E8%AF%B7%E6%B1%82-%E5%93%8D%E5%BA%94-Request-Response"><span class="nav-number">1.5.4.1.</span> <span class="nav-text">1. 请求 - 响应 (Request-Response)</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#2-%E5%8F%91%E5%B8%83-%E8%AE%A2%E9%98%85-Pub-Sub"><span class="nav-number">1.5.4.2.</span> <span class="nav-text">2. 发布 - 订阅 (Pub-Sub)</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#3-%E6%B5%81%E5%BC%8F%E5%AF%B9%E8%AF%9D-Streaming-Dialogue"><span class="nav-number">1.5.4.3.</span> <span class="nav-text">3. 流式对话 (Streaming Dialogue)</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%9C%8D%E5%8A%A1%E5%8F%91%E7%8E%B0"><span class="nav-number">1.5.5.</span> <span class="nav-text">服务发现</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E4%BF%A1%E4%BB%BB%E4%B8%8E%E5%AE%89%E5%85%A8"><span class="nav-number">1.5.6.</span> <span class="nav-text">信任与安全</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#ACP-Agent-Communication-Protocol"><span class="nav-number">1.6.</span> <span class="nav-text">ACP (Agent Communication Protocol)</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%A6%82%E8%BF%B0-2"><span class="nav-number">1.6.1.</span> <span class="nav-text">概述</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%A0%B8%E5%BF%83%E6%A6%82%E5%BF%B5"><span class="nav-number">1.6.2.</span> <span class="nav-text">核心概念</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#%E8%A8%80%E8%AF%AD%E8%A1%8C%E4%B8%BA%E7%90%86%E8%AE%BA-Speech-Act-Theory"><span class="nav-number">1.6.2.1.</span> <span class="nav-text">言语行为理论 (Speech Act Theory)</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E6%B6%88%E6%81%AF%E7%BB%93%E6%9E%84"><span class="nav-number">1.6.2.2.</span> <span class="nav-text">消息结构</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E4%BA%A4%E4%BA%92%E5%8D%8F%E8%AE%AE-Interaction-Protocols"><span class="nav-number">1.6.3.</span> <span class="nav-text">交互协议 (Interaction Protocols)</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#%E5%90%88%E5%90%8C%E7%BD%91%E5%8D%8F%E8%AE%AE-Contract-Net-Protocol"><span class="nav-number">1.6.3.1.</span> <span class="nav-text">合同网协议 (Contract Net Protocol)</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E8%AF%A2%E9%97%AE%E5%8D%8F%E8%AE%AE-Query-Protocol"><span class="nav-number">1.6.3.2.</span> <span class="nav-text">询问协议 (Query Protocol)</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%9C%AC%E4%BD%93%E8%AE%BA-Ontology"><span class="nav-number">1.6.4.</span> <span class="nav-text">本体论 (Ontology)</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%8D%8F%E8%AE%AE%E5%AF%B9%E6%AF%94%E4%B8%8E%E9%80%89%E5%9E%8B%E5%BB%BA%E8%AE%AE"><span class="nav-number">1.7.</span> <span class="nav-text">协议对比与选型建议</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%8A%9F%E8%83%BD%E5%AF%B9%E6%AF%94"><span class="nav-number">1.7.1.</span> <span class="nav-text">功能对比</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E9%80%89%E5%9E%8B%E5%86%B3%E7%AD%96%E6%A0%91"><span class="nav-number">1.7.2.</span> <span class="nav-text">选型决策树</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%AE%9E%E9%99%85%E6%A1%88%E4%BE%8B"><span class="nav-number">1.7.3.</span> <span class="nav-text">实际案例</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#%E6%A1%88%E4%BE%8B-1%EF%BC%9A%E6%99%BA%E8%83%BD%E5%AE%A2%E6%9C%8D%E7%B3%BB%E7%BB%9F"><span class="nav-number">1.7.3.1.</span> <span class="nav-text">案例 1：智能客服系统</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E6%A1%88%E4%BE%8B-2%EF%BC%9A%E4%BB%A3%E7%A0%81%E5%8A%A9%E6%89%8B"><span class="nav-number">1.7.3.2.</span> <span class="nav-text">案例 2：代码助手</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E6%A1%88%E4%BE%8B-3%EF%BC%9A%E4%BC%81%E4%B8%9A%E7%BA%A7%E8%87%AA%E5%8A%A8%E5%8C%96%E5%B9%B3%E5%8F%B0"><span class="nav-number">1.7.3.3.</span> <span class="nav-text">案例 3：企业级自动化平台</span></a></li></ol></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%AE%9E%E6%88%98%EF%BC%9A%E6%9E%84%E5%BB%BA%E5%A4%9A-Agent-%E7%B3%BB%E7%BB%9F"><span class="nav-number">1.8.</span> <span class="nav-text">实战：构建多 Agent 系统</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E7%B3%BB%E7%BB%9F%E6%9E%B6%E6%9E%84"><span class="nav-number">1.8.1.</span> <span class="nav-text">系统架构</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%AE%9E%E7%8E%B0%E7%A4%BA%E4%BE%8B"><span class="nav-number">1.8.2.</span> <span class="nav-text">实现示例</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#1-MCP-Server-%E9%85%8D%E7%BD%AE"><span class="nav-number">1.8.2.1.</span> <span class="nav-text">1. MCP Server 配置</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#2-A2A-%E6%B6%88%E6%81%AF%E5%A4%84%E7%90%86"><span class="nav-number">1.8.2.2.</span> <span class="nav-text">2. A2A 消息处理</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#3-ACP-%E4%BA%A4%E4%BA%92%E5%8D%8F%E8%AE%AE"><span class="nav-number">1.8.2.3.</span> <span class="nav-text">3. ACP 交互协议</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E9%83%A8%E7%BD%B2%E5%BB%BA%E8%AE%AE"><span class="nav-number">1.8.3.</span> <span class="nav-text">部署建议</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%9C%AA%E6%9D%A5%E5%B1%95%E6%9C%9B"><span class="nav-number">1.9.</span> <span class="nav-text">未来展望</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%8A%80%E6%9C%AF%E8%B6%8B%E5%8A%BF"><span class="nav-number">1.9.1.</span> <span class="nav-text">技术趋势</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%8C%91%E6%88%98%E4%B8%8E%E6%9C%BA%E9%81%87"><span class="nav-number">1.9.2.</span> <span class="nav-text">挑战与机遇</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E7%BB%99%E5%BC%80%E5%8F%91%E8%80%85%E7%9A%84%E5%BB%BA%E8%AE%AE"><span class="nav-number">1.9.3.</span> <span class="nav-text">给开发者的建议</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E7%BB%93%E8%AF%AD"><span class="nav-number">1.10.</span> <span class="nav-text">结语</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%8F%82%E8%80%83%E8%B5%84%E6%96%99"><span class="nav-number">1.11.</span> <span class="nav-text">参考资料</span></a></li></ol></li></ol></div>
+            
+
+          </div>
+        </section>
+      <!--/noindex-->
+      
+
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright"> &copy; <span itemprop="copyrightYear">2026</span>
+  <span class="with-love" id="animate">
+    <i class="fa fa-user"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">Noah Sun</span>
+
+  
+
+  
+</div>
+
+
+
+
+  <div class="powered-by">由 <a class="theme-link" target="_blank" href="https://hexo.io">Hexo</a> 强力驱动 v6.3.0</div>
+
+
+
+  <span class="post-meta-divider">|</span>
+
+
+
+  <div class="theme-info">主题 – <a class="theme-link" target="_blank" href="https://theme-next.org">NexT.Pisces</a> v6.4.2</div>
+
+
+
+
+        
+
+
+
+
+
+
+
+
+        
+      </div>
+    </footer>
+
+    
+      <div class="back-to-top">
+        <i class="fa fa-arrow-up"></i>
+        
+      </div>
+    
+
+    
+	
+    
+
+    
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+    <script type="text/javascript" src="//cdn.jsdelivr.net/jquery/2.1.3/jquery.min.js"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/velocity-animate@1.2.1/velocity.min.js"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="//cdnjs.cloudflare.com/ajax/libs/velocity/1.2.1/velocity.ui.min.js"></script>
+  
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/utils.js?v=6.4.2"></script>
+
+  <script type="text/javascript" src="/js/src/motion.js?v=6.4.2"></script>
+
+
+
+  
+  
+
+
+  <script type="text/javascript" src="/js/src/affix.js?v=6.4.2"></script>
+
+  <script type="text/javascript" src="/js/src/schemes/pisces.js?v=6.4.2"></script>
+
+
+
+  
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=6.4.2"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=6.4.2"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/bootstrap.js?v=6.4.2"></script>
+
+
+
+  
+
+  
+    <script id="dsq-count-scr" src="https://noahsun.disqus.com/count.js" async></script>
+  
+
+  
+    <script type="text/javascript">
+      var disqus_config = function () {
+        this.page.url = 'http://blog.noahsun.top/2026/03/22/%E6%B7%B1%E5%BA%A6%E8%A7%A3%E6%9E%90-AI-Agent-%E9%80%9A%E8%AE%AF%E5%8D%8F%E8%AE%AE/';
+        this.page.identifier = '2026/03/22/深度解析-AI-Agent-通讯协议/';
+        this.page.title = '深度解析 AI Agent 通讯协议';
+        };
+      function loadComments () {
+        var d = document, s = d.createElement('script');
+        s.src = 'https://noahsun.disqus.com/embed.js';
+        s.setAttribute('data-timestamp', '' + +new Date());
+        (d.head || d.body).appendChild(s);
+      }
+      
+        loadComments();
+      
+    </script>
+  
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  <script type="text/javascript">
+    // Popup Window;
+    var isfetched = false;
+    var isXml = true;
+    // Search DB path;
+    var search_path = "search.xml";
+    if (search_path.length === 0) {
+      search_path = "search.xml";
+    } else if (/json$/i.test(search_path)) {
+      isXml = false;
+    }
+    var path = "/" + search_path;
+    // monitor main search box;
+
+    var onPopupClose = function (e) {
+      $('.popup').hide();
+      $('#local-search-input').val('');
+      $('.search-result-list').remove();
+      $('#no-result').remove();
+      $(".local-search-pop-overlay").remove();
+      $('body').css('overflow', '');
+    }
+
+    function proceedsearch() {
+      $("body")
+        .append('<div class="search-popup-overlay local-search-pop-overlay"></div>')
+        .css('overflow', 'hidden');
+      $('.search-popup-overlay').click(onPopupClose);
+      $('.popup').toggle();
+      var $localSearchInput = $('#local-search-input');
+      $localSearchInput.attr("autocapitalize", "none");
+      $localSearchInput.attr("autocorrect", "off");
+      $localSearchInput.focus();
+    }
+
+    // search function;
+    var searchFunc = function(path, search_id, content_id) {
+      'use strict';
+
+      // start loading animation
+      $("body")
+        .append('<div class="search-popup-overlay local-search-pop-overlay">' +
+          '<div id="search-loading-icon">' +
+          '<i class="fa fa-spinner fa-pulse fa-5x fa-fw"></i>' +
+          '</div>' +
+          '</div>')
+        .css('overflow', 'hidden');
+      $("#search-loading-icon").css('margin', '20% auto 0 auto').css('text-align', 'center');
+
+      
+
+      $.ajax({
+        url: path,
+        dataType: isXml ? "xml" : "json",
+        async: true,
+        success: function(res) {
+          // get the contents from search data
+          isfetched = true;
+          $('.popup').detach().appendTo('.header-inner');
+          var datas = isXml ? $("entry", res).map(function() {
+            return {
+              title: $("title", this).text(),
+              content: $("content",this).text(),
+              url: $("url" , this).text()
+            };
+          }).get() : res;
+          var input = document.getElementById(search_id);
+          var resultContent = document.getElementById(content_id);
+          var inputEventFunction = function() {
+            var searchText = input.value.trim().toLowerCase();
+            var keywords = searchText.split(/[\s\-]+/);
+            if (keywords.length > 1) {
+              keywords.push(searchText);
+            }
+            var resultItems = [];
+            if (searchText.length > 0) {
+              // perform local searching
+              datas.forEach(function(data) {
+                var isMatch = false;
+                var hitCount = 0;
+                var searchTextCount = 0;
+                var title = data.title.trim();
+                var titleInLowerCase = title.toLowerCase();
+                var content = data.content.trim().replace(/<[^>]+>/g,"");
+                
+                var contentInLowerCase = content.toLowerCase();
+                var articleUrl = decodeURIComponent(data.url);
+                var indexOfTitle = [];
+                var indexOfContent = [];
+                // only match articles with not empty titles
+                if(title != '') {
+                  keywords.forEach(function(keyword) {
+                    function getIndexByWord(word, text, caseSensitive) {
+                      var wordLen = word.length;
+                      if (wordLen === 0) {
+                        return [];
+                      }
+                      var startPosition = 0, position = [], index = [];
+                      if (!caseSensitive) {
+                        text = text.toLowerCase();
+                        word = word.toLowerCase();
+                      }
+                      while ((position = text.indexOf(word, startPosition)) > -1) {
+                        index.push({position: position, word: word});
+                        startPosition = position + wordLen;
+                      }
+                      return index;
+                    }
+
+                    indexOfTitle = indexOfTitle.concat(getIndexByWord(keyword, titleInLowerCase, false));
+                    indexOfContent = indexOfContent.concat(getIndexByWord(keyword, contentInLowerCase, false));
+                  });
+                  if (indexOfTitle.length > 0 || indexOfContent.length > 0) {
+                    isMatch = true;
+                    hitCount = indexOfTitle.length + indexOfContent.length;
+                  }
+                }
+
+                // show search results
+
+                if (isMatch) {
+                  // sort index by position of keyword
+
+                  [indexOfTitle, indexOfContent].forEach(function (index) {
+                    index.sort(function (itemLeft, itemRight) {
+                      if (itemRight.position !== itemLeft.position) {
+                        return itemRight.position - itemLeft.position;
+                      } else {
+                        return itemLeft.word.length - itemRight.word.length;
+                      }
+                    });
+                  });
+
+                  // merge hits into slices
+
+                  function mergeIntoSlice(text, start, end, index) {
+                    var item = index[index.length - 1];
+                    var position = item.position;
+                    var word = item.word;
+                    var hits = [];
+                    var searchTextCountInSlice = 0;
+                    while (position + word.length <= end && index.length != 0) {
+                      if (word === searchText) {
+                        searchTextCountInSlice++;
+                      }
+                      hits.push({position: position, length: word.length});
+                      var wordEnd = position + word.length;
+
+                      // move to next position of hit
+
+                      index.pop();
+                      while (index.length != 0) {
+                        item = index[index.length - 1];
+                        position = item.position;
+                        word = item.word;
+                        if (wordEnd > position) {
+                          index.pop();
+                        } else {
+                          break;
+                        }
+                      }
+                    }
+                    searchTextCount += searchTextCountInSlice;
+                    return {
+                      hits: hits,
+                      start: start,
+                      end: end,
+                      searchTextCount: searchTextCountInSlice
+                    };
+                  }
+
+                  var slicesOfTitle = [];
+                  if (indexOfTitle.length != 0) {
+                    slicesOfTitle.push(mergeIntoSlice(title, 0, title.length, indexOfTitle));
+                  }
+
+                  var slicesOfContent = [];
+                  while (indexOfContent.length != 0) {
+                    var item = indexOfContent[indexOfContent.length - 1];
+                    var position = item.position;
+                    var word = item.word;
+                    // cut out 100 characters
+                    var start = position - 20;
+                    var end = position + 80;
+                    if(start < 0){
+                      start = 0;
+                    }
+                    if (end < position + word.length) {
+                      end = position + word.length;
+                    }
+                    if(end > content.length){
+                      end = content.length;
+                    }
+                    slicesOfContent.push(mergeIntoSlice(content, start, end, indexOfContent));
+                  }
+
+                  // sort slices in content by search text's count and hits' count
+
+                  slicesOfContent.sort(function (sliceLeft, sliceRight) {
+                    if (sliceLeft.searchTextCount !== sliceRight.searchTextCount) {
+                      return sliceRight.searchTextCount - sliceLeft.searchTextCount;
+                    } else if (sliceLeft.hits.length !== sliceRight.hits.length) {
+                      return sliceRight.hits.length - sliceLeft.hits.length;
+                    } else {
+                      return sliceLeft.start - sliceRight.start;
+                    }
+                  });
+
+                  // select top N slices in content
+
+                  var upperBound = parseInt('1');
+                  if (upperBound >= 0) {
+                    slicesOfContent = slicesOfContent.slice(0, upperBound);
+                  }
+
+                  // highlight title and content
+
+                  function highlightKeyword(text, slice) {
+                    var result = '';
+                    var prevEnd = slice.start;
+                    slice.hits.forEach(function (hit) {
+                      result += text.substring(prevEnd, hit.position);
+                      var end = hit.position + hit.length;
+                      result += '<b class="search-keyword">' + text.substring(hit.position, end) + '</b>';
+                      prevEnd = end;
+                    });
+                    result += text.substring(prevEnd, slice.end);
+                    return result;
+                  }
+
+                  var resultItem = '';
+
+                  if (slicesOfTitle.length != 0) {
+                    resultItem += "<li><a href='" + articleUrl + "' class='search-result-title'>" + highlightKeyword(title, slicesOfTitle[0]) + "</a>";
+                  } else {
+                    resultItem += "<li><a href='" + articleUrl + "' class='search-result-title'>" + title + "</a>";
+                  }
+
+                  slicesOfContent.forEach(function (slice) {
+                    resultItem += "<a href='" + articleUrl + "'>" +
+                      "<p class=\"search-result\">" + highlightKeyword(content, slice) +
+                      "...</p>" + "</a>";
+                  });
+
+                  resultItem += "</li>";
+                  resultItems.push({
+                    item: resultItem,
+                    searchTextCount: searchTextCount,
+                    hitCount: hitCount,
+                    id: resultItems.length
+                  });
+                }
+              })
+            };
+            if (keywords.length === 1 && keywords[0] === "") {
+              resultContent.innerHTML = '<div id="no-result"><i class="fa fa-search fa-5x" /></div>'
+            } else if (resultItems.length === 0) {
+              resultContent.innerHTML = '<div id="no-result"><i class="fa fa-frown-o fa-5x" /></div>'
+            } else {
+              resultItems.sort(function (resultLeft, resultRight) {
+                if (resultLeft.searchTextCount !== resultRight.searchTextCount) {
+                  return resultRight.searchTextCount - resultLeft.searchTextCount;
+                } else if (resultLeft.hitCount !== resultRight.hitCount) {
+                  return resultRight.hitCount - resultLeft.hitCount;
+                } else {
+                  return resultRight.id - resultLeft.id;
+                }
+              });
+              var searchResultList = '<ul class=\"search-result-list\">';
+              resultItems.forEach(function (result) {
+                searchResultList += result.item;
+              })
+              searchResultList += "</ul>";
+              resultContent.innerHTML = searchResultList;
+            }
+          }
+
+          if ('auto' === 'auto') {
+            input.addEventListener('input', inputEventFunction);
+          } else {
+            $('.search-icon').click(inputEventFunction);
+            input.addEventListener('keypress', function (event) {
+              if (event.keyCode === 13) {
+                inputEventFunction();
+              }
+            });
+          }
+
+          // remove loading animation
+          $(".local-search-pop-overlay").remove();
+          $('body').css('overflow', '');
+
+          proceedsearch();
+        }
+      });
+    }
+
+    // handle and trigger popup window;
+    $('.popup-trigger').click(function(e) {
+      e.stopPropagation();
+      if (isfetched === false) {
+        searchFunc(path, 'local-search-input', 'local-search-result');
+      } else {
+        proceedsearch();
+      };
+    });
+
+    $('.popup-btn-close').click(onPopupClose);
+    $('.popup').click(function(e){
+      e.stopPropagation();
+    });
+    $(document).on('keyup', function (event) {
+      var shouldDismissSearchPopup = event.which === 27 &&
+        $('.search-popup').is(':visible');
+      if (shouldDismissSearchPopup) {
+        onPopupClose();
+      }
+    });
+  </script>
+
+
+
+
+
+  
+
+  
+  <script>
+    
+    function addCount(Counter) {
+      var $visitors = $(".leancloud_visitors");
+      var url = $visitors.attr('id').trim();
+      var title = $visitors.attr('data-flag-title').trim();
+
+      Counter('get', '/classes/Counter', { where: JSON.stringify({ url }) })
+        .done(function ({ results }) {
+          if (results.length > 0) {
+            var counter = results[0];
+            
+            Counter('put', `/classes/Counter/${counter.objectId}`, JSON.stringify({ time: { "__op":"Increment", "amount":1 } }))
+            
+            .done(function () {
+                  var $element = $(document.getElementById(url));
+                  $element.find('.leancloud-visitors-count').text(counter.time + 1);
+            })
+            
+            .fail(function ({ responseJSON }) {
+                console.log('Failed to save Visitor num, with error message: ' + responseJSON.error);
+            })
+          } else {
+            
+              Counter('post', '/classes/Counter', JSON.stringify({ title: title, url: url, time: 1}))
+                .done(function () {
+                  var $element = $(document.getElementById(url));
+                  $element.find('.leancloud-visitors-count').text(1);
+                })
+                .fail(function () {
+                  console.log('Failed to create');
+                });
+            
+          }
+        })
+      .fail(function ({ responseJSON }) {
+        console.log('LeanCloud Counter Error:' + responseJSON.code + " " + responseJSON.error);
+      });
+    }
+    
+
+    $(function() {
+      $.get('https://app-router.leancloud.cn/2/route?appId=' + "Cz56UW3FvEkwHB689nG2jLGm-gzGzoHsz")
+        .done(function ({ api_server }) {
+          var Counter = function (method, url, data) {
+            return $.ajax({
+              method: method,
+              url: `https://${api_server}/1.1${url}`,
+              headers: {
+                'X-LC-Id': "Cz56UW3FvEkwHB689nG2jLGm-gzGzoHsz",
+                'X-LC-Key': "zuFQDzA0SxPUkEfqOisL54YJ",
+                'Content-Type': 'application/json',
+              },
+              data: data,
+            });
+          };
+          
+          addCount(Counter);
+          
+        })
+    });
+  </script>
+
+
+
+  
+
+  
+
+  
+
+  
+
+  
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+</body>
+</html>

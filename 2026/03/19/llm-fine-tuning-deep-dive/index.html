@@ -1,0 +1,1839 @@
+<!DOCTYPE html>
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+
+<html class="theme-next pisces use-motion" lang="zh-CN,en,default">
+<head>
+  <meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2"/>
+<meta name="theme-color" content="#222">
+
+
+
+
+
+
+
+
+
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+<link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet" type="text/css" />
+
+<link href="/css/main.css?v=6.4.2" rel="stylesheet" type="text/css" />
+
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png?v=6.4.2">
+
+
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png?v=6.4.2">
+
+
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png?v=6.4.2">
+
+
+  <link rel="mask-icon" href="/images/logo.svg?v=6.4.2" color="#222">
+
+
+
+
+
+
+
+
+
+<script type="text/javascript" id="hexo.configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    root: '',
+    scheme: 'Pisces',
+    version: '6.4.2',
+    sidebar: {"position":"left","display":"post","offset":12,"b2t":false,"scrollpercent":false,"onmobile":false},
+    fancybox: false,
+    fastclick: false,
+    lazyload: false,
+    tabs: true,
+    motion: {"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},
+    algolia: {
+      applicationID: '',
+      apiKey: '',
+      indexName: '',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    }
+  };
+</script>
+
+
+  
+
+
+
+
+  <meta name="description" content="前言2025-2026 年，大语言模型（LLM）已从实验室走向生产环境。但直接使用通用模型往往无法满足特定场景的需求——医疗诊断需要专业术语、法律咨询需要严谨表述、客服系统需要品牌语调。 微调（Fine-tuning） 正是解决这一问题的关键技术。它让我们能够用相对少量的数据，将通用大模型”定制”成领域专家。 本文将从微调原理、技术演进、实战方法、最佳实践四个维度，系统梳理大模型微调的完整知识体系">
+<meta property="og:type" content="article">
+<meta property="og:title" content="深入理解大模型微调：从理论到实战的完整指南">
+<meta property="og:url" content="http://blog.noahsun.top/2026/03/19/llm-fine-tuning-deep-dive/index.html">
+<meta property="og:site_name" content="Noah Sun&#39;s Home">
+<meta property="og:description" content="前言2025-2026 年，大语言模型（LLM）已从实验室走向生产环境。但直接使用通用模型往往无法满足特定场景的需求——医疗诊断需要专业术语、法律咨询需要严谨表述、客服系统需要品牌语调。 微调（Fine-tuning） 正是解决这一问题的关键技术。它让我们能够用相对少量的数据，将通用大模型”定制”成领域专家。 本文将从微调原理、技术演进、实战方法、最佳实践四个维度，系统梳理大模型微调的完整知识体系">
+<meta property="og:locale" content="zh_CN">
+<meta property="article:published_time" content="2026-03-19T04:30:00.000Z">
+<meta property="article:modified_time" content="2026-03-23T10:37:27.639Z">
+<meta property="article:author" content="Noah Sun">
+<meta property="article:tag" content="大语言模型">
+<meta property="article:tag" content="微调">
+<meta property="article:tag" content="LoRA">
+<meta property="article:tag" content="PEFT">
+<meta property="article:tag" content="AI 工程化">
+<meta name="twitter:card" content="summary">
+
+
+
+
+
+
+  <link rel="canonical" href="http://blog.noahsun.top/2026/03/19/llm-fine-tuning-deep-dive/"/>
+
+
+
+<script type="text/javascript" id="page.configurations">
+  CONFIG.page = {
+    sidebar: "",
+  };
+</script>
+
+  <title>深入理解大模型微调：从理论到实战的完整指南 | Noah Sun's Home</title>
+  
+
+
+
+
+<script async src="https://www.googletagmanager.com/gtag/js?id=UA-102233237-1"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+
+  gtag('config', 'UA-102233237-1');
+</script>
+
+
+
+  <script type="text/javascript">
+    var _hmt = _hmt || [];
+    (function() {
+      var hm = document.createElement("script");
+      hm.src = "https://hm.baidu.com/hm.js?07c7e0461feabfd55d89458a5c4ae94b";
+      var s = document.getElementsByTagName("script")[0];
+      s.parentNode.insertBefore(hm, s);
+    })();
+  </script>
+
+
+
+
+
+
+  <noscript>
+  <style type="text/css">
+    .use-motion .motion-element,
+    .use-motion .brand,
+    .use-motion .menu-item,
+    .sidebar-inner,
+    .use-motion .post-block,
+    .use-motion .pagination,
+    .use-motion .comments,
+    .use-motion .post-header,
+    .use-motion .post-body,
+    .use-motion .collection-title { opacity: initial; }
+
+    .use-motion .logo,
+    .use-motion .site-title,
+    .use-motion .site-subtitle {
+      opacity: initial;
+      top: initial;
+    }
+
+    .use-motion {
+      .logo-line-before i { left: initial; }
+      .logo-line-after i { right: initial; }
+    }
+  </style>
+</noscript>
+
+<meta name="generator" content="Hexo 6.3.0"></head>
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="zh-CN">
+
+  
+  
+    
+  
+
+  <div class="container sidebar-position-left page-post-detail">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-wrapper">
+  <div class="site-meta ">
+    
+
+    <div class="custom-logo-site-title">
+      <a href="/" class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title">Noah Sun's Home</span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+    
+  </div>
+
+  <div class="site-nav-toggle">
+    <button aria-label="切换导航栏">
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+    </button>
+  </div>
+</div>
+
+
+
+<nav class="site-nav">
+  
+    <ul id="menu" class="menu">
+      
+        
+        
+        
+          
+          <li class="menu-item menu-item-home">
+    <a href="/" rel="section">
+      <i class="menu-item-icon fa fa-fw fa-home"></i> <br />首页</a>
+  </li>
+        
+        
+        
+          
+          <li class="menu-item menu-item-archives">
+    <a href="/archives/" rel="section">
+      <i class="menu-item-icon fa fa-fw fa-archive"></i> <br />归档</a>
+  </li>
+        
+        
+        
+          
+          <li class="menu-item menu-item-categories">
+    <a href="/categories/" rel="section">
+      <i class="menu-item-icon fa fa-fw fa-th"></i> <br />分类</a>
+  </li>
+        
+        
+        
+          
+          <li class="menu-item menu-item-tags">
+    <a href="/tags/" rel="section">
+      <i class="menu-item-icon fa fa-fw fa-tags"></i> <br />标签</a>
+  </li>
+        
+        
+        
+          
+          <li class="menu-item menu-item-about">
+    <a href="/about/" rel="section">
+      <i class="menu-item-icon fa fa-fw fa-user"></i> <br />关于</a>
+  </li>
+
+      
+      
+        <li class="menu-item menu-item-search">
+          
+            <a href="javascript:;" class="popup-trigger">
+          
+            
+              <i class="menu-item-icon fa fa-search fa-fw"></i> <br />搜索</a>
+        </li>
+      
+    </ul>
+  
+
+  
+
+  
+    <div class="site-search">
+      
+  <div class="popup search-popup local-search-popup">
+  <div class="local-search-header clearfix">
+    <span class="search-icon">
+      <i class="fa fa-search"></i>
+    </span>
+    <span class="popup-btn-close">
+      <i class="fa fa-times-circle"></i>
+    </span>
+    <div class="local-search-input-wrapper">
+      <input autocomplete="off"
+             placeholder="搜索..." spellcheck="false"
+             type="text" id="local-search-input">
+    </div>
+  </div>
+  <div id="local-search-result"></div>
+</div>
+
+
+
+    </div>
+  
+</nav>
+
+
+
+  
+
+
+
+</div>
+    </header>
+
+    
+
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+            
+
+          
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+
+  
+  
+  
+
+  
+
+  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="http://blog.noahsun.top/2026/03/19/llm-fine-tuning-deep-dive/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="Noah Sun">
+      <meta itemprop="description" content="Noah Sun's Blog.">
+      <meta itemprop="image" content="/images/avatar.jpg">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Noah Sun's Home">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">深入理解大模型微调：从理论到实战的完整指南
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+
+            
+            
+            
+
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+
+              
+                
+              
+
+              <time title="创建时间：2026-03-19 12:30:00" itemprop="dateCreated datePublished" datetime="2026-03-19T12:30:00+08:00">2026-03-19</time>
+            
+
+            
+              
+
+              
+                
+                <span class="post-meta-divider">|</span>
+                
+
+                <span class="post-meta-item-icon">
+                  <i class="fa fa-calendar-check-o"></i>
+                </span>
+                
+                  <span class="post-meta-item-text">更新于</span>
+                
+                <time title="修改时间：2026-03-23 18:37:27" itemprop="dateModified" datetime="2026-03-23T18:37:27+08:00">2026-03-23</time>
+              
+            
+          </span>
+
+          
+            <span class="post-category" >
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing"><a href="/categories/Technology/" itemprop="url" rel="index"><span itemprop="name">Technology</span></a></span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+              <span class="post-comments-count">
+                <span class="post-meta-divider">|</span>
+                <span class="post-meta-item-icon">
+                  <i class="fa fa-comment-o"></i>
+                </span>
+                <a href="/2026/03/19/llm-fine-tuning-deep-dive/#comments" itemprop="discussionUrl">
+                  <span class="post-meta-item-text">评论数：</span> <span class="post-comments-count fb-comments-count" data-href="http://blog.noahsun.top/2026/03/19/llm-fine-tuning-deep-dive/" itemprop="commentCount">0</span>
+                </a>
+              </span>
+            
+          
+
+          
+          
+             <span id="/2026/03/19/llm-fine-tuning-deep-dive/" class="leancloud_visitors" data-flag-title="深入理解大模型微调：从理论到实战的完整指南">
+               <span class="post-meta-divider">|</span>
+               <span class="post-meta-item-icon">
+                 <i class="fa fa-eye"></i>
+               </span>
+               
+                 <span class="post-meta-item-text">阅读次数：</span>
+               
+                 <span class="leancloud-visitors-count"></span>
+             </span>
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <h2 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h2><p>2025-2026 年，大语言模型（LLM）已从实验室走向生产环境。但直接使用通用模型往往无法满足特定场景的需求——医疗诊断需要专业术语、法律咨询需要严谨表述、客服系统需要品牌语调。</p>
+<p><strong>微调（Fine-tuning）</strong> 正是解决这一问题的关键技术。它让我们能够用相对少量的数据，将通用大模型”定制”成领域专家。</p>
+<p>本文将从<strong>微调原理、技术演进、实战方法、最佳实践</strong>四个维度，系统梳理大模型微调的完整知识体系。无论你是想入门微调的新手，还是希望优化现有流程的工程师，都能从中获得启发。</p>
+<h2 id="什么是大模型微调？"><a href="#什么是大模型微调？" class="headerlink" title="什么是大模型微调？"></a>什么是大模型微调？</h2><h3 id="预训练-vs-微调"><a href="#预训练-vs-微调" class="headerlink" title="预训练 vs 微调"></a>预训练 vs 微调</h3><p>理解微调之前，先厘清两个核心概念：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line">┌─────────────────────────────────────────────────────────────┐</span><br><span class="line">│                    预训练 (Pre-training)                     │</span><br><span class="line">│  数据：海量互联网文本（TB 级）                                │</span><br><span class="line">│  目标：学习语言通用规律（语法、事实、推理）                    │</span><br><span class="line">│  成本：数百万美元，数月时间                                   │</span><br><span class="line">│  产出：基础模型（Base Model）                                 │</span><br><span class="line">└─────────────────────────────────────────────────────────────┘</span><br><span class="line">                              ↓</span><br><span class="line">┌─────────────────────────────────────────────────────────────┐</span><br><span class="line">│                     微调 (Fine-tuning)                       │</span><br><span class="line">│  数据：领域特定数据（MB-GB 级）                               │</span><br><span class="line">│  目标：适配特定任务/领域（医疗、法律、客服）                   │</span><br><span class="line">│  成本：几百到几千美元，数小时到数天                           │</span><br><span class="line">│  产出：领域专用模型（Domain-specific Model）                  │</span><br><span class="line">└─────────────────────────────────────────────────────────────┘</span><br></pre></td></tr></table></figure>
+
+<p><strong>类比理解：</strong></p>
+<ul>
+<li>预训练 &#x3D; 读完小学到大学，掌握通用知识</li>
+<li>微调 &#x3D; 参加职业培训，成为医生&#x2F;律师&#x2F;工程师</li>
+</ul>
+<h3 id="微调的核心价值"><a href="#微调的核心价值" class="headerlink" title="微调的核心价值"></a>微调的核心价值</h3><ol>
+<li><strong>领域适配</strong>：让模型理解专业术语和行业黑话</li>
+<li><strong>任务定制</strong>：从”通用聊天”转向”特定任务”（如分类、抽取、生成）</li>
+<li><strong>风格对齐</strong>：匹配品牌语调、写作风格、回复格式</li>
+<li><strong>知识注入</strong>：补充预训练数据中缺失的最新信息或私有知识</li>
+<li><strong>性能提升</strong>：在特定 benchmark 上显著超越基础模型</li>
+</ol>
+<h2 id="微调技术演进史"><a href="#微调技术演进史" class="headerlink" title="微调技术演进史"></a>微调技术演进史</h2><h3 id="第一阶段：全量微调（Full-Fine-tuning）"><a href="#第一阶段：全量微调（Full-Fine-tuning）" class="headerlink" title="第一阶段：全量微调（Full Fine-tuning）"></a>第一阶段：全量微调（Full Fine-tuning）</h3><p><strong>时间：</strong> 2018-2022（BERT 时代）</p>
+<p><strong>方法：</strong> 更新模型<strong>所有参数</strong></p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 伪代码示例</span></span><br><span class="line">model = load_pretrained_model(<span class="string">&quot;llama-3-8b&quot;</span>)</span><br><span class="line">optimizer = AdamW(model.parameters(), lr=<span class="number">2e-5</span>)</span><br><span class="line"></span><br><span class="line"><span class="keyword">for</span> batch <span class="keyword">in</span> dataset:</span><br><span class="line">    loss = model(batch)</span><br><span class="line">    loss.backward()</span><br><span class="line">    optimizer.step()  <span class="comment"># 更新所有参数</span></span><br></pre></td></tr></table></figure>
+
+<p><strong>优点：</strong></p>
+<ul>
+<li>简单直接，效果通常最好</li>
+<li>理论成熟，工具完善</li>
+</ul>
+<p><strong>缺点：</strong></p>
+<ul>
+<li><strong>显存爆炸</strong>：微调 7B 模型需要 ~80GB 显存（模型权重 + 梯度 + 优化器状态）</li>
+<li><strong>存储成本高</strong>：每个任务保存完整模型副本（7B 模型 &#x3D; 14GB+）</li>
+<li><strong>灾难性遗忘</strong>：过度拟合新数据，丢失通用能力</li>
+</ul>
+<p><strong>适用场景：</strong> 小模型（&lt;1B）、资源充足、对效果要求极高</p>
+<h3 id="第二阶段：参数高效微调（PEFT）"><a href="#第二阶段：参数高效微调（PEFT）" class="headerlink" title="第二阶段：参数高效微调（PEFT）"></a>第二阶段：参数高效微调（PEFT）</h3><p><strong>时间：</strong> 2023 至今（LLM 时代）</p>
+<p>核心思想：<strong>冻结大部分参数，只训练少量参数</strong></p>
+<h4 id="2-1-LoRA（Low-Rank-Adaptation）🔥"><a href="#2-1-LoRA（Low-Rank-Adaptation）🔥" class="headerlink" title="2.1 LoRA（Low-Rank Adaptation）🔥"></a>2.1 LoRA（Low-Rank Adaptation）🔥</h4><p><strong>提出时间：</strong> 2021 年 12 月（Hu et al.）</p>
+<p><strong>核心洞察：</strong> 大模型参数存在<strong>低秩结构</strong>，可以用少量参数近似全量更新。</p>
+<p><strong>技术原理：</strong></p>
+<p>传统全量微调：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">W_new = W_old + ΔW</span><br><span class="line">其中 ΔW 是与 W 同维度的完整更新矩阵</span><br></pre></td></tr></table></figure>
+
+<p>LoRA 的巧妙设计：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">W_new = W_old + ΔW</span><br><span class="line">其中 ΔW = A × B</span><br><span class="line"></span><br><span class="line">A: r × d 矩阵（r &lt;&lt; d）</span><br><span class="line">B: d × r 矩阵</span><br><span class="line">r: 秩（rank），通常取 8-64</span><br></pre></td></tr></table></figure>
+
+<p><strong>直观理解：</strong></p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">假设原始权重矩阵 W 是 4096×4096（约 1600 万参数）</span><br><span class="line"></span><br><span class="line">全量微调 ΔW：4096×4096 = 1600 万参数</span><br><span class="line"></span><br><span class="line">LoRA (r=16)：</span><br><span class="line">  A: 16×4096 = 6.5 万参数</span><br><span class="line">  B: 4096×16 = 6.5 万参数</span><br><span class="line">  总计：13 万参数（仅 0.8%！）</span><br></pre></td></tr></table></figure>
+
+<p><strong>代码示例（使用 PEFT 库）：</strong></p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">from</span> peft <span class="keyword">import</span> LoraConfig, get_peft_model</span><br><span class="line"><span class="keyword">from</span> transformers <span class="keyword">import</span> AutoModelForCausalLM</span><br><span class="line"></span><br><span class="line"><span class="comment"># 加载基础模型</span></span><br><span class="line">model = AutoModelForCausalLM.from_pretrained(</span><br><span class="line">    <span class="string">&quot;meta-llama/Llama-3-8B&quot;</span>,</span><br><span class="line">    torch_dtype=torch.bfloat16</span><br><span class="line">)</span><br><span class="line"></span><br><span class="line"><span class="comment"># 配置 LoRA</span></span><br><span class="line">lora_config = LoraConfig(</span><br><span class="line">    r=<span class="number">16</span>,                    <span class="comment"># 秩</span></span><br><span class="line">    lora_alpha=<span class="number">32</span>,           <span class="comment"># 缩放系数</span></span><br><span class="line">    target_modules=[<span class="string">&quot;q_proj&quot;</span>, <span class="string">&quot;v_proj&quot;</span>],  <span class="comment"># 作用模块</span></span><br><span class="line">    lora_dropout=<span class="number">0.05</span>,</span><br><span class="line">    bias=<span class="string">&quot;none&quot;</span>,</span><br><span class="line">    task_type=<span class="string">&quot;CAUSAL_LM&quot;</span></span><br><span class="line">)</span><br><span class="line"></span><br><span class="line"><span class="comment"># 应用 LoRA</span></span><br><span class="line">model = get_peft_model(model, lora_config)</span><br><span class="line">model.print_trainable_parameters()</span><br><span class="line"><span class="comment"># 输出：trainable params: 4,194,304 || all params: 8,030,261,248</span></span><br><span class="line"><span class="comment">#       可训练参数仅占 0.052%！</span></span><br></pre></td></tr></table></figure>
+
+<p><strong>LoRA 的优势：</strong></p>
+<ul>
+<li>✅ <strong>显存友好</strong>：微调 7B 模型仅需 ~12GB 显存（全量需 80GB+）</li>
+<li>✅ <strong>存储高效</strong>：只保存 LoRA 权重（几 MB 到几百 MB）</li>
+<li>✅ <strong>快速切换</strong>：同一基础模型可加载不同 LoRA 适配不同任务</li>
+<li>✅ <strong>效果接近</strong>：多数任务上达到全量微调的 95%+ 性能</li>
+</ul>
+<h4 id="2-2-其他-PEFT-方法"><a href="#2-2-其他-PEFT-方法" class="headerlink" title="2.2 其他 PEFT 方法"></a>2.2 其他 PEFT 方法</h4><table>
+<thead>
+<tr>
+<th>方法</th>
+<th>核心思想</th>
+<th>适用场景</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><strong>LoRA</strong></td>
+<td>低秩分解</td>
+<td>通用首选</td>
+</tr>
+<tr>
+<td><strong>QLoRA</strong></td>
+<td>LoRA + 4bit 量化</td>
+<td>超低显存（单卡微调 70B）</td>
+</tr>
+<tr>
+<td><strong>Adapter</strong></td>
+<td>插入小型 MLP 模块</td>
+<td>多任务学习</td>
+</tr>
+<tr>
+<td><strong>Prefix Tuning</strong></td>
+<td>优化可学习前缀</td>
+<td>生成任务</td>
+</tr>
+<tr>
+<td><strong>P-Tuning</strong></td>
+<td>优化连续提示</td>
+<td>分类&#x2F;抽取任务</td>
+</tr>
+</tbody></table>
+<h3 id="第三阶段：无监督微调与对齐"><a href="#第三阶段：无监督微调与对齐" class="headerlink" title="第三阶段：无监督微调与对齐"></a>第三阶段：无监督微调与对齐</h3><p><strong>时间：</strong> 2024 至今</p>
+<p>随着 RLHF（人类反馈强化学习）和 DPO（直接偏好优化）的成熟，微调从”任务适配”扩展到”价值观对齐”。</p>
+<p><strong>关键方法：</strong></p>
+<ul>
+<li><strong>SFT（Supervised Fine-tuning）</strong>：有监督指令微调</li>
+<li><strong>DPO（Direct Preference Optimization）</strong>：直接从偏好数据学习</li>
+<li><strong>ORPO（Odds Ratio Preference Optimization）</strong>：无需参考模型的偏好优化</li>
+</ul>
+<h2 id="微调实战：从零开始训练一个领域模型"><a href="#微调实战：从零开始训练一个领域模型" class="headerlink" title="微调实战：从零开始训练一个领域模型"></a>微调实战：从零开始训练一个领域模型</h2><h3 id="场景设定"><a href="#场景设定" class="headerlink" title="场景设定"></a>场景设定</h3><p>假设我们要微调一个<strong>医疗问答助手</strong>，能够：</p>
+<ul>
+<li>理解医学术语和缩写</li>
+<li>提供准确的疾病&#x2F;药物信息</li>
+<li>用通俗易懂的语言解释专业概念</li>
+</ul>
+<h3 id="步骤-1：数据准备"><a href="#步骤-1：数据准备" class="headerlink" title="步骤 1：数据准备"></a>步骤 1：数据准备</h3><p><strong>数据格式（Alpaca 格式）：</strong></p>
+<figure class="highlight json"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"><span class="punctuation">[</span></span><br><span class="line">  <span class="punctuation">&#123;</span></span><br><span class="line">    <span class="attr">&quot;instruction&quot;</span><span class="punctuation">:</span> <span class="string">&quot;什么是高血压？&quot;</span><span class="punctuation">,</span></span><br><span class="line">    <span class="attr">&quot;input&quot;</span><span class="punctuation">:</span> <span class="string">&quot;&quot;</span><span class="punctuation">,</span></span><br><span class="line">    <span class="attr">&quot;output&quot;</span><span class="punctuation">:</span> <span class="string">&quot;高血压是指血液在血管中流动时，对血管壁造成的压力持续高于正常值的状态。通常定义为收缩压≥140mmHg 和/或舒张压≥90mmHg。&quot;</span></span><br><span class="line">  <span class="punctuation">&#125;</span><span class="punctuation">,</span></span><br><span class="line">  <span class="punctuation">&#123;</span></span><br><span class="line">    <span class="attr">&quot;instruction&quot;</span><span class="punctuation">:</span> <span class="string">&quot;阿司匹林的主要作用是什么？&quot;</span><span class="punctuation">,</span></span><br><span class="line">    <span class="attr">&quot;input&quot;</span><span class="punctuation">:</span> <span class="string">&quot;&quot;</span><span class="punctuation">,</span></span><br><span class="line">    <span class="attr">&quot;output&quot;</span><span class="punctuation">:</span> <span class="string">&quot;阿司匹林是一种非甾体抗炎药，主要作用包括：1) 解热镇痛；2) 抗炎；3) 抗血小板聚集，预防心脑血管疾病。&quot;</span></span><br><span class="line">  <span class="punctuation">&#125;</span></span><br><span class="line"><span class="punctuation">]</span></span><br></pre></td></tr></table></figure>
+
+<p><strong>数据量建议：</strong></p>
+<ul>
+<li>最小可行：500-1000 条高质量样本</li>
+<li>推荐：5000-10000 条</li>
+<li>饱和点：通常 2-3 万条后收益递减</li>
+</ul>
+<p><strong>数据质量 &gt; 数据数量！</strong> 1000 条精心标注的数据胜过 10 万条噪声数据。</p>
+<h3 id="步骤-2：环境搭建"><a href="#步骤-2：环境搭建" class="headerlink" title="步骤 2：环境搭建"></a>步骤 2：环境搭建</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 创建虚拟环境</span></span><br><span class="line">conda create -n llm-ft python=3.10</span><br><span class="line">conda activate llm-ft</span><br><span class="line"></span><br><span class="line"><span class="comment"># 安装核心依赖</span></span><br><span class="line">pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu118</span><br><span class="line">pip install transformers datasets accelerate peft bitsandbytes</span><br><span class="line">pip install trl  <span class="comment"># 用于 SFT/DPO 训练</span></span><br></pre></td></tr></table></figure>
+
+<h3 id="步骤-3：加载模型与配置-LoRA"><a href="#步骤-3：加载模型与配置-LoRA" class="headerlink" title="步骤 3：加载模型与配置 LoRA"></a>步骤 3：加载模型与配置 LoRA</h3><figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">import</span> torch</span><br><span class="line"><span class="keyword">from</span> transformers <span class="keyword">import</span> AutoModelForCausalLM, AutoTokenizer</span><br><span class="line"><span class="keyword">from</span> peft <span class="keyword">import</span> LoraConfig, get_peft_model, prepare_model_for_kbit_training</span><br><span class="line"></span><br><span class="line"><span class="comment"># 模型选择（根据显存）</span></span><br><span class="line"><span class="comment"># 24GB 显存：Llama-3-8B</span></span><br><span class="line"><span class="comment"># 48GB 显存：Llama-3-70B（QLoRA）</span></span><br><span class="line"><span class="comment"># 80GB 显存：全量微调或大模型</span></span><br><span class="line"></span><br><span class="line">model_name = <span class="string">&quot;meta-llama/Meta-Llama-3-8B&quot;</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># 4bit 量化加载（QLoRA，大幅降低显存）</span></span><br><span class="line">model = AutoModelForCausalLM.from_pretrained(</span><br><span class="line">    model_name,</span><br><span class="line">    load_in_4bit=<span class="literal">True</span>,</span><br><span class="line">    torch_dtype=torch.bfloat16,</span><br><span class="line">    device_map=<span class="string">&quot;auto&quot;</span>,</span><br><span class="line">    bnb_4bit_compute_dtype=torch.bfloat16,</span><br><span class="line">    bnb_4bit_use_double_quant=<span class="literal">True</span>,</span><br><span class="line">    bnb_4bit_quant_type=<span class="string">&quot;nf4&quot;</span></span><br><span class="line">)</span><br><span class="line"></span><br><span class="line"><span class="comment"># 准备模型用于 k-bit 训练</span></span><br><span class="line">model = prepare_model_for_kbit_training(model)</span><br><span class="line"></span><br><span class="line"><span class="comment"># 配置 LoRA</span></span><br><span class="line">lora_config = LoraConfig(</span><br><span class="line">    r=<span class="number">16</span>,</span><br><span class="line">    lora_alpha=<span class="number">32</span>,</span><br><span class="line">    target_modules=[<span class="string">&quot;q_proj&quot;</span>, <span class="string">&quot;k_proj&quot;</span>, <span class="string">&quot;v_proj&quot;</span>, <span class="string">&quot;o_proj&quot;</span>],</span><br><span class="line">    lora_dropout=<span class="number">0.05</span>,</span><br><span class="line">    bias=<span class="string">&quot;none&quot;</span>,</span><br><span class="line">    task_type=<span class="string">&quot;CAUSAL_LM&quot;</span></span><br><span class="line">)</span><br><span class="line"></span><br><span class="line">model = get_peft_model(model, lora_config)</span><br></pre></td></tr></table></figure>
+
+<h3 id="步骤-4：数据预处理"><a href="#步骤-4：数据预处理" class="headerlink" title="步骤 4：数据预处理"></a>步骤 4：数据预处理</h3><figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">from</span> datasets <span class="keyword">import</span> load_dataset</span><br><span class="line"></span><br><span class="line"><span class="comment"># 加载数据</span></span><br><span class="line">dataset = load_dataset(<span class="string">&quot;json&quot;</span>, data_files=<span class="string">&quot;medical_qa.json&quot;</span>)</span><br><span class="line"></span><br><span class="line"><span class="comment"># 格式化模板</span></span><br><span class="line"><span class="keyword">def</span> <span class="title function_">format_prompt</span>(<span class="params">example</span>):</span><br><span class="line">    <span class="keyword">return</span> <span class="string">f&quot;&quot;&quot;### Instruction:</span></span><br><span class="line"><span class="string"><span class="subst">&#123;example[<span class="string">&#x27;instruction&#x27;</span>]&#125;</span></span></span><br><span class="line"><span class="string"></span></span><br><span class="line"><span class="string">### Input:</span></span><br><span class="line"><span class="string"><span class="subst">&#123;example[<span class="string">&#x27;input&#x27;</span>] <span class="keyword">if</span> example[<span class="string">&#x27;input&#x27;</span>] <span class="keyword">else</span> <span class="string">&#x27;无&#x27;</span>&#125;</span></span></span><br><span class="line"><span class="string"></span></span><br><span class="line"><span class="string">### Response:</span></span><br><span class="line"><span class="string"><span class="subst">&#123;example[<span class="string">&#x27;output&#x27;</span>]&#125;</span>&quot;&quot;&quot;</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># 应用模板</span></span><br><span class="line">dataset = dataset.<span class="built_in">map</span>(<span class="keyword">lambda</span> x: &#123;<span class="string">&quot;text&quot;</span>: format_prompt(x)&#125;)</span><br><span class="line"></span><br><span class="line"><span class="comment"># Tokenization</span></span><br><span class="line">tokenizer = AutoTokenizer.from_pretrained(model_name)</span><br><span class="line">tokenizer.pad_token = tokenizer.eos_token</span><br><span class="line"></span><br><span class="line"><span class="keyword">def</span> <span class="title function_">tokenize_function</span>(<span class="params">examples</span>):</span><br><span class="line">    <span class="keyword">return</span> tokenizer(</span><br><span class="line">        examples[<span class="string">&quot;text&quot;</span>],</span><br><span class="line">        padding=<span class="string">&quot;max_length&quot;</span>,</span><br><span class="line">        truncation=<span class="literal">True</span>,</span><br><span class="line">        max_length=<span class="number">512</span></span><br><span class="line">    )</span><br><span class="line"></span><br><span class="line">tokenized_dataset = dataset.<span class="built_in">map</span>(tokenize_function, batched=<span class="literal">True</span>)</span><br></pre></td></tr></table></figure>
+
+<h3 id="步骤-5：训练配置"><a href="#步骤-5：训练配置" class="headerlink" title="步骤 5：训练配置"></a>步骤 5：训练配置</h3><figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">from</span> transformers <span class="keyword">import</span> TrainingArguments</span><br><span class="line"><span class="keyword">from</span> trl <span class="keyword">import</span> SFTTrainer</span><br><span class="line"></span><br><span class="line">training_args = TrainingArguments(</span><br><span class="line">    output_dir=<span class="string">&quot;./medical-llama&quot;</span>,</span><br><span class="line">    per_device_train_batch_size=<span class="number">4</span>,</span><br><span class="line">    gradient_accumulation_steps=<span class="number">4</span>,  <span class="comment"># 等效 batch_size=16</span></span><br><span class="line">    learning_rate=<span class="number">2e-4</span>,</span><br><span class="line">    num_train_epochs=<span class="number">3</span>,</span><br><span class="line">    fp16=<span class="literal">True</span>,</span><br><span class="line">    logging_steps=<span class="number">10</span>,</span><br><span class="line">    save_strategy=<span class="string">&quot;epoch&quot;</span>,</span><br><span class="line">    lr_scheduler_type=<span class="string">&quot;cosine&quot;</span>,</span><br><span class="line">    warmup_ratio=<span class="number">0.03</span>,</span><br><span class="line">    weight_decay=<span class="number">0.01</span>,</span><br><span class="line">    report_to=<span class="string">&quot;none&quot;</span></span><br><span class="line">)</span><br><span class="line"></span><br><span class="line">trainer = SFTTrainer(</span><br><span class="line">    model=model,</span><br><span class="line">    args=training_args,</span><br><span class="line">    train_dataset=tokenized_dataset[<span class="string">&quot;train&quot;</span>],</span><br><span class="line">    dataset_text_field=<span class="string">&quot;text&quot;</span>,</span><br><span class="line">    max_seq_length=<span class="number">512</span>,</span><br><span class="line">    packing=<span class="literal">False</span>,</span><br><span class="line">)</span><br></pre></td></tr></table></figure>
+
+<h3 id="步骤-6：开始训练"><a href="#步骤-6：开始训练" class="headerlink" title="步骤 6：开始训练"></a>步骤 6：开始训练</h3><figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 训练</span></span><br><span class="line">trainer.train()</span><br><span class="line"></span><br><span class="line"><span class="comment"># 保存模型</span></span><br><span class="line">trainer.save_model(<span class="string">&quot;./medical-llama-lora&quot;</span>)</span><br><span class="line">tokenizer.save_pretrained(<span class="string">&quot;./medical-llama-lora&quot;</span>)</span><br></pre></td></tr></table></figure>
+
+<h3 id="步骤-7：推理测试"><a href="#步骤-7：推理测试" class="headerlink" title="步骤 7：推理测试"></a>步骤 7：推理测试</h3><figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">from</span> peft <span class="keyword">import</span> PeftModel</span><br><span class="line"></span><br><span class="line"><span class="comment"># 加载基础模型</span></span><br><span class="line">base_model = AutoModelForCausalLM.from_pretrained(</span><br><span class="line">    model_name,</span><br><span class="line">    torch_dtype=torch.bfloat16,</span><br><span class="line">    device_map=<span class="string">&quot;auto&quot;</span></span><br><span class="line">)</span><br><span class="line"></span><br><span class="line"><span class="comment"># 加载 LoRA 权重</span></span><br><span class="line">model = PeftModel.from_pretrained(</span><br><span class="line">    base_model,</span><br><span class="line">    <span class="string">&quot;./medical-llama-lora&quot;</span></span><br><span class="line">)</span><br><span class="line"></span><br><span class="line"><span class="comment"># 推理</span></span><br><span class="line"><span class="keyword">def</span> <span class="title function_">generate_response</span>(<span class="params">question</span>):</span><br><span class="line">    prompt = <span class="string">f&quot;### Instruction:\n<span class="subst">&#123;question&#125;</span>\n\n### Response:&quot;</span></span><br><span class="line">    inputs = tokenizer(prompt, return_tensors=<span class="string">&quot;pt&quot;</span>).to(model.device)</span><br><span class="line">    </span><br><span class="line">    outputs = model.generate(</span><br><span class="line">        **inputs,</span><br><span class="line">        max_new_tokens=<span class="number">256</span>,</span><br><span class="line">        temperature=<span class="number">0.7</span>,</span><br><span class="line">        top_p=<span class="number">0.9</span>,</span><br><span class="line">        do_sample=<span class="literal">True</span></span><br><span class="line">    )</span><br><span class="line">    </span><br><span class="line">    <span class="keyword">return</span> tokenizer.decode(outputs[<span class="number">0</span>], skip_special_tokens=<span class="literal">True</span>)</span><br><span class="line"></span><br><span class="line"><span class="comment"># 测试</span></span><br><span class="line"><span class="built_in">print</span>(generate_response(<span class="string">&quot;糖尿病的典型症状有哪些？&quot;</span>))</span><br></pre></td></tr></table></figure>
+
+<h2 id="微调最佳实践与避坑指南"><a href="#微调最佳实践与避坑指南" class="headerlink" title="微调最佳实践与避坑指南"></a>微调最佳实践与避坑指南</h2><h3 id="✅-最佳实践"><a href="#✅-最佳实践" class="headerlink" title="✅ 最佳实践"></a>✅ 最佳实践</h3><h4 id="1-数据质量优先"><a href="#1-数据质量优先" class="headerlink" title="1. 数据质量优先"></a>1. 数据质量优先</h4><figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">糟糕的数据 → 糟糕的模型（Garbage In, Garbage Out）</span><br><span class="line"></span><br><span class="line">检查清单：</span><br><span class="line">□ 格式一致性（指令/输入/输出结构统一）</span><br><span class="line">□ 答案准确性（领域专家审核）</span><br><span class="line">□ 多样性覆盖（不同问题类型、难度、长度）</span><br><span class="line">□ 无敏感信息（隐私、版权、偏见）</span><br></pre></td></tr></table></figure>
+
+<h4 id="2-学习率调优"><a href="#2-学习率调优" class="headerlink" title="2. 学习率调优"></a>2. 学习率调优</h4><p><strong>经验法则：</strong></p>
+<ul>
+<li>LoRA 微调：<code>2e-4</code> 到 <code>5e-4</code></li>
+<li>全量微调：<code>1e-5</code> 到 <code>3e-5</code></li>
+<li>QLoRA：<code>1e-4</code> 到 <code>2e-4</code></li>
+</ul>
+<p><strong>调试策略：</strong></p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 从小学习率开始，观察 loss 下降</span></span><br><span class="line">learning_rates = [<span class="number">1e-4</span>, <span class="number">2e-4</span>, <span class="number">5e-4</span>, <span class="number">1e-3</span>]</span><br><span class="line"></span><br><span class="line"><span class="comment"># 如果 loss 不下降 → 学习率太小</span></span><br><span class="line"><span class="comment"># 如果 loss 震荡 → 学习率太大</span></span><br><span class="line"><span class="comment"># 如果 loss 骤降后停滞 → 可能陷入局部最优</span></span><br></pre></td></tr></table></figure>
+
+<h4 id="3-防止过拟合"><a href="#3-防止过拟合" class="headerlink" title="3. 防止过拟合"></a>3. 防止过拟合</h4><figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 方法 1：早停（Early Stopping）</span></span><br><span class="line">training_args = TrainingArguments(</span><br><span class="line">    ...,</span><br><span class="line">    evaluation_strategy=<span class="string">&quot;steps&quot;</span>,</span><br><span class="line">    eval_steps=<span class="number">100</span>,</span><br><span class="line">    load_best_model_at_end=<span class="literal">True</span>,</span><br><span class="line">    save_total_limit=<span class="number">2</span></span><br><span class="line">)</span><br><span class="line"></span><br><span class="line"><span class="comment"># 方法 2：正则化</span></span><br><span class="line">lora_config = LoraConfig(</span><br><span class="line">    ...,</span><br><span class="line">    lora_dropout=<span class="number">0.05</span>,  <span class="comment"># Dropout</span></span><br><span class="line">    weight_decay=<span class="number">0.01</span>   <span class="comment"># L2 正则</span></span><br><span class="line">)</span><br><span class="line"></span><br><span class="line"><span class="comment"># 方法 3：数据增强</span></span><br><span class="line"><span class="comment"># 同义改写、回译、添加噪声</span></span><br></pre></td></tr></table></figure>
+
+<h4 id="4-显存优化技巧"><a href="#4-显存优化技巧" class="headerlink" title="4. 显存优化技巧"></a>4. 显存优化技巧</h4><figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 1. 梯度累积（等效大 batch，不增加显存）</span></span><br><span class="line">gradient_accumulation_steps = <span class="number">8</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># 2. 混合精度训练</span></span><br><span class="line">fp16=<span class="literal">True</span>  <span class="comment"># 或 bf16（A100/H100 推荐）</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># 3. 梯度检查点（节省显存，增加计算）</span></span><br><span class="line">model.gradient_checkpointing_enable()</span><br><span class="line"></span><br><span class="line"><span class="comment"># 4. 量化（QLoRA）</span></span><br><span class="line">load_in_4bit=<span class="literal">True</span>  <span class="comment"># 70B 模型单卡可训！</span></span><br></pre></td></tr></table></figure>
+
+<h3 id="❌-常见陷阱"><a href="#❌-常见陷阱" class="headerlink" title="❌ 常见陷阱"></a>❌ 常见陷阱</h3><h4 id="陷阱-1：数据泄露"><a href="#陷阱-1：数据泄露" class="headerlink" title="陷阱 1：数据泄露"></a>陷阱 1：数据泄露</h4><figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 错误：测试集混入训练</span></span><br><span class="line">train_data = all_data  <span class="comment"># ❌</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># 正确：严格划分</span></span><br><span class="line">train_data, test_data = train_test_split(all_data, test_size=<span class="number">0.1</span>)</span><br></pre></td></tr></table></figure>
+
+<h4 id="陷阱-2：评估指标单一"><a href="#陷阱-2：评估指标单一" class="headerlink" title="陷阱 2：评估指标单一"></a>陷阱 2：评估指标单一</h4><figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">只看训练 loss → 可能过拟合</span><br><span class="line"></span><br><span class="line">综合评估：</span><br><span class="line">- 训练 loss / 验证 loss</span><br><span class="line">- 人工评估（领域专家打分）</span><br><span class="line">- 自动评测（BLEU, ROUGE, BERTScore）</span><br><span class="line">- 下游任务性能（分类准确率、抽取 F1）</span><br></pre></td></tr></table></figure>
+
+<h4 id="陷阱-3：忽视基础模型能力"><a href="#陷阱-3：忽视基础模型能力" class="headerlink" title="陷阱 3：忽视基础模型能力"></a>陷阱 3：忽视基础模型能力</h4><figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">微调不是万能药！</span><br><span class="line"></span><br><span class="line">如果基础模型完全不懂某个领域：</span><br><span class="line">- 微调数据需求会指数级增长</span><br><span class="line">- 效果可能不如 RAG（检索增强生成）</span><br><span class="line"></span><br><span class="line">建议：</span><br><span class="line">- 优先选择已有领域知识的基础模型</span><br><span class="line">- 结合 RAG + 微调（检索 + 生成双保险）</span><br></pre></td></tr></table></figure>
+
+<h4 id="陷阱-4：过度微调"><a href="#陷阱-4：过度微调" class="headerlink" title="陷阱 4：过度微调"></a>陷阱 4：过度微调</h4><figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line">微调 epochs 过多 → 灾难性遗忘</span><br><span class="line"></span><br><span class="line">症状：</span><br><span class="line">- 领域任务表现好，通用能力大幅下降</span><br><span class="line">- 模型变得&quot;死板&quot;，失去灵活性</span><br><span class="line"></span><br><span class="line">解决：</span><br><span class="line">- 控制训练轮次（通常 2-5 epochs）</span><br><span class="line">- 混合通用数据（10-20%）</span><br><span class="line">- 使用正则化技术</span><br></pre></td></tr></table></figure>
+
+<h2 id="微调-vs-RAG：如何选择？"><a href="#微调-vs-RAG：如何选择？" class="headerlink" title="微调 vs RAG：如何选择？"></a>微调 vs RAG：如何选择？</h2><p>这是 2025-2026 年最常被问到的问题。答案是：<strong>看场景，经常是组合使用</strong>。</p>
+<h3 id="决策矩阵"><a href="#决策矩阵" class="headerlink" title="决策矩阵"></a>决策矩阵</h3><table>
+<thead>
+<tr>
+<th>需求</th>
+<th>推荐方案</th>
+<th>原因</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>注入最新信息（昨天发布的新闻）</td>
+<td>RAG</td>
+<td>微调无法实时更新</td>
+</tr>
+<tr>
+<td>学习专业术语和表述风格</td>
+<td>微调</td>
+<td>RAG 难以改变生成风格</td>
+</tr>
+<tr>
+<td>私有数据（公司内部文档）</td>
+<td>RAG + 微调</td>
+<td>RAG 检索 + 微调风格</td>
+</tr>
+<tr>
+<td>严格事实准确性</td>
+<td>RAG</td>
+<td>可追溯信息来源</td>
+</tr>
+<tr>
+<td>创造性写作</td>
+<td>微调</td>
+<td>学习创作风格</td>
+</tr>
+<tr>
+<td>多轮对话一致性</td>
+<td>微调</td>
+<td>学习对话模式</td>
+</tr>
+<tr>
+<td>长尾知识问答</td>
+<td>RAG</td>
+<td>无需为每个知识点微调</td>
+</tr>
+</tbody></table>
+<h3 id="组合架构（推荐）"><a href="#组合架构（推荐）" class="headerlink" title="组合架构（推荐）"></a>组合架构（推荐）</h3><figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line">用户问题</span><br><span class="line">    ↓</span><br><span class="line">┌─────────────────┐</span><br><span class="line">│   RAG 检索       │ → 从向量库检索相关文档</span><br><span class="line">└────────┬────────┘</span><br><span class="line">         ↓</span><br><span class="line">┌─────────────────┐</span><br><span class="line">│  微调后的模型    │ → 基于检索结果 + 领域知识生成</span><br><span class="line">└────────┬────────┘</span><br><span class="line">         ↓</span><br><span class="line">    最终回答</span><br></pre></td></tr></table></figure>
+
+<p><strong>优势：</strong></p>
+<ul>
+<li>RAG 提供准确事实依据</li>
+<li>微调确保专业表述风格</li>
+<li>两者互补，效果最佳</li>
+</ul>
+<h2 id="工具与资源推荐"><a href="#工具与资源推荐" class="headerlink" title="工具与资源推荐"></a>工具与资源推荐</h2><h3 id="核心库"><a href="#核心库" class="headerlink" title="核心库"></a>核心库</h3><table>
+<thead>
+<tr>
+<th>库</th>
+<th>用途</th>
+<th>链接</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><strong>PEFT</strong></td>
+<td>参数高效微调</td>
+<td><a target="_blank" rel="noopener" href="https://github.com/huggingface/peft">https://github.com/huggingface/peft</a></td>
+</tr>
+<tr>
+<td><strong>TRL</strong></td>
+<td>SFT&#x2F;DPO 训练</td>
+<td><a target="_blank" rel="noopener" href="https://github.com/huggingface/trl">https://github.com/huggingface/trl</a></td>
+</tr>
+<tr>
+<td><strong>bitsandbytes</strong></td>
+<td>量化支持</td>
+<td><a target="_blank" rel="noopener" href="https://github.com/TimDettmers/bitsandbytes">https://github.com/TimDettmers/bitsandbytes</a></td>
+</tr>
+<tr>
+<td><strong>Axolotl</strong></td>
+<td>端到端微调框架</td>
+<td><a target="_blank" rel="noopener" href="https://github.com/OpenAccess-AI-Collective/axolotl">https://github.com/OpenAccess-AI-Collective/axolotl</a></td>
+</tr>
+<tr>
+<td><strong>LLaMA-Factory</strong></td>
+<td>一站式微调平台</td>
+<td><a target="_blank" rel="noopener" href="https://github.com/hiyouga/LLaMA-Factory">https://github.com/hiyouga/LLaMA-Factory</a></td>
+</tr>
+</tbody></table>
+<h3 id="数据集"><a href="#数据集" class="headerlink" title="数据集"></a>数据集</h3><ul>
+<li><strong>Alpaca</strong>：52K 指令微调数据</li>
+<li><strong>Dolly</strong>：Databricks 开源指令数据</li>
+<li><strong>UltraChat</strong>：多轮对话数据</li>
+<li><strong>OpenOrca</strong>：FLAN 增强版</li>
+</ul>
+<h3 id="预训练模型"><a href="#预训练模型" class="headerlink" title="预训练模型"></a>预训练模型</h3><ul>
+<li><strong>Llama 3 系列</strong>：8B &#x2F; 70B &#x2F; 400B（Meta）</li>
+<li><strong>Qwen2.5 系列</strong>：0.5B - 72B（阿里）</li>
+<li><strong>Mistral 系列</strong>：7B - 8x22B（Mistral AI）</li>
+<li><strong>Gemma 2 系列</strong>：2B - 27B（Google）</li>
+</ul>
+<h2 id="成本估算（2026-年行情）"><a href="#成本估算（2026-年行情）" class="headerlink" title="成本估算（2026 年行情）"></a>成本估算（2026 年行情）</h2><h3 id="云端微调（以-Llama-3-8B-LoRA-为例）"><a href="#云端微调（以-Llama-3-8B-LoRA-为例）" class="headerlink" title="云端微调（以 Llama-3-8B + LoRA 为例）"></a>云端微调（以 Llama-3-8B + LoRA 为例）</h3><table>
+<thead>
+<tr>
+<th>云厂商</th>
+<th>实例</th>
+<th>显存</th>
+<th>时间</th>
+<th>成本</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>AWS</td>
+<td>g5.2xlarge</td>
+<td>24GB</td>
+<td>4 小时</td>
+<td>~$8</td>
+</tr>
+<tr>
+<td>Azure</td>
+<td>NCASv4</td>
+<td>24GB</td>
+<td>4 小时</td>
+<td>~$10</td>
+</tr>
+<tr>
+<td>阿里云</td>
+<td>gn7i</td>
+<td>24GB</td>
+<td>4 小时</td>
+<td>~¥60</td>
+</tr>
+<tr>
+<td>AutoDL</td>
+<td>RTX4090</td>
+<td>24GB</td>
+<td>4 小时</td>
+<td>~¥20</td>
+</tr>
+</tbody></table>
+<h3 id="本地微调"><a href="#本地微调" class="headerlink" title="本地微调"></a>本地微调</h3><figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">一次性投入：</span><br><span class="line">- 二手 RTX3090(24GB) × 2: ~¥6000</span><br><span class="line">- 或 RTX4090(24GB) × 1: ~¥12000</span><br><span class="line"></span><br><span class="line">电费（4 小时训练）：</span><br><span class="line">- 4090 功耗 450W × 4h × ¥0.6/kWh ≈ ¥1.1</span><br><span class="line"></span><br><span class="line">长期高频使用 → 本地更划算</span><br><span class="line">偶尔实验 → 云端更灵活</span><br></pre></td></tr></table></figure>
+
+<h2 id="未来展望"><a href="#未来展望" class="headerlink" title="未来展望"></a>未来展望</h2><h3 id="趋势-1：更小、更快、更强"><a href="#趋势-1：更小、更快、更强" class="headerlink" title="趋势 1：更小、更快、更强"></a>趋势 1：更小、更快、更强</h3><ul>
+<li><strong>小模型崛起</strong>：1-3B 模型通过高质量微调，逼近早期 7B 性能</li>
+<li><strong>推理优化</strong>：vLLM、TGI 等框架让微调模型部署更简单</li>
+<li><strong>端侧微调</strong>：手机&#x2F;PC 本地微调成为可能（Apple Intelligence 已展示）</li>
+</ul>
+<h3 id="趋势-2：自动化与平民化"><a href="#趋势-2：自动化与平民化" class="headerlink" title="趋势 2：自动化与平民化"></a>趋势 2：自动化与平民化</h3><ul>
+<li><strong>AutoFT</strong>：自动搜索最优超参数</li>
+<li><strong>无代码平台</strong>：Hugging Face、Replicate 提供一键微调</li>
+<li><strong>垂直 SaaS</strong>：医疗、法律、教育等行业专用微调服务</li>
+</ul>
+<h3 id="趋势-3：多模态融合"><a href="#趋势-3：多模态融合" class="headerlink" title="趋势 3：多模态融合"></a>趋势 3：多模态融合</h3><ul>
+<li>文本 + 图像 + 音频联合微调</li>
+<li>视频理解与生成</li>
+<li>具身智能（机器人）微调</li>
+</ul>
+<h2 id="结语"><a href="#结语" class="headerlink" title="结语"></a>结语</h2><p>大模型微调已从”实验室技术”走向”生产工具”。掌握微调，意味着你能够：</p>
+<ul>
+<li>✅ 将通用 AI 变成领域专家</li>
+<li>✅ 用少量数据创造巨大价值</li>
+<li>✅ 在 AI 应用浪潮中建立竞争壁垒</li>
+</ul>
+<p><strong>关键认知：</strong></p>
+<ol>
+<li>微调不是银弹，要结合实际场景选择（微调 vs RAG vs 提示工程）</li>
+<li>数据质量决定上限，工程优化决定下限</li>
+<li>从小处着手，快速迭代，不要追求一次性完美</li>
+</ol>
+<p><strong>行动建议：</strong></p>
+<ol>
+<li>选一个你熟悉的领域（工作&#x2F;爱好）</li>
+<li>收集 500-1000 条高质量问答数据</li>
+<li>用 LoRA 微调一个 7B 模型（成本&lt;¥50）</li>
+<li>部署测试，收集反馈，持续优化</li>
+</ol>
+<p>AI 民主化的时代，微调是你手中的”魔法棒”。现在，开始创造属于你的领域专家模型吧！🚀</p>
+<hr>
+<h2 id="参考文献"><a href="#参考文献" class="headerlink" title="参考文献"></a>参考文献</h2><ol>
+<li>Hu, E. J., et al. (2021). LoRA: Low-Rank Adaptation of Large Language Models. <em>arXiv:2106.09685</em></li>
+<li>Dettmers, T., et al. (2023). QLoRA: Efficient Finetuning of Quantized LLMs. <em>arXiv:2305.14314</em></li>
+<li>Rafailov, R., et al. (2023). Direct Preference Optimization: Your Language Model is Secretly a Reward Model. <em>arXiv:2305.18290</em></li>
+<li>Hugging Face PEFT Documentation. <a target="_blank" rel="noopener" href="https://huggingface.co/docs/peft">https://huggingface.co/docs/peft</a></li>
+<li>LLaMA-Factory GitHub. <a target="_blank" rel="noopener" href="https://github.com/hiyouga/LLaMA-Factory">https://github.com/hiyouga/LLaMA-Factory</a></li>
+</ol>
+<hr>
+
+      
+    </div>
+
+    
+
+    
+    
+    
+
+    
+
+    
+      <div>
+        <div style="padding: 10px 0; margin: 20px auto; width: 90%; text-align: center;">
+  <div>感谢你的阅读，如果文章对你有帮助，可以请作者喝杯茶!</div>
+  <button id="rewardButton" disable="enable" onclick="var qr = document.getElementById('QR'); if (qr.style.display === 'none') {qr.style.display='block';} else {qr.style.display='none'}">
+    <span>打赏</span>
+  </button>
+  <div id="QR" style="display: none;">
+
+    
+      <div id="wechat" style="display: inline-block">
+        <img id="wechat_qr" src="/images/wechatpay.jpg" alt="Noah Sun 微信支付"/>
+        <p>微信支付</p>
+      </div>
+    
+
+    
+      <div id="alipay" style="display: inline-block">
+        <img id="alipay_qr" src="/images/alipay.jpg" alt="Noah Sun 支付宝"/>
+        <p>支付宝</p>
+      </div>
+    
+
+    
+
+  </div>
+</div>
+
+      </div>
+    
+
+    
+      <div>
+        <ul class="post-copyright">
+  <li class="post-copyright-author">
+    <strong>本文作者： </strong>Noah Sun</li>
+  <li class="post-copyright-link">
+    <strong>本文链接：</strong>
+    <a href="http://blog.noahsun.top/2026/03/19/llm-fine-tuning-deep-dive/" title="深入理解大模型微调：从理论到实战的完整指南">http://blog.noahsun.top/2026/03/19/llm-fine-tuning-deep-dive/</a>
+  </li>
+  <li class="post-copyright-license">
+    <strong>版权声明： </strong>本博客所有文章除特别声明外，均采用 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" rel="external nofollow" target="_blank">CC BY-NC-SA 4.0</a> 许可协议。转载请注明出处！</li>
+</ul>
+
+      </div>
+    
+
+    <footer class="post-footer">
+      
+        <div class="post-tags">
+          
+            <a href="/tags/%E5%A4%A7%E8%AF%AD%E8%A8%80%E6%A8%A1%E5%9E%8B/" rel="tag"># 大语言模型</a>
+          
+            <a href="/tags/%E5%BE%AE%E8%B0%83/" rel="tag"># 微调</a>
+          
+            <a href="/tags/LoRA/" rel="tag"># LoRA</a>
+          
+            <a href="/tags/PEFT/" rel="tag"># PEFT</a>
+          
+            <a href="/tags/AI-%E5%B7%A5%E7%A8%8B%E5%8C%96/" rel="tag"># AI 工程化</a>
+          
+        </div>
+      
+
+      
+      
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2026/03/18/milvus-vector-database-deep-dive/" rel="next" title="Milvus 向量数据库深度解析：从原理到实战">
+                <i class="fa fa-chevron-left"></i> Milvus 向量数据库深度解析：从原理到实战
+              </a>
+            
+          </div>
+
+          <span class="post-nav-divider"></span>
+
+          <div class="post-nav-prev post-nav-item">
+            
+              <a href="/2026/03/19/vllm-core-principles-deep-dive/" rel="prev" title="深度解析 vLLM：重新定义大模型推理的性能革命">
+                深度解析 vLLM：重新定义大模型推理的性能革命 <i class="fa fa-chevron-right"></i>
+              </a>
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+  </div>
+
+
+          </div>
+          
+
+  
+    <div class="comments" id="comments">
+      <div id="disqus_thread">
+        <noscript>
+          Please enable JavaScript to view the
+          <a target="_blank" rel="noopener" href="https://disqus.com/?ref_noscript">comments powered by Disqus.</a>
+        </noscript>
+      </div>
+    </div>
+
+  
+
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap">
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview-wrap">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <section class="site-overview-wrap sidebar-panel">
+        <div class="site-overview">
+          <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+            
+              <img class="site-author-image" itemprop="image"
+                src="/images/avatar.jpg"
+                alt="Noah Sun" />
+            
+              <p class="site-author-name" itemprop="name">Noah Sun</p>
+              <p class="site-description motion-element" itemprop="description">Noah Sun's Blog.</p>
+          </div>
+
+          
+            <nav class="site-state motion-element">
+              
+                <div class="site-state-item site-state-posts">
+                
+                  <a href="/archives/%20%7C%7C%20archive">
+                
+                    <span class="site-state-item-count">31</span>
+                    <span class="site-state-item-name">日志</span>
+                  </a>
+                </div>
+              
+
+              
+                
+                
+                <div class="site-state-item site-state-categories">
+                  <a href="/categories/index.html">
+                    
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                    <span class="site-state-item-count">7</span>
+                    <span class="site-state-item-name">分类</span>
+                  </a>
+                </div>
+              
+
+              
+                
+                
+                <div class="site-state-item site-state-tags">
+                  <a href="/tags/index.html">
+                    
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                    <span class="site-state-item-count">65</span>
+                    <span class="site-state-item-name">标签</span>
+                  </a>
+                </div>
+              
+            </nav>
+          
+
+          
+
+          
+            <div class="links-of-author motion-element">
+              
+                <span class="links-of-author-item">
+                  <a href="https://github.com/rukesun/" target="_blank" title="GitHub"><i class="fa fa-fw fa-github"></i>GitHub</a>
+                  
+                </span>
+              
+                <span class="links-of-author-item">
+                  <a href="https://www.facebook.com/Noah.D.Sun" target="_blank" title="Facebook"><i class="fa fa-fw fa-facebook"></i>Facebook</a>
+                  
+                </span>
+              
+            </div>
+          
+
+          
+          
+
+          
+          
+
+          
+            
+          
+          
+
+        </div>
+      </section>
+
+      
+      <!--noindex-->
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+
+            
+              
+            
+
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%89%8D%E8%A8%80"><span class="nav-number">1.</span> <span class="nav-text">前言</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%BB%80%E4%B9%88%E6%98%AF%E5%A4%A7%E6%A8%A1%E5%9E%8B%E5%BE%AE%E8%B0%83%EF%BC%9F"><span class="nav-number">2.</span> <span class="nav-text">什么是大模型微调？</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E9%A2%84%E8%AE%AD%E7%BB%83-vs-%E5%BE%AE%E8%B0%83"><span class="nav-number">2.1.</span> <span class="nav-text">预训练 vs 微调</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%BE%AE%E8%B0%83%E7%9A%84%E6%A0%B8%E5%BF%83%E4%BB%B7%E5%80%BC"><span class="nav-number">2.2.</span> <span class="nav-text">微调的核心价值</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%BE%AE%E8%B0%83%E6%8A%80%E6%9C%AF%E6%BC%94%E8%BF%9B%E5%8F%B2"><span class="nav-number">3.</span> <span class="nav-text">微调技术演进史</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E7%AC%AC%E4%B8%80%E9%98%B6%E6%AE%B5%EF%BC%9A%E5%85%A8%E9%87%8F%E5%BE%AE%E8%B0%83%EF%BC%88Full-Fine-tuning%EF%BC%89"><span class="nav-number">3.1.</span> <span class="nav-text">第一阶段：全量微调（Full Fine-tuning）</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E7%AC%AC%E4%BA%8C%E9%98%B6%E6%AE%B5%EF%BC%9A%E5%8F%82%E6%95%B0%E9%AB%98%E6%95%88%E5%BE%AE%E8%B0%83%EF%BC%88PEFT%EF%BC%89"><span class="nav-number">3.2.</span> <span class="nav-text">第二阶段：参数高效微调（PEFT）</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#2-1-LoRA%EF%BC%88Low-Rank-Adaptation%EF%BC%89%F0%9F%94%A5"><span class="nav-number">3.2.1.</span> <span class="nav-text">2.1 LoRA（Low-Rank Adaptation）🔥</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#2-2-%E5%85%B6%E4%BB%96-PEFT-%E6%96%B9%E6%B3%95"><span class="nav-number">3.2.2.</span> <span class="nav-text">2.2 其他 PEFT 方法</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E7%AC%AC%E4%B8%89%E9%98%B6%E6%AE%B5%EF%BC%9A%E6%97%A0%E7%9B%91%E7%9D%A3%E5%BE%AE%E8%B0%83%E4%B8%8E%E5%AF%B9%E9%BD%90"><span class="nav-number">3.3.</span> <span class="nav-text">第三阶段：无监督微调与对齐</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%BE%AE%E8%B0%83%E5%AE%9E%E6%88%98%EF%BC%9A%E4%BB%8E%E9%9B%B6%E5%BC%80%E5%A7%8B%E8%AE%AD%E7%BB%83%E4%B8%80%E4%B8%AA%E9%A2%86%E5%9F%9F%E6%A8%A1%E5%9E%8B"><span class="nav-number">4.</span> <span class="nav-text">微调实战：从零开始训练一个领域模型</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%9C%BA%E6%99%AF%E8%AE%BE%E5%AE%9A"><span class="nav-number">4.1.</span> <span class="nav-text">场景设定</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%AD%A5%E9%AA%A4-1%EF%BC%9A%E6%95%B0%E6%8D%AE%E5%87%86%E5%A4%87"><span class="nav-number">4.2.</span> <span class="nav-text">步骤 1：数据准备</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%AD%A5%E9%AA%A4-2%EF%BC%9A%E7%8E%AF%E5%A2%83%E6%90%AD%E5%BB%BA"><span class="nav-number">4.3.</span> <span class="nav-text">步骤 2：环境搭建</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%AD%A5%E9%AA%A4-3%EF%BC%9A%E5%8A%A0%E8%BD%BD%E6%A8%A1%E5%9E%8B%E4%B8%8E%E9%85%8D%E7%BD%AE-LoRA"><span class="nav-number">4.4.</span> <span class="nav-text">步骤 3：加载模型与配置 LoRA</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%AD%A5%E9%AA%A4-4%EF%BC%9A%E6%95%B0%E6%8D%AE%E9%A2%84%E5%A4%84%E7%90%86"><span class="nav-number">4.5.</span> <span class="nav-text">步骤 4：数据预处理</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%AD%A5%E9%AA%A4-5%EF%BC%9A%E8%AE%AD%E7%BB%83%E9%85%8D%E7%BD%AE"><span class="nav-number">4.6.</span> <span class="nav-text">步骤 5：训练配置</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%AD%A5%E9%AA%A4-6%EF%BC%9A%E5%BC%80%E5%A7%8B%E8%AE%AD%E7%BB%83"><span class="nav-number">4.7.</span> <span class="nav-text">步骤 6：开始训练</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%AD%A5%E9%AA%A4-7%EF%BC%9A%E6%8E%A8%E7%90%86%E6%B5%8B%E8%AF%95"><span class="nav-number">4.8.</span> <span class="nav-text">步骤 7：推理测试</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%BE%AE%E8%B0%83%E6%9C%80%E4%BD%B3%E5%AE%9E%E8%B7%B5%E4%B8%8E%E9%81%BF%E5%9D%91%E6%8C%87%E5%8D%97"><span class="nav-number">5.</span> <span class="nav-text">微调最佳实践与避坑指南</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E2%9C%85-%E6%9C%80%E4%BD%B3%E5%AE%9E%E8%B7%B5"><span class="nav-number">5.1.</span> <span class="nav-text">✅ 最佳实践</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#1-%E6%95%B0%E6%8D%AE%E8%B4%A8%E9%87%8F%E4%BC%98%E5%85%88"><span class="nav-number">5.1.1.</span> <span class="nav-text">1. 数据质量优先</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#2-%E5%AD%A6%E4%B9%A0%E7%8E%87%E8%B0%83%E4%BC%98"><span class="nav-number">5.1.2.</span> <span class="nav-text">2. 学习率调优</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#3-%E9%98%B2%E6%AD%A2%E8%BF%87%E6%8B%9F%E5%90%88"><span class="nav-number">5.1.3.</span> <span class="nav-text">3. 防止过拟合</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#4-%E6%98%BE%E5%AD%98%E4%BC%98%E5%8C%96%E6%8A%80%E5%B7%A7"><span class="nav-number">5.1.4.</span> <span class="nav-text">4. 显存优化技巧</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E2%9D%8C-%E5%B8%B8%E8%A7%81%E9%99%B7%E9%98%B1"><span class="nav-number">5.2.</span> <span class="nav-text">❌ 常见陷阱</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#%E9%99%B7%E9%98%B1-1%EF%BC%9A%E6%95%B0%E6%8D%AE%E6%B3%84%E9%9C%B2"><span class="nav-number">5.2.1.</span> <span class="nav-text">陷阱 1：数据泄露</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E9%99%B7%E9%98%B1-2%EF%BC%9A%E8%AF%84%E4%BC%B0%E6%8C%87%E6%A0%87%E5%8D%95%E4%B8%80"><span class="nav-number">5.2.2.</span> <span class="nav-text">陷阱 2：评估指标单一</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E9%99%B7%E9%98%B1-3%EF%BC%9A%E5%BF%BD%E8%A7%86%E5%9F%BA%E7%A1%80%E6%A8%A1%E5%9E%8B%E8%83%BD%E5%8A%9B"><span class="nav-number">5.2.3.</span> <span class="nav-text">陷阱 3：忽视基础模型能力</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E9%99%B7%E9%98%B1-4%EF%BC%9A%E8%BF%87%E5%BA%A6%E5%BE%AE%E8%B0%83"><span class="nav-number">5.2.4.</span> <span class="nav-text">陷阱 4：过度微调</span></a></li></ol></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%BE%AE%E8%B0%83-vs-RAG%EF%BC%9A%E5%A6%82%E4%BD%95%E9%80%89%E6%8B%A9%EF%BC%9F"><span class="nav-number">6.</span> <span class="nav-text">微调 vs RAG：如何选择？</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%86%B3%E7%AD%96%E7%9F%A9%E9%98%B5"><span class="nav-number">6.1.</span> <span class="nav-text">决策矩阵</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E7%BB%84%E5%90%88%E6%9E%B6%E6%9E%84%EF%BC%88%E6%8E%A8%E8%8D%90%EF%BC%89"><span class="nav-number">6.2.</span> <span class="nav-text">组合架构（推荐）</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%B7%A5%E5%85%B7%E4%B8%8E%E8%B5%84%E6%BA%90%E6%8E%A8%E8%8D%90"><span class="nav-number">7.</span> <span class="nav-text">工具与资源推荐</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%A0%B8%E5%BF%83%E5%BA%93"><span class="nav-number">7.1.</span> <span class="nav-text">核心库</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%95%B0%E6%8D%AE%E9%9B%86"><span class="nav-number">7.2.</span> <span class="nav-text">数据集</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E9%A2%84%E8%AE%AD%E7%BB%83%E6%A8%A1%E5%9E%8B"><span class="nav-number">7.3.</span> <span class="nav-text">预训练模型</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%88%90%E6%9C%AC%E4%BC%B0%E7%AE%97%EF%BC%882026-%E5%B9%B4%E8%A1%8C%E6%83%85%EF%BC%89"><span class="nav-number">8.</span> <span class="nav-text">成本估算（2026 年行情）</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E4%BA%91%E7%AB%AF%E5%BE%AE%E8%B0%83%EF%BC%88%E4%BB%A5-Llama-3-8B-LoRA-%E4%B8%BA%E4%BE%8B%EF%BC%89"><span class="nav-number">8.1.</span> <span class="nav-text">云端微调（以 Llama-3-8B + LoRA 为例）</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%9C%AC%E5%9C%B0%E5%BE%AE%E8%B0%83"><span class="nav-number">8.2.</span> <span class="nav-text">本地微调</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%9C%AA%E6%9D%A5%E5%B1%95%E6%9C%9B"><span class="nav-number">9.</span> <span class="nav-text">未来展望</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E8%B6%8B%E5%8A%BF-1%EF%BC%9A%E6%9B%B4%E5%B0%8F%E3%80%81%E6%9B%B4%E5%BF%AB%E3%80%81%E6%9B%B4%E5%BC%BA"><span class="nav-number">9.1.</span> <span class="nav-text">趋势 1：更小、更快、更强</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E8%B6%8B%E5%8A%BF-2%EF%BC%9A%E8%87%AA%E5%8A%A8%E5%8C%96%E4%B8%8E%E5%B9%B3%E6%B0%91%E5%8C%96"><span class="nav-number">9.2.</span> <span class="nav-text">趋势 2：自动化与平民化</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E8%B6%8B%E5%8A%BF-3%EF%BC%9A%E5%A4%9A%E6%A8%A1%E6%80%81%E8%9E%8D%E5%90%88"><span class="nav-number">9.3.</span> <span class="nav-text">趋势 3：多模态融合</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E7%BB%93%E8%AF%AD"><span class="nav-number">10.</span> <span class="nav-text">结语</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%8F%82%E8%80%83%E6%96%87%E7%8C%AE"><span class="nav-number">11.</span> <span class="nav-text">参考文献</span></a></li></ol></div>
+            
+
+          </div>
+        </section>
+      <!--/noindex-->
+      
+
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright"> &copy; <span itemprop="copyrightYear">2026</span>
+  <span class="with-love" id="animate">
+    <i class="fa fa-user"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">Noah Sun</span>
+
+  
+
+  
+</div>
+
+
+
+
+  <div class="powered-by">由 <a class="theme-link" target="_blank" href="https://hexo.io">Hexo</a> 强力驱动 v6.3.0</div>
+
+
+
+  <span class="post-meta-divider">|</span>
+
+
+
+  <div class="theme-info">主题 – <a class="theme-link" target="_blank" href="https://theme-next.org">NexT.Pisces</a> v6.4.2</div>
+
+
+
+
+        
+
+
+
+
+
+
+
+
+        
+      </div>
+    </footer>
+
+    
+      <div class="back-to-top">
+        <i class="fa fa-arrow-up"></i>
+        
+      </div>
+    
+
+    
+	
+    
+
+    
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+    <script type="text/javascript" src="//cdn.jsdelivr.net/jquery/2.1.3/jquery.min.js"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/velocity-animate@1.2.1/velocity.min.js"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="//cdnjs.cloudflare.com/ajax/libs/velocity/1.2.1/velocity.ui.min.js"></script>
+  
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/utils.js?v=6.4.2"></script>
+
+  <script type="text/javascript" src="/js/src/motion.js?v=6.4.2"></script>
+
+
+
+  
+  
+
+
+  <script type="text/javascript" src="/js/src/affix.js?v=6.4.2"></script>
+
+  <script type="text/javascript" src="/js/src/schemes/pisces.js?v=6.4.2"></script>
+
+
+
+  
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=6.4.2"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=6.4.2"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/bootstrap.js?v=6.4.2"></script>
+
+
+
+  
+
+  
+    <script id="dsq-count-scr" src="https://noahsun.disqus.com/count.js" async></script>
+  
+
+  
+    <script type="text/javascript">
+      var disqus_config = function () {
+        this.page.url = 'http://blog.noahsun.top/2026/03/19/llm-fine-tuning-deep-dive/';
+        this.page.identifier = '2026/03/19/llm-fine-tuning-deep-dive/';
+        this.page.title = '深入理解大模型微调：从理论到实战的完整指南';
+        };
+      function loadComments () {
+        var d = document, s = d.createElement('script');
+        s.src = 'https://noahsun.disqus.com/embed.js';
+        s.setAttribute('data-timestamp', '' + +new Date());
+        (d.head || d.body).appendChild(s);
+      }
+      
+        loadComments();
+      
+    </script>
+  
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  <script type="text/javascript">
+    // Popup Window;
+    var isfetched = false;
+    var isXml = true;
+    // Search DB path;
+    var search_path = "search.xml";
+    if (search_path.length === 0) {
+      search_path = "search.xml";
+    } else if (/json$/i.test(search_path)) {
+      isXml = false;
+    }
+    var path = "/" + search_path;
+    // monitor main search box;
+
+    var onPopupClose = function (e) {
+      $('.popup').hide();
+      $('#local-search-input').val('');
+      $('.search-result-list').remove();
+      $('#no-result').remove();
+      $(".local-search-pop-overlay").remove();
+      $('body').css('overflow', '');
+    }
+
+    function proceedsearch() {
+      $("body")
+        .append('<div class="search-popup-overlay local-search-pop-overlay"></div>')
+        .css('overflow', 'hidden');
+      $('.search-popup-overlay').click(onPopupClose);
+      $('.popup').toggle();
+      var $localSearchInput = $('#local-search-input');
+      $localSearchInput.attr("autocapitalize", "none");
+      $localSearchInput.attr("autocorrect", "off");
+      $localSearchInput.focus();
+    }
+
+    // search function;
+    var searchFunc = function(path, search_id, content_id) {
+      'use strict';
+
+      // start loading animation
+      $("body")
+        .append('<div class="search-popup-overlay local-search-pop-overlay">' +
+          '<div id="search-loading-icon">' +
+          '<i class="fa fa-spinner fa-pulse fa-5x fa-fw"></i>' +
+          '</div>' +
+          '</div>')
+        .css('overflow', 'hidden');
+      $("#search-loading-icon").css('margin', '20% auto 0 auto').css('text-align', 'center');
+
+      
+
+      $.ajax({
+        url: path,
+        dataType: isXml ? "xml" : "json",
+        async: true,
+        success: function(res) {
+          // get the contents from search data
+          isfetched = true;
+          $('.popup').detach().appendTo('.header-inner');
+          var datas = isXml ? $("entry", res).map(function() {
+            return {
+              title: $("title", this).text(),
+              content: $("content",this).text(),
+              url: $("url" , this).text()
+            };
+          }).get() : res;
+          var input = document.getElementById(search_id);
+          var resultContent = document.getElementById(content_id);
+          var inputEventFunction = function() {
+            var searchText = input.value.trim().toLowerCase();
+            var keywords = searchText.split(/[\s\-]+/);
+            if (keywords.length > 1) {
+              keywords.push(searchText);
+            }
+            var resultItems = [];
+            if (searchText.length > 0) {
+              // perform local searching
+              datas.forEach(function(data) {
+                var isMatch = false;
+                var hitCount = 0;
+                var searchTextCount = 0;
+                var title = data.title.trim();
+                var titleInLowerCase = title.toLowerCase();
+                var content = data.content.trim().replace(/<[^>]+>/g,"");
+                
+                var contentInLowerCase = content.toLowerCase();
+                var articleUrl = decodeURIComponent(data.url);
+                var indexOfTitle = [];
+                var indexOfContent = [];
+                // only match articles with not empty titles
+                if(title != '') {
+                  keywords.forEach(function(keyword) {
+                    function getIndexByWord(word, text, caseSensitive) {
+                      var wordLen = word.length;
+                      if (wordLen === 0) {
+                        return [];
+                      }
+                      var startPosition = 0, position = [], index = [];
+                      if (!caseSensitive) {
+                        text = text.toLowerCase();
+                        word = word.toLowerCase();
+                      }
+                      while ((position = text.indexOf(word, startPosition)) > -1) {
+                        index.push({position: position, word: word});
+                        startPosition = position + wordLen;
+                      }
+                      return index;
+                    }
+
+                    indexOfTitle = indexOfTitle.concat(getIndexByWord(keyword, titleInLowerCase, false));
+                    indexOfContent = indexOfContent.concat(getIndexByWord(keyword, contentInLowerCase, false));
+                  });
+                  if (indexOfTitle.length > 0 || indexOfContent.length > 0) {
+                    isMatch = true;
+                    hitCount = indexOfTitle.length + indexOfContent.length;
+                  }
+                }
+
+                // show search results
+
+                if (isMatch) {
+                  // sort index by position of keyword
+
+                  [indexOfTitle, indexOfContent].forEach(function (index) {
+                    index.sort(function (itemLeft, itemRight) {
+                      if (itemRight.position !== itemLeft.position) {
+                        return itemRight.position - itemLeft.position;
+                      } else {
+                        return itemLeft.word.length - itemRight.word.length;
+                      }
+                    });
+                  });
+
+                  // merge hits into slices
+
+                  function mergeIntoSlice(text, start, end, index) {
+                    var item = index[index.length - 1];
+                    var position = item.position;
+                    var word = item.word;
+                    var hits = [];
+                    var searchTextCountInSlice = 0;
+                    while (position + word.length <= end && index.length != 0) {
+                      if (word === searchText) {
+                        searchTextCountInSlice++;
+                      }
+                      hits.push({position: position, length: word.length});
+                      var wordEnd = position + word.length;
+
+                      // move to next position of hit
+
+                      index.pop();
+                      while (index.length != 0) {
+                        item = index[index.length - 1];
+                        position = item.position;
+                        word = item.word;
+                        if (wordEnd > position) {
+                          index.pop();
+                        } else {
+                          break;
+                        }
+                      }
+                    }
+                    searchTextCount += searchTextCountInSlice;
+                    return {
+                      hits: hits,
+                      start: start,
+                      end: end,
+                      searchTextCount: searchTextCountInSlice
+                    };
+                  }
+
+                  var slicesOfTitle = [];
+                  if (indexOfTitle.length != 0) {
+                    slicesOfTitle.push(mergeIntoSlice(title, 0, title.length, indexOfTitle));
+                  }
+
+                  var slicesOfContent = [];
+                  while (indexOfContent.length != 0) {
+                    var item = indexOfContent[indexOfContent.length - 1];
+                    var position = item.position;
+                    var word = item.word;
+                    // cut out 100 characters
+                    var start = position - 20;
+                    var end = position + 80;
+                    if(start < 0){
+                      start = 0;
+                    }
+                    if (end < position + word.length) {
+                      end = position + word.length;
+                    }
+                    if(end > content.length){
+                      end = content.length;
+                    }
+                    slicesOfContent.push(mergeIntoSlice(content, start, end, indexOfContent));
+                  }
+
+                  // sort slices in content by search text's count and hits' count
+
+                  slicesOfContent.sort(function (sliceLeft, sliceRight) {
+                    if (sliceLeft.searchTextCount !== sliceRight.searchTextCount) {
+                      return sliceRight.searchTextCount - sliceLeft.searchTextCount;
+                    } else if (sliceLeft.hits.length !== sliceRight.hits.length) {
+                      return sliceRight.hits.length - sliceLeft.hits.length;
+                    } else {
+                      return sliceLeft.start - sliceRight.start;
+                    }
+                  });
+
+                  // select top N slices in content
+
+                  var upperBound = parseInt('1');
+                  if (upperBound >= 0) {
+                    slicesOfContent = slicesOfContent.slice(0, upperBound);
+                  }
+
+                  // highlight title and content
+
+                  function highlightKeyword(text, slice) {
+                    var result = '';
+                    var prevEnd = slice.start;
+                    slice.hits.forEach(function (hit) {
+                      result += text.substring(prevEnd, hit.position);
+                      var end = hit.position + hit.length;
+                      result += '<b class="search-keyword">' + text.substring(hit.position, end) + '</b>';
+                      prevEnd = end;
+                    });
+                    result += text.substring(prevEnd, slice.end);
+                    return result;
+                  }
+
+                  var resultItem = '';
+
+                  if (slicesOfTitle.length != 0) {
+                    resultItem += "<li><a href='" + articleUrl + "' class='search-result-title'>" + highlightKeyword(title, slicesOfTitle[0]) + "</a>";
+                  } else {
+                    resultItem += "<li><a href='" + articleUrl + "' class='search-result-title'>" + title + "</a>";
+                  }
+
+                  slicesOfContent.forEach(function (slice) {
+                    resultItem += "<a href='" + articleUrl + "'>" +
+                      "<p class=\"search-result\">" + highlightKeyword(content, slice) +
+                      "...</p>" + "</a>";
+                  });
+
+                  resultItem += "</li>";
+                  resultItems.push({
+                    item: resultItem,
+                    searchTextCount: searchTextCount,
+                    hitCount: hitCount,
+                    id: resultItems.length
+                  });
+                }
+              })
+            };
+            if (keywords.length === 1 && keywords[0] === "") {
+              resultContent.innerHTML = '<div id="no-result"><i class="fa fa-search fa-5x" /></div>'
+            } else if (resultItems.length === 0) {
+              resultContent.innerHTML = '<div id="no-result"><i class="fa fa-frown-o fa-5x" /></div>'
+            } else {
+              resultItems.sort(function (resultLeft, resultRight) {
+                if (resultLeft.searchTextCount !== resultRight.searchTextCount) {
+                  return resultRight.searchTextCount - resultLeft.searchTextCount;
+                } else if (resultLeft.hitCount !== resultRight.hitCount) {
+                  return resultRight.hitCount - resultLeft.hitCount;
+                } else {
+                  return resultRight.id - resultLeft.id;
+                }
+              });
+              var searchResultList = '<ul class=\"search-result-list\">';
+              resultItems.forEach(function (result) {
+                searchResultList += result.item;
+              })
+              searchResultList += "</ul>";
+              resultContent.innerHTML = searchResultList;
+            }
+          }
+
+          if ('auto' === 'auto') {
+            input.addEventListener('input', inputEventFunction);
+          } else {
+            $('.search-icon').click(inputEventFunction);
+            input.addEventListener('keypress', function (event) {
+              if (event.keyCode === 13) {
+                inputEventFunction();
+              }
+            });
+          }
+
+          // remove loading animation
+          $(".local-search-pop-overlay").remove();
+          $('body').css('overflow', '');
+
+          proceedsearch();
+        }
+      });
+    }
+
+    // handle and trigger popup window;
+    $('.popup-trigger').click(function(e) {
+      e.stopPropagation();
+      if (isfetched === false) {
+        searchFunc(path, 'local-search-input', 'local-search-result');
+      } else {
+        proceedsearch();
+      };
+    });
+
+    $('.popup-btn-close').click(onPopupClose);
+    $('.popup').click(function(e){
+      e.stopPropagation();
+    });
+    $(document).on('keyup', function (event) {
+      var shouldDismissSearchPopup = event.which === 27 &&
+        $('.search-popup').is(':visible');
+      if (shouldDismissSearchPopup) {
+        onPopupClose();
+      }
+    });
+  </script>
+
+
+
+
+
+  
+
+  
+  <script>
+    
+    function addCount(Counter) {
+      var $visitors = $(".leancloud_visitors");
+      var url = $visitors.attr('id').trim();
+      var title = $visitors.attr('data-flag-title').trim();
+
+      Counter('get', '/classes/Counter', { where: JSON.stringify({ url }) })
+        .done(function ({ results }) {
+          if (results.length > 0) {
+            var counter = results[0];
+            
+            Counter('put', `/classes/Counter/${counter.objectId}`, JSON.stringify({ time: { "__op":"Increment", "amount":1 } }))
+            
+            .done(function () {
+                  var $element = $(document.getElementById(url));
+                  $element.find('.leancloud-visitors-count').text(counter.time + 1);
+            })
+            
+            .fail(function ({ responseJSON }) {
+                console.log('Failed to save Visitor num, with error message: ' + responseJSON.error);
+            })
+          } else {
+            
+              Counter('post', '/classes/Counter', JSON.stringify({ title: title, url: url, time: 1}))
+                .done(function () {
+                  var $element = $(document.getElementById(url));
+                  $element.find('.leancloud-visitors-count').text(1);
+                })
+                .fail(function () {
+                  console.log('Failed to create');
+                });
+            
+          }
+        })
+      .fail(function ({ responseJSON }) {
+        console.log('LeanCloud Counter Error:' + responseJSON.code + " " + responseJSON.error);
+      });
+    }
+    
+
+    $(function() {
+      $.get('https://app-router.leancloud.cn/2/route?appId=' + "Cz56UW3FvEkwHB689nG2jLGm-gzGzoHsz")
+        .done(function ({ api_server }) {
+          var Counter = function (method, url, data) {
+            return $.ajax({
+              method: method,
+              url: `https://${api_server}/1.1${url}`,
+              headers: {
+                'X-LC-Id': "Cz56UW3FvEkwHB689nG2jLGm-gzGzoHsz",
+                'X-LC-Key': "zuFQDzA0SxPUkEfqOisL54YJ",
+                'Content-Type': 'application/json',
+              },
+              data: data,
+            });
+          };
+          
+          addCount(Counter);
+          
+        })
+    });
+  </script>
+
+
+
+  
+
+  
+
+  
+
+  
+
+  
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+</body>
+</html>

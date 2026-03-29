@@ -1,0 +1,1848 @@
+<!DOCTYPE html>
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+
+<html class="theme-next pisces use-motion" lang="zh-CN,en,default">
+<head>
+  <meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2"/>
+<meta name="theme-color" content="#222">
+
+
+
+
+
+
+
+
+
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+<link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet" type="text/css" />
+
+<link href="/css/main.css?v=6.4.2" rel="stylesheet" type="text/css" />
+
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png?v=6.4.2">
+
+
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png?v=6.4.2">
+
+
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png?v=6.4.2">
+
+
+  <link rel="mask-icon" href="/images/logo.svg?v=6.4.2" color="#222">
+
+
+
+
+
+
+
+
+
+<script type="text/javascript" id="hexo.configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    root: '',
+    scheme: 'Pisces',
+    version: '6.4.2',
+    sidebar: {"position":"left","display":"post","offset":12,"b2t":false,"scrollpercent":false,"onmobile":false},
+    fancybox: false,
+    fastclick: false,
+    lazyload: false,
+    tabs: true,
+    motion: {"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},
+    algolia: {
+      applicationID: '',
+      apiKey: '',
+      indexName: '',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    }
+  };
+</script>
+
+
+  
+
+
+
+
+  <meta name="description" content="前言在 AI 应用爆发的 2025-2026 年，向量数据库已成为大模型应用的”标配”基础设施。无论是 RAG（检索增强生成）、语义搜索、推荐系统，还是多模态应用，都离不开高效的向量存储与检索能力。 Milvus 作为全球最流行的开源向量数据库之一，以其高性能、可扩展性和易用性，成为了众多开发者的首选。本文将从架构原理、核心特性、实战应用三个维度，深度解析 Milvus 的技术实现。 什么是向量数">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Milvus 向量数据库深度解析：从原理到实战">
+<meta property="og:url" content="http://blog.noahsun.top/2026/03/18/milvus-vector-database-deep-dive/index.html">
+<meta property="og:site_name" content="Noah Sun&#39;s Home">
+<meta property="og:description" content="前言在 AI 应用爆发的 2025-2026 年，向量数据库已成为大模型应用的”标配”基础设施。无论是 RAG（检索增强生成）、语义搜索、推荐系统，还是多模态应用，都离不开高效的向量存储与检索能力。 Milvus 作为全球最流行的开源向量数据库之一，以其高性能、可扩展性和易用性，成为了众多开发者的首选。本文将从架构原理、核心特性、实战应用三个维度，深度解析 Milvus 的技术实现。 什么是向量数">
+<meta property="og:locale" content="zh_CN">
+<meta property="article:published_time" content="2026-03-18T07:50:00.000Z">
+<meta property="article:modified_time" content="2026-03-18T07:51:27.006Z">
+<meta property="article:author" content="Noah Sun">
+<meta property="article:tag" content="Milvus">
+<meta property="article:tag" content="向量数据库">
+<meta property="article:tag" content="AI 基础设施">
+<meta property="article:tag" content="相似度搜索">
+<meta name="twitter:card" content="summary">
+
+
+
+
+
+
+  <link rel="canonical" href="http://blog.noahsun.top/2026/03/18/milvus-vector-database-deep-dive/"/>
+
+
+
+<script type="text/javascript" id="page.configurations">
+  CONFIG.page = {
+    sidebar: "",
+  };
+</script>
+
+  <title>Milvus 向量数据库深度解析：从原理到实战 | Noah Sun's Home</title>
+  
+
+
+
+
+<script async src="https://www.googletagmanager.com/gtag/js?id=UA-102233237-1"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+
+  gtag('config', 'UA-102233237-1');
+</script>
+
+
+
+  <script type="text/javascript">
+    var _hmt = _hmt || [];
+    (function() {
+      var hm = document.createElement("script");
+      hm.src = "https://hm.baidu.com/hm.js?07c7e0461feabfd55d89458a5c4ae94b";
+      var s = document.getElementsByTagName("script")[0];
+      s.parentNode.insertBefore(hm, s);
+    })();
+  </script>
+
+
+
+
+
+
+  <noscript>
+  <style type="text/css">
+    .use-motion .motion-element,
+    .use-motion .brand,
+    .use-motion .menu-item,
+    .sidebar-inner,
+    .use-motion .post-block,
+    .use-motion .pagination,
+    .use-motion .comments,
+    .use-motion .post-header,
+    .use-motion .post-body,
+    .use-motion .collection-title { opacity: initial; }
+
+    .use-motion .logo,
+    .use-motion .site-title,
+    .use-motion .site-subtitle {
+      opacity: initial;
+      top: initial;
+    }
+
+    .use-motion {
+      .logo-line-before i { left: initial; }
+      .logo-line-after i { right: initial; }
+    }
+  </style>
+</noscript>
+
+<meta name="generator" content="Hexo 6.3.0"></head>
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="zh-CN">
+
+  
+  
+    
+  
+
+  <div class="container sidebar-position-left page-post-detail">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-wrapper">
+  <div class="site-meta ">
+    
+
+    <div class="custom-logo-site-title">
+      <a href="/" class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title">Noah Sun's Home</span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+    
+  </div>
+
+  <div class="site-nav-toggle">
+    <button aria-label="切换导航栏">
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+    </button>
+  </div>
+</div>
+
+
+
+<nav class="site-nav">
+  
+    <ul id="menu" class="menu">
+      
+        
+        
+        
+          
+          <li class="menu-item menu-item-home">
+    <a href="/" rel="section">
+      <i class="menu-item-icon fa fa-fw fa-home"></i> <br />首页</a>
+  </li>
+        
+        
+        
+          
+          <li class="menu-item menu-item-archives">
+    <a href="/archives/" rel="section">
+      <i class="menu-item-icon fa fa-fw fa-archive"></i> <br />归档</a>
+  </li>
+        
+        
+        
+          
+          <li class="menu-item menu-item-categories">
+    <a href="/categories/" rel="section">
+      <i class="menu-item-icon fa fa-fw fa-th"></i> <br />分类</a>
+  </li>
+        
+        
+        
+          
+          <li class="menu-item menu-item-tags">
+    <a href="/tags/" rel="section">
+      <i class="menu-item-icon fa fa-fw fa-tags"></i> <br />标签</a>
+  </li>
+        
+        
+        
+          
+          <li class="menu-item menu-item-about">
+    <a href="/about/" rel="section">
+      <i class="menu-item-icon fa fa-fw fa-user"></i> <br />关于</a>
+  </li>
+
+      
+      
+        <li class="menu-item menu-item-search">
+          
+            <a href="javascript:;" class="popup-trigger">
+          
+            
+              <i class="menu-item-icon fa fa-search fa-fw"></i> <br />搜索</a>
+        </li>
+      
+    </ul>
+  
+
+  
+
+  
+    <div class="site-search">
+      
+  <div class="popup search-popup local-search-popup">
+  <div class="local-search-header clearfix">
+    <span class="search-icon">
+      <i class="fa fa-search"></i>
+    </span>
+    <span class="popup-btn-close">
+      <i class="fa fa-times-circle"></i>
+    </span>
+    <div class="local-search-input-wrapper">
+      <input autocomplete="off"
+             placeholder="搜索..." spellcheck="false"
+             type="text" id="local-search-input">
+    </div>
+  </div>
+  <div id="local-search-result"></div>
+</div>
+
+
+
+    </div>
+  
+</nav>
+
+
+
+  
+
+
+
+</div>
+    </header>
+
+    
+
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+            
+
+          
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+
+  
+  
+  
+
+  
+
+  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="http://blog.noahsun.top/2026/03/18/milvus-vector-database-deep-dive/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="Noah Sun">
+      <meta itemprop="description" content="Noah Sun's Blog.">
+      <meta itemprop="image" content="/images/avatar.jpg">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Noah Sun's Home">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">Milvus 向量数据库深度解析：从原理到实战
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+
+            
+            
+            
+
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+
+              
+                
+              
+
+              <time title="创建时间：2026-03-18 15:50:00 / 修改时间：15:51:27" itemprop="dateCreated datePublished" datetime="2026-03-18T15:50:00+08:00">2026-03-18</time>
+            
+
+            
+              
+
+              
+            
+          </span>
+
+          
+            <span class="post-category" >
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing"><a href="/categories/Technology/" itemprop="url" rel="index"><span itemprop="name">Technology</span></a></span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+              <span class="post-comments-count">
+                <span class="post-meta-divider">|</span>
+                <span class="post-meta-item-icon">
+                  <i class="fa fa-comment-o"></i>
+                </span>
+                <a href="/2026/03/18/milvus-vector-database-deep-dive/#comments" itemprop="discussionUrl">
+                  <span class="post-meta-item-text">评论数：</span> <span class="post-comments-count fb-comments-count" data-href="http://blog.noahsun.top/2026/03/18/milvus-vector-database-deep-dive/" itemprop="commentCount">0</span>
+                </a>
+              </span>
+            
+          
+
+          
+          
+             <span id="/2026/03/18/milvus-vector-database-deep-dive/" class="leancloud_visitors" data-flag-title="Milvus 向量数据库深度解析：从原理到实战">
+               <span class="post-meta-divider">|</span>
+               <span class="post-meta-item-icon">
+                 <i class="fa fa-eye"></i>
+               </span>
+               
+                 <span class="post-meta-item-text">阅读次数：</span>
+               
+                 <span class="leancloud-visitors-count"></span>
+             </span>
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <h2 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h2><p>在 AI 应用爆发的 2025-2026 年，向量数据库已成为大模型应用的”标配”基础设施。无论是 RAG（检索增强生成）、语义搜索、推荐系统，还是多模态应用，都离不开高效的向量存储与检索能力。</p>
+<p><strong>Milvus</strong> 作为全球最流行的开源向量数据库之一，以其高性能、可扩展性和易用性，成为了众多开发者的首选。本文将从架构原理、核心特性、实战应用三个维度，深度解析 Milvus 的技术实现。</p>
+<h2 id="什么是向量数据库？"><a href="#什么是向量数据库？" class="headerlink" title="什么是向量数据库？"></a>什么是向量数据库？</h2><h3 id="传统数据库-vs-向量数据库"><a href="#传统数据库-vs-向量数据库" class="headerlink" title="传统数据库 vs 向量数据库"></a>传统数据库 vs 向量数据库</h3><p>传统数据库（如 MySQL、PostgreSQL）擅长处理结构化数据，支持精确匹配和范围查询：</p>
+<figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">SELECT</span> <span class="operator">*</span> <span class="keyword">FROM</span> users <span class="keyword">WHERE</span> age <span class="operator">&gt;</span> <span class="number">25</span> <span class="keyword">AND</span> city <span class="operator">=</span> <span class="string">&#x27;Beijing&#x27;</span>;</span><br></pre></td></tr></table></figure>
+
+<p>但在 AI 时代，我们更多需要处理<strong>非结构化数据</strong>（文本、图片、音频、视频），并通过<strong>语义相似度</strong>进行检索：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">&quot;找出与这张图片最相似的 10 张图片&quot;</span><br><span class="line">&quot;搜索与&#x27;气候变化影响&#x27;语义最接近的文档&quot;</span><br></pre></td></tr></table></figure>
+
+<p>向量数据库的核心能力：</p>
+<ul>
+<li>将非结构化数据转换为<strong>向量嵌入</strong>（Embeddings）</li>
+<li>支持<strong>近似最近邻搜索</strong>（ANN, Approximate Nearest Neighbor）</li>
+<li>在高维向量空间中快速找到<strong>语义相似</strong>的数据</li>
+</ul>
+<h3 id="向量检索的本质"><a href="#向量检索的本质" class="headerlink" title="向量检索的本质"></a>向量检索的本质</h3><figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">文本/图片/音频 → Embedding 模型 → 向量 [0.23, -0.45, 0.89, ...]</span><br><span class="line">                                    ↓</span><br><span class="line">                            向量数据库存储</span><br><span class="line">                                    ↓</span><br><span class="line">                      相似度计算（余弦/欧氏距离）</span><br><span class="line">                                    ↓</span><br><span class="line">                            返回最相似的 Top-K</span><br></pre></td></tr></table></figure>
+
+<h2 id="Milvus-架构深度解析"><a href="#Milvus-架构深度解析" class="headerlink" title="Milvus 架构深度解析"></a>Milvus 架构深度解析</h2><h3 id="整体架构"><a href="#整体架构" class="headerlink" title="整体架构"></a>整体架构</h3><p>Milvus 采用<strong>存算分离</strong>的云原生架构，核心组件包括：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br></pre></td><td class="code"><pre><span class="line">┌─────────────────────────────────────────────────────────────┐</span><br><span class="line">│                        SDK / API                             │</span><br><span class="line">│                   (Python, Java, Go, etc.)                   │</span><br><span class="line">└─────────────────────────┬───────────────────────────────────┘</span><br><span class="line">                          │</span><br><span class="line">┌─────────────────────────▼───────────────────────────────────┐</span><br><span class="line">│                    Milvus Proxy                              │</span><br><span class="line">│              (请求解析、路由、负载均衡)                        │</span><br><span class="line">└─────────────────────────┬───────────────────────────────────┘</span><br><span class="line">                          │</span><br><span class="line">        ┌─────────────────┼─────────────────┐</span><br><span class="line">        ▼                 ▼                 ▼</span><br><span class="line">┌──────────────┐  ┌──────────────┐  ┌──────────────┐</span><br><span class="line">│  Query Node  │  │  Data Node   │  │  Index Node  │</span><br><span class="line">│  (查询服务)   │  │  (数据写入)   │  │  (索引构建)   │</span><br><span class="line">└──────┬───────┘  └──────┬───────┘  └──────┬───────┘</span><br><span class="line">       │                 │                 │</span><br><span class="line">       └─────────────────┼─────────────────┘</span><br><span class="line">                         ▼</span><br><span class="line">              ┌─────────────────────┐</span><br><span class="line">              │     Message Queue    │</span><br><span class="line">              │    (Pulsar / Kafka)  │</span><br><span class="line">              └──────────┬──────────┘</span><br><span class="line">                         │</span><br><span class="line">        ┌────────────────┼────────────────┐</span><br><span class="line">        ▼                ▼                ▼</span><br><span class="line">┌─────────────┐  ┌─────────────┐  ┌─────────────┐</span><br><span class="line">│   MySQL     │  │   MinIO     │  │   Etcd      │</span><br><span class="line">│  (元数据)    │  │  (对象存储)  │  │  (协调服务)  │</span><br><span class="line">└─────────────┘  └─────────────┘  └─────────────┘</span><br></pre></td></tr></table></figure>
+
+<h3 id="核心组件详解"><a href="#核心组件详解" class="headerlink" title="核心组件详解"></a>核心组件详解</h3><h4 id="1-Proxy（代理层）"><a href="#1-Proxy（代理层）" class="headerlink" title="1. Proxy（代理层）"></a>1. Proxy（代理层）</h4><ul>
+<li><strong>请求入口</strong>：接收所有客户端请求（SDK&#x2F;RESTful API）</li>
+<li><strong>身份验证</strong>：处理用户认证和权限校验</li>
+<li><strong>请求路由</strong>：将请求分发到正确的 Data Node 或 Query Node</li>
+<li><strong>结果聚合</strong>：合并多个节点的查询结果并返回</li>
+</ul>
+<h4 id="2-Data-Node（数据节点）"><a href="#2-Data-Node（数据节点）" class="headerlink" title="2. Data Node（数据节点）"></a>2. Data Node（数据节点）</h4><ul>
+<li><strong>数据写入</strong>：处理 Insert、Delete 操作</li>
+<li><strong>日志持久化</strong>：将数据写入 Message Queue（Pulsar&#x2F;Kafka）</li>
+<li><strong>数据分段</strong>：自动将数据切分为 Segment（类似数据库的分区）</li>
+<li><strong>实时性保证</strong>：支持流式写入和实时查询</li>
+</ul>
+<h4 id="3-Query-Node（查询节点）"><a href="#3-Query-Node（查询节点）" class="headerlink" title="3. Query Node（查询节点）"></a>3. Query Node（查询节点）</h4><ul>
+<li><strong>向量检索</strong>：执行 ANN 搜索算法</li>
+<li><strong>标量过滤</strong>：支持混合查询（向量 + 元数据过滤）</li>
+<li><strong>内存缓存</strong>：将热点数据加载到内存加速查询</li>
+<li><strong>并行计算</strong>：支持分布式查询，多节点并行处理</li>
+</ul>
+<h4 id="4-Index-Node（索引节点）"><a href="#4-Index-Node（索引节点）" class="headerlink" title="4. Index Node（索引节点）"></a>4. Index Node（索引节点）</h4><ul>
+<li><strong>索引构建</strong>：异步构建向量索引（IVF、HNSW 等）</li>
+<li><strong>索引优化</strong>：自动选择最优索引类型</li>
+<li><strong>后台任务</strong>：不阻塞数据写入和查询</li>
+</ul>
+<h4 id="5-存储层"><a href="#5-存储层" class="headerlink" title="5. 存储层"></a>5. 存储层</h4><table>
+<thead>
+<tr>
+<th>组件</th>
+<th>用途</th>
+<th>替代方案</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><strong>MySQL</strong></td>
+<td>存储元数据（集合、字段、索引信息）</td>
+<td>PostgreSQL</td>
+</tr>
+<tr>
+<td><strong>MinIO</strong></td>
+<td>存储向量数据和日志（对象存储）</td>
+<td>AWS S3, GCS</td>
+</tr>
+<tr>
+<td><strong>Etcd</strong></td>
+<td>分布式协调、服务发现、配置管理</td>
+<td>-</td>
+</tr>
+<tr>
+<td><strong>Pulsar&#x2F;Kafka</strong></td>
+<td>消息队列、数据持久化</td>
+<td>-</td>
+</tr>
+</tbody></table>
+<h3 id="存算分离的优势"><a href="#存算分离的优势" class="headerlink" title="存算分离的优势"></a>存算分离的优势</h3><p>Milvus 2.x 采用存算分离架构，带来以下优势：</p>
+<ol>
+<li><strong>弹性伸缩</strong>：计算节点（Query&#x2F;Data Node）可独立扩缩容</li>
+<li><strong>高可用</strong>：单点故障不影响整体服务</li>
+<li><strong>成本优化</strong>：存储和计算可按需配置</li>
+<li><strong>云原生友好</strong>：天然支持 Kubernetes 部署</li>
+</ol>
+<h2 id="核心特性"><a href="#核心特性" class="headerlink" title="核心特性"></a>核心特性</h2><h3 id="1-高性能向量检索"><a href="#1-高性能向量检索" class="headerlink" title="1. 高性能向量检索"></a>1. 高性能向量检索</h3><p>Milvus 支持多种索引类型，针对不同场景优化：</p>
+<table>
+<thead>
+<tr>
+<th>索引类型</th>
+<th>适用场景</th>
+<th>查询速度</th>
+<th>内存占用</th>
+<th>构建速度</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><strong>FLAT</strong></td>
+<td>小数据集 (&lt;10 万)</td>
+<td>慢</td>
+<td>低</td>
+<td>快</td>
+</tr>
+<tr>
+<td><strong>IVF_FLAT</strong></td>
+<td>通用场景</td>
+<td>快</td>
+<td>中</td>
+<td>中</td>
+</tr>
+<tr>
+<td><strong>IVF_SQ8</strong></td>
+<td>大数据集，内存敏感</td>
+<td>快</td>
+<td>低</td>
+<td>中</td>
+</tr>
+<tr>
+<td><strong>HNSW</strong></td>
+<td>高召回率要求</td>
+<td>最快</td>
+<td>高</td>
+<td>慢</td>
+</tr>
+<tr>
+<td><strong>ANNOY</strong></td>
+<td>读多写少</td>
+<td>快</td>
+<td>中</td>
+<td>慢</td>
+</tr>
+<tr>
+<td><strong>DiskANN</strong></td>
+<td>超大数据集</td>
+<td>快</td>
+<td>极低</td>
+<td>中</td>
+</tr>
+</tbody></table>
+<p><strong>索引选择建议：</strong></p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 小数据集 (&lt;10 万条)</span></span><br><span class="line">index_type = <span class="string">&quot;FLAT&quot;</span>  <span class="comment"># 精确搜索，无需索引</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># 中等数据集 (10 万 -1000 万)</span></span><br><span class="line">index_type = <span class="string">&quot;IVF_FLAT&quot;</span>  <span class="comment"># 平衡性能和内存</span></span><br><span class="line"><span class="comment"># 或</span></span><br><span class="line">index_type = <span class="string">&quot;HNSW&quot;</span>  <span class="comment"># 追求极致查询速度</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># 大数据集 (&gt;1000 万)</span></span><br><span class="line">index_type = <span class="string">&quot;IVF_SQ8&quot;</span>  <span class="comment"># 压缩存储，节省内存</span></span><br><span class="line"><span class="comment"># 或</span></span><br><span class="line">index_type = <span class="string">&quot;DiskANN&quot;</span>  <span class="comment"># 磁盘索引，支持海量数据</span></span><br></pre></td></tr></table></figure>
+
+<h3 id="2-混合查询（Hybrid-Search）"><a href="#2-混合查询（Hybrid-Search）" class="headerlink" title="2. 混合查询（Hybrid Search）"></a>2. 混合查询（Hybrid Search）</h3><p>Milvus 支持<strong>向量检索 + 标量过滤</strong>的混合查询：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">from</span> pymilvus <span class="keyword">import</span> connections, Collection</span><br><span class="line"></span><br><span class="line"><span class="comment"># 连接 Milvus</span></span><br><span class="line">connections.connect(<span class="string">&quot;default&quot;</span>, host=<span class="string">&quot;localhost&quot;</span>, port=<span class="string">&quot;19530&quot;</span>)</span><br><span class="line"></span><br><span class="line"><span class="comment"># 获取集合</span></span><br><span class="line">collection = Collection(<span class="string">&quot;articles&quot;</span>)</span><br><span class="line"></span><br><span class="line"><span class="comment"># 混合查询：向量相似度 + 元数据过滤</span></span><br><span class="line">expr = <span class="string">&quot;publish_date &gt; 1704067200 and category == &#x27;technology&#x27;&quot;</span>  <span class="comment"># 标量过滤</span></span><br><span class="line">search_params = &#123;</span><br><span class="line">    <span class="string">&quot;metric_type&quot;</span>: <span class="string">&quot;COSINE&quot;</span>,</span><br><span class="line">    <span class="string">&quot;params&quot;</span>: &#123;<span class="string">&quot;nprobe&quot;</span>: <span class="number">10</span>&#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">results = collection.search(</span><br><span class="line">    data=[[<span class="number">0.23</span>, -<span class="number">0.45</span>, <span class="number">0.89</span>, ...]],  <span class="comment"># 查询向量</span></span><br><span class="line">    anns_field=<span class="string">&quot;embedding&quot;</span>,           <span class="comment"># 向量字段</span></span><br><span class="line">    param=search_params,</span><br><span class="line">    limit=<span class="number">10</span>,                         <span class="comment"># 返回 Top-10</span></span><br><span class="line">    expr=expr                         <span class="comment"># 过滤条件</span></span><br><span class="line">)</span><br></pre></td></tr></table></figure>
+
+<p><strong>应用场景：</strong></p>
+<ul>
+<li>搜索”最近发布的科技类文章”</li>
+<li>查找”价格低于 100 元的相似商品”</li>
+<li>筛选”用户评分&gt;4.5 的相似视频”</li>
+</ul>
+<h3 id="3-多向量支持（Multi-Vector）"><a href="#3-多向量支持（Multi-Vector）" class="headerlink" title="3. 多向量支持（Multi-Vector）"></a>3. 多向量支持（Multi-Vector）</h3><p>Milvus 2.4+ 支持<strong>单条记录存储多个向量</strong>，适用于：</p>
+<ul>
+<li><strong>多模态检索</strong>：同一商品同时存储图片向量、文本向量</li>
+<li><strong>分块检索</strong>：长文档切分为多个段落，每段独立向量</li>
+<li><strong>层级检索</strong>：粗粒度 + 细粒度向量组合</li>
+</ul>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 定义包含多个向量的 Schema</span></span><br><span class="line"><span class="keyword">from</span> pymilvus <span class="keyword">import</span> DataType, FieldSchema, CollectionSchema</span><br><span class="line"></span><br><span class="line">fields = [</span><br><span class="line">    FieldSchema(name=<span class="string">&quot;id&quot;</span>, dtype=DataType.INT64, is_primary=<span class="literal">True</span>),</span><br><span class="line">    FieldSchema(name=<span class="string">&quot;doc_embedding&quot;</span>, dtype=DataType.FLOAT_VECTOR, dim=<span class="number">768</span>),  <span class="comment"># 文档级向量</span></span><br><span class="line">    FieldSchema(name=<span class="string">&quot;paragraph_embeddings&quot;</span>, dtype=DataType.FLOAT_VECTOR, dim=<span class="number">768</span>, is_primary=<span class="literal">False</span>),  <span class="comment"># 段落级向量</span></span><br><span class="line">    FieldSchema(name=<span class="string">&quot;content&quot;</span>, dtype=DataType.VARCHAR, max_length=<span class="number">65535</span>),</span><br><span class="line">]</span><br><span class="line"></span><br><span class="line">schema = CollectionSchema(fields, <span class="string">&quot;Multi-vector collection&quot;</span>)</span><br><span class="line">collection = Collection(<span class="string">&quot;multi_vector_docs&quot;</span>, schema)</span><br></pre></td></tr></table></figure>
+
+<h3 id="4-动态-Schema（Dynamic-Field）"><a href="#4-动态-Schema（Dynamic-Field）" class="headerlink" title="4. 动态 Schema（Dynamic Field）"></a>4. 动态 Schema（Dynamic Field）</h3><p>Milvus 2.3+ 支持动态字段，无需预先定义所有字段：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 启用动态字段</span></span><br><span class="line">schema = CollectionSchema([</span><br><span class="line">    FieldSchema(name=<span class="string">&quot;id&quot;</span>, dtype=DataType.INT64, is_primary=<span class="literal">True</span>),</span><br><span class="line">    FieldSchema(name=<span class="string">&quot;embedding&quot;</span>, dtype=DataType.FLOAT_VECTOR, dim=<span class="number">768</span>),</span><br><span class="line">], dynamic_field=<span class="literal">True</span>)</span><br><span class="line"></span><br><span class="line"><span class="comment"># 插入时动态添加字段</span></span><br><span class="line">data = [</span><br><span class="line">    &#123;</span><br><span class="line">        <span class="string">&quot;id&quot;</span>: <span class="number">1</span>,</span><br><span class="line">        <span class="string">&quot;embedding&quot;</span>: [<span class="number">0.1</span>, <span class="number">0.2</span>, ...],</span><br><span class="line">        <span class="string">&quot;author&quot;</span>: <span class="string">&quot;张三&quot;</span>,      <span class="comment"># 动态字段</span></span><br><span class="line">        <span class="string">&quot;tags&quot;</span>: [<span class="string">&quot;AI&quot;</span>, <span class="string">&quot;DB&quot;</span>],  <span class="comment"># 动态字段</span></span><br><span class="line">        <span class="string">&quot;extra_info&quot;</span>: &#123;...&#125;    <span class="comment"># 动态字段</span></span><br><span class="line">    &#125;</span><br><span class="line">]</span><br><span class="line">collection.insert(data)</span><br></pre></td></tr></table></figure>
+
+<h3 id="5-分区（Partition）"><a href="#5-分区（Partition）" class="headerlink" title="5. 分区（Partition）"></a>5. 分区（Partition）</h3><p>支持按业务逻辑分区，提升查询性能和管理效率：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 创建分区</span></span><br><span class="line">collection.create_partition(partition_name=<span class="string">&quot;tech_articles&quot;</span>)</span><br><span class="line">collection.create_partition(partition_name=<span class="string">&quot;finance_articles&quot;</span>)</span><br><span class="line"></span><br><span class="line"><span class="comment"># 向特定分区插入数据</span></span><br><span class="line">collection.insert(data, partition_name=<span class="string">&quot;tech_articles&quot;</span>)</span><br><span class="line"></span><br><span class="line"><span class="comment"># 分区查询</span></span><br><span class="line">results = collection.search(</span><br><span class="line">    data=query_vector,</span><br><span class="line">    anns_field=<span class="string">&quot;embedding&quot;</span>,</span><br><span class="line">    param=search_params,</span><br><span class="line">    limit=<span class="number">10</span>,</span><br><span class="line">    partition_names=[<span class="string">&quot;tech_articles&quot;</span>]  <span class="comment"># 只查询技术类文章</span></span><br><span class="line">)</span><br></pre></td></tr></table></figure>
+
+<h3 id="6-数据一致性级别"><a href="#6-数据一致性级别" class="headerlink" title="6. 数据一致性级别"></a>6. 数据一致性级别</h3><p>Milvus 支持三种一致性级别：</p>
+<table>
+<thead>
+<tr>
+<th>级别</th>
+<th>说明</th>
+<th>适用场景</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><strong>Strong</strong></td>
+<td>强一致性，写入立即可查</td>
+<td>金融、交易</td>
+</tr>
+<tr>
+<td><strong>Bounded</strong></td>
+<td>有界一致性（默认）</td>
+<td>大多数场景</td>
+</tr>
+<tr>
+<td><strong>Eventually</strong></td>
+<td>最终一致性，延迟最低</td>
+<td>日志、监控</td>
+</tr>
+</tbody></table>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 设置一致性级别</span></span><br><span class="line">collection = Collection(<span class="string">&quot;my_collection&quot;</span>, consistency_level=<span class="string">&quot;Bounded&quot;</span>)</span><br></pre></td></tr></table></figure>
+
+<h2 id="实战：构建-RAG-应用"><a href="#实战：构建-RAG-应用" class="headerlink" title="实战：构建 RAG 应用"></a>实战：构建 RAG 应用</h2><h3 id="场景描述"><a href="#场景描述" class="headerlink" title="场景描述"></a>场景描述</h3><p>构建一个基于 Milvus 的<strong>文档问答系统</strong>：</p>
+<ol>
+<li>用户上传文档（PDF&#x2F;Markdown&#x2F;TXT）</li>
+<li>文档切分为段落，生成向量嵌入</li>
+<li>用户提问时，检索最相关的段落</li>
+<li>将检索结果 + 问题发送给 LLM，生成答案</li>
+</ol>
+<h3 id="完整代码示例"><a href="#完整代码示例" class="headerlink" title="完整代码示例"></a>完整代码示例</h3><h4 id="1-环境准备"><a href="#1-环境准备" class="headerlink" title="1. 环境准备"></a>1. 环境准备</h4><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 安装 Milvus (Docker)</span></span><br><span class="line">docker run -d --name milvus-standalone \</span><br><span class="line">  -p 19530:19530 \</span><br><span class="line">  -p 9091:9091 \</span><br><span class="line">  milvusdb/milvus:latest</span><br><span class="line"></span><br><span class="line"><span class="comment"># 安装 Python 依赖</span></span><br><span class="line">pip install pymilvus sentence-transformers langchain</span><br></pre></td></tr></table></figure>
+
+<h4 id="2-创建集合"><a href="#2-创建集合" class="headerlink" title="2. 创建集合"></a>2. 创建集合</h4><figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">from</span> pymilvus <span class="keyword">import</span> connections, FieldSchema, CollectionSchema, Collection, DataType</span><br><span class="line"></span><br><span class="line"><span class="comment"># 连接 Milvus</span></span><br><span class="line">connections.connect(<span class="string">&quot;default&quot;</span>, host=<span class="string">&quot;localhost&quot;</span>, port=<span class="string">&quot;19530&quot;</span>)</span><br><span class="line"></span><br><span class="line"><span class="comment"># 定义 Schema</span></span><br><span class="line">fields = [</span><br><span class="line">    FieldSchema(name=<span class="string">&quot;id&quot;</span>, dtype=DataType.INT64, is_primary=<span class="literal">True</span>, auto_id=<span class="literal">True</span>),</span><br><span class="line">    FieldSchema(name=<span class="string">&quot;doc_id&quot;</span>, dtype=DataType.VARCHAR, max_length=<span class="number">64</span>),  <span class="comment"># 文档 ID</span></span><br><span class="line">    FieldSchema(name=<span class="string">&quot;paragraph&quot;</span>, dtype=DataType.VARCHAR, max_length=<span class="number">65535</span>),  <span class="comment"># 段落内容</span></span><br><span class="line">    FieldSchema(name=<span class="string">&quot;embedding&quot;</span>, dtype=DataType.FLOAT_VECTOR, dim=<span class="number">768</span>),  <span class="comment"># 向量</span></span><br><span class="line">    FieldSchema(name=<span class="string">&quot;metadata&quot;</span>, dtype=DataType.JSON),  <span class="comment"># 元数据（动态字段）</span></span><br><span class="line">]</span><br><span class="line"></span><br><span class="line">schema = CollectionSchema(fields, <span class="string">&quot;RAG document collection&quot;</span>, dynamic_field=<span class="literal">True</span>)</span><br><span class="line">collection = Collection(<span class="string">&quot;rag_docs&quot;</span>, schema)</span><br><span class="line"></span><br><span class="line"><span class="comment"># 创建索引</span></span><br><span class="line">index_params = &#123;</span><br><span class="line">    <span class="string">&quot;metric_type&quot;</span>: <span class="string">&quot;COSINE&quot;</span>,</span><br><span class="line">    <span class="string">&quot;index_type&quot;</span>: <span class="string">&quot;HNSW&quot;</span>,</span><br><span class="line">    <span class="string">&quot;params&quot;</span>: &#123;<span class="string">&quot;M&quot;</span>: <span class="number">16</span>, <span class="string">&quot;efConstruction&quot;</span>: <span class="number">200</span>&#125;</span><br><span class="line">&#125;</span><br><span class="line">collection.create_index(field_name=<span class="string">&quot;embedding&quot;</span>, index_params=index_params)</span><br><span class="line"></span><br><span class="line"><span class="comment"># 加载到内存</span></span><br><span class="line">collection.load()</span><br></pre></td></tr></table></figure>
+
+<h4 id="3-文档处理与插入"><a href="#3-文档处理与插入" class="headerlink" title="3. 文档处理与插入"></a>3. 文档处理与插入</h4><figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">from</span> sentence_transformers <span class="keyword">import</span> SentenceTransformer</span><br><span class="line"><span class="keyword">import</span> hashlib</span><br><span class="line"></span><br><span class="line"><span class="comment"># 加载嵌入模型</span></span><br><span class="line">model = SentenceTransformer(<span class="string">&#x27;BAAI/bge-large-zh-v1.5&#x27;</span>)</span><br><span class="line"></span><br><span class="line"><span class="keyword">def</span> <span class="title function_">process_document</span>(<span class="params">doc_id: <span class="built_in">str</span>, content: <span class="built_in">str</span>, metadata: <span class="built_in">dict</span></span>):</span><br><span class="line">    <span class="string">&quot;&quot;&quot;处理文档：切分段落、生成向量、插入 Milvus&quot;&quot;&quot;</span></span><br><span class="line">    </span><br><span class="line">    <span class="comment"># 简单按换行符切分（实际可用更智能的切分策略）</span></span><br><span class="line">    paragraphs = [p.strip() <span class="keyword">for</span> p <span class="keyword">in</span> content.split(<span class="string">&#x27;\n\n&#x27;</span>) <span class="keyword">if</span> <span class="built_in">len</span>(p.strip()) &gt; <span class="number">50</span>]</span><br><span class="line">    </span><br><span class="line">    <span class="comment"># 生成向量</span></span><br><span class="line">    embeddings = model.encode(paragraphs, normalize_embeddings=<span class="literal">True</span>)</span><br><span class="line">    </span><br><span class="line">    <span class="comment"># 准备插入数据</span></span><br><span class="line">    data = []</span><br><span class="line">    <span class="keyword">for</span> para, emb <span class="keyword">in</span> <span class="built_in">zip</span>(paragraphs, embeddings):</span><br><span class="line">        data.append(&#123;</span><br><span class="line">            <span class="string">&quot;doc_id&quot;</span>: doc_id,</span><br><span class="line">            <span class="string">&quot;paragraph&quot;</span>: para,</span><br><span class="line">            <span class="string">&quot;embedding&quot;</span>: emb.tolist(),</span><br><span class="line">            <span class="string">&quot;metadata&quot;</span>: metadata</span><br><span class="line">        &#125;)</span><br><span class="line">    </span><br><span class="line">    <span class="comment"># 插入 Milvus</span></span><br><span class="line">    collection.insert(data)</span><br><span class="line">    collection.flush()  <span class="comment"># 确保数据持久化</span></span><br><span class="line">    </span><br><span class="line">    <span class="keyword">return</span> <span class="built_in">len</span>(data)</span><br><span class="line"></span><br><span class="line"><span class="comment"># 示例：插入文档</span></span><br><span class="line">doc_content = <span class="string">&quot;&quot;&quot;</span></span><br><span class="line"><span class="string">Milvus 是一款开源向量数据库...</span></span><br><span class="line"><span class="string">（文档内容）</span></span><br><span class="line"><span class="string">&quot;&quot;&quot;</span></span><br><span class="line"></span><br><span class="line">doc_metadata = &#123;</span><br><span class="line">    <span class="string">&quot;title&quot;</span>: <span class="string">&quot;Milvus 技术文档&quot;</span>,</span><br><span class="line">    <span class="string">&quot;author&quot;</span>: <span class="string">&quot;Zilliz&quot;</span>,</span><br><span class="line">    <span class="string">&quot;publish_date&quot;</span>: <span class="string">&quot;2025-12-01&quot;</span>,</span><br><span class="line">    <span class="string">&quot;category&quot;</span>: <span class="string">&quot;database&quot;</span></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">count = process_document(<span class="string">&quot;doc_001&quot;</span>, doc_content, doc_metadata)</span><br><span class="line"><span class="built_in">print</span>(<span class="string">f&quot;插入了 <span class="subst">&#123;count&#125;</span> 个段落&quot;</span>)</span><br></pre></td></tr></table></figure>
+
+<h4 id="4-检索与问答"><a href="#4-检索与问答" class="headerlink" title="4. 检索与问答"></a>4. 检索与问答</h4><figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">def</span> <span class="title function_">retrieve_relevant_paragraphs</span>(<span class="params">query: <span class="built_in">str</span>, top_k: <span class="built_in">int</span> = <span class="number">5</span></span>):</span><br><span class="line">    <span class="string">&quot;&quot;&quot;检索与查询最相关的段落&quot;&quot;&quot;</span></span><br><span class="line">    </span><br><span class="line">    <span class="comment"># 生成查询向量</span></span><br><span class="line">    query_embedding = model.encode([query], normalize_embeddings=<span class="literal">True</span>)[<span class="number">0</span>]</span><br><span class="line">    </span><br><span class="line">    <span class="comment"># 搜索</span></span><br><span class="line">    search_params = &#123;</span><br><span class="line">        <span class="string">&quot;metric_type&quot;</span>: <span class="string">&quot;COSINE&quot;</span>,</span><br><span class="line">        <span class="string">&quot;params&quot;</span>: &#123;<span class="string">&quot;ef&quot;</span>: <span class="number">64</span>&#125;</span><br><span class="line">    &#125;</span><br><span class="line">    </span><br><span class="line">    results = collection.search(</span><br><span class="line">        data=[query_embedding.tolist()],</span><br><span class="line">        anns_field=<span class="string">&quot;embedding&quot;</span>,</span><br><span class="line">        param=search_params,</span><br><span class="line">        limit=top_k,</span><br><span class="line">        output_fields=[<span class="string">&quot;paragraph&quot;</span>, <span class="string">&quot;doc_id&quot;</span>, <span class="string">&quot;metadata&quot;</span>]</span><br><span class="line">    )</span><br><span class="line">    </span><br><span class="line">    <span class="comment"># 解析结果</span></span><br><span class="line">    relevant_paragraphs = []</span><br><span class="line">    <span class="keyword">for</span> hit <span class="keyword">in</span> results[<span class="number">0</span>]:</span><br><span class="line">        relevant_paragraphs.append(&#123;</span><br><span class="line">            <span class="string">&quot;content&quot;</span>: hit.entity.get(<span class="string">&quot;paragraph&quot;</span>),</span><br><span class="line">            <span class="string">&quot;doc_id&quot;</span>: hit.entity.get(<span class="string">&quot;doc_id&quot;</span>),</span><br><span class="line">            <span class="string">&quot;metadata&quot;</span>: hit.entity.get(<span class="string">&quot;metadata&quot;</span>),</span><br><span class="line">            <span class="string">&quot;score&quot;</span>: hit.score</span><br><span class="line">        &#125;)</span><br><span class="line">    </span><br><span class="line">    <span class="keyword">return</span> relevant_paragraphs</span><br><span class="line"></span><br><span class="line"><span class="keyword">def</span> <span class="title function_">answer_question</span>(<span class="params">query: <span class="built_in">str</span></span>):</span><br><span class="line">    <span class="string">&quot;&quot;&quot;完整的 RAG 问答流程&quot;&quot;&quot;</span></span><br><span class="line">    <span class="keyword">from</span> openai <span class="keyword">import</span> OpenAI</span><br><span class="line">    </span><br><span class="line">    <span class="comment"># 1. 检索相关段落</span></span><br><span class="line">    paragraphs = retrieve_relevant_paragraphs(query, top_k=<span class="number">5</span>)</span><br><span class="line">    </span><br><span class="line">    <span class="comment"># 2. 构建上下文</span></span><br><span class="line">    context = <span class="string">&quot;\n\n&quot;</span>.join([</span><br><span class="line">        <span class="string">f&quot;[来源：<span class="subst">&#123;p[<span class="string">&#x27;doc_id&#x27;</span>]&#125;</span>]\n<span class="subst">&#123;p[<span class="string">&#x27;content&#x27;</span>]&#125;</span>&quot;</span></span><br><span class="line">        <span class="keyword">for</span> p <span class="keyword">in</span> paragraphs</span><br><span class="line">    ])</span><br><span class="line">    </span><br><span class="line">    <span class="comment"># 3. 调用 LLM</span></span><br><span class="line">    client = OpenAI(api_key=<span class="string">&quot;your-api-key&quot;</span>)</span><br><span class="line">    prompt = <span class="string">f&quot;&quot;&quot;基于以下参考资料回答问题。如果资料中没有相关信息，请说明。</span></span><br><span class="line"><span class="string"></span></span><br><span class="line"><span class="string">参考资料：</span></span><br><span class="line"><span class="string"><span class="subst">&#123;context&#125;</span></span></span><br><span class="line"><span class="string"></span></span><br><span class="line"><span class="string">问题：<span class="subst">&#123;query&#125;</span></span></span><br><span class="line"><span class="string"></span></span><br><span class="line"><span class="string">回答：&quot;&quot;&quot;</span></span><br><span class="line">    </span><br><span class="line">    response = client.chat.completions.create(</span><br><span class="line">        model=<span class="string">&quot;gpt-4&quot;</span>,</span><br><span class="line">        messages=[&#123;<span class="string">&quot;role&quot;</span>: <span class="string">&quot;user&quot;</span>, <span class="string">&quot;content&quot;</span>: prompt&#125;]</span><br><span class="line">    )</span><br><span class="line">    </span><br><span class="line">    <span class="keyword">return</span> &#123;</span><br><span class="line">        <span class="string">&quot;answer&quot;</span>: response.choices[<span class="number">0</span>].message.content,</span><br><span class="line">        <span class="string">&quot;sources&quot;</span>: paragraphs</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line"><span class="comment"># 测试</span></span><br><span class="line">result = answer_question(<span class="string">&quot;Milvus 支持哪些索引类型？&quot;</span>)</span><br><span class="line"><span class="built_in">print</span>(<span class="string">f&quot;答案：<span class="subst">&#123;result[<span class="string">&#x27;answer&#x27;</span>]&#125;</span>&quot;</span>)</span><br><span class="line"><span class="built_in">print</span>(<span class="string">f&quot;来源：<span class="subst">&#123;[s[<span class="string">&#x27;doc_id&#x27;</span>] <span class="keyword">for</span> s <span class="keyword">in</span> result[<span class="string">&#x27;sources&#x27;</span>]]&#125;</span>&quot;</span>)</span><br></pre></td></tr></table></figure>
+
+<h3 id="性能优化建议"><a href="#性能优化建议" class="headerlink" title="性能优化建议"></a>性能优化建议</h3><h4 id="1-批量插入"><a href="#1-批量插入" class="headerlink" title="1. 批量插入"></a>1. 批量插入</h4><figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># ❌ 低效：逐条插入</span></span><br><span class="line"><span class="keyword">for</span> para <span class="keyword">in</span> paragraphs:</span><br><span class="line">    collection.insert([para])</span><br><span class="line"></span><br><span class="line"><span class="comment"># ✅ 高效：批量插入</span></span><br><span class="line">collection.insert(all_paragraphs_batch)  <span class="comment"># 单次插入 1000-5000 条</span></span><br></pre></td></tr></table></figure>
+
+<h4 id="2-异步插入"><a href="#2-异步插入" class="headerlink" title="2. 异步插入"></a>2. 异步插入</h4><figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 使用异步客户端（Milvus 2.4+）</span></span><br><span class="line"><span class="keyword">from</span> pymilvus <span class="keyword">import</span> AsyncMilvusClient</span><br><span class="line"></span><br><span class="line">async_client = AsyncMilvusClient(uri=<span class="string">&quot;http://localhost:19530&quot;</span>)</span><br><span class="line"><span class="keyword">await</span> async_client.insert(collection_name=<span class="string">&quot;rag_docs&quot;</span>, data=batch_data)</span><br></pre></td></tr></table></figure>
+
+<h4 id="3-索引参数调优"><a href="#3-索引参数调优" class="headerlink" title="3. 索引参数调优"></a>3. 索引参数调优</h4><figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># HNSW 索引参数调优</span></span><br><span class="line"><span class="comment"># M: 每个节点的最大连接数（越大越精确，但内存占用越高）</span></span><br><span class="line"><span class="comment"># efConstruction: 构建时的搜索范围（越大构建越慢，但索引质量越高）</span></span><br><span class="line"></span><br><span class="line">index_params = &#123;</span><br><span class="line">    <span class="string">&quot;metric_type&quot;</span>: <span class="string">&quot;COSINE&quot;</span>,</span><br><span class="line">    <span class="string">&quot;index_type&quot;</span>: <span class="string">&quot;HNSW&quot;</span>,</span><br><span class="line">    <span class="string">&quot;params&quot;</span>: &#123;<span class="string">&quot;M&quot;</span>: <span class="number">32</span>, <span class="string">&quot;efConstruction&quot;</span>: <span class="number">400</span>&#125;  <span class="comment"># 高质量索引</span></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment"># 查询时的 ef 参数（越大越精确，但查询越慢）</span></span><br><span class="line">search_params = &#123;</span><br><span class="line">    <span class="string">&quot;metric_type&quot;</span>: <span class="string">&quot;COSINE&quot;</span>,</span><br><span class="line">    <span class="string">&quot;params&quot;</span>: &#123;<span class="string">&quot;ef&quot;</span>: <span class="number">128</span>&#125;  <span class="comment"># 平衡速度和精度</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h4 id="4-使用-GPU-加速"><a href="#4-使用-GPU-加速" class="headerlink" title="4. 使用 GPU 加速"></a>4. 使用 GPU 加速</h4><p>Milvus 支持 GPU 索引（需要 GPU 版本）：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># GPU 索引类型</span></span><br><span class="line">gpu_index_params = &#123;</span><br><span class="line">    <span class="string">&quot;metric_type&quot;</span>: <span class="string">&quot;COSINE&quot;</span>,</span><br><span class="line">    <span class="string">&quot;index_type&quot;</span>: <span class="string">&quot;GPU_IVF_FLAT&quot;</span>,</span><br><span class="line">    <span class="string">&quot;params&quot;</span>: &#123;<span class="string">&quot;nlist&quot;</span>: <span class="number">1024</span>&#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h2 id="部署方案"><a href="#部署方案" class="headerlink" title="部署方案"></a>部署方案</h2><h3 id="1-单机版（开发-测试）"><a href="#1-单机版（开发-测试）" class="headerlink" title="1. 单机版（开发&#x2F;测试）"></a>1. 单机版（开发&#x2F;测试）</h3><figure class="highlight yaml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># docker-compose.yml</span></span><br><span class="line"><span class="attr">version:</span> <span class="string">&#x27;3.5&#x27;</span></span><br><span class="line"><span class="attr">services:</span></span><br><span class="line">  <span class="attr">etcd:</span></span><br><span class="line">    <span class="attr">image:</span> <span class="string">quay.io/coreos/etcd:v3.5.5</span></span><br><span class="line">    <span class="attr">environment:</span></span><br><span class="line">      <span class="bullet">-</span> <span class="string">ETCD_AUTO_COMPACTION_MODE=revision</span></span><br><span class="line">      <span class="bullet">-</span> <span class="string">ETCD_AUTO_COMPACTION_RETENTION=1000</span></span><br><span class="line">    <span class="attr">volumes:</span></span><br><span class="line">      <span class="bullet">-</span> <span class="string">$&#123;DOCKER_VOLUME_DIRECTORY:-.&#125;/volumes/etcd:/etcd</span></span><br><span class="line">    <span class="attr">command:</span> <span class="string">etcd</span> <span class="string">-advertise-client-urls=http://127.0.0.1:2379</span> <span class="string">-listen-client-urls</span> <span class="string">http://0.0.0.0:2379</span> <span class="string">--data-dir</span> <span class="string">/etcd</span></span><br><span class="line"></span><br><span class="line">  <span class="attr">minio:</span></span><br><span class="line">    <span class="attr">image:</span> <span class="string">minio/minio:RELEASE.2023-03-20T20-16-18Z</span></span><br><span class="line">    <span class="attr">environment:</span></span><br><span class="line">      <span class="attr">MINIO_ROOT_USER:</span> <span class="string">minioadmin</span></span><br><span class="line">      <span class="attr">MINIO_ROOT_PASSWORD:</span> <span class="string">minioadmin</span></span><br><span class="line">    <span class="attr">volumes:</span></span><br><span class="line">      <span class="bullet">-</span> <span class="string">$&#123;DOCKER_VOLUME_DIRECTORY:-.&#125;/volumes/minio:/minio_data</span></span><br><span class="line">    <span class="attr">command:</span> <span class="string">minio</span> <span class="string">server</span> <span class="string">/minio_data</span></span><br><span class="line">    <span class="attr">healthcheck:</span></span><br><span class="line">      <span class="attr">test:</span> [<span class="string">&quot;CMD&quot;</span>, <span class="string">&quot;curl&quot;</span>, <span class="string">&quot;-f&quot;</span>, <span class="string">&quot;http://localhost:9000/minio/health/live&quot;</span>]</span><br><span class="line">      <span class="attr">interval:</span> <span class="string">30s</span></span><br><span class="line">      <span class="attr">timeout:</span> <span class="string">20s</span></span><br><span class="line">      <span class="attr">retries:</span> <span class="number">3</span></span><br><span class="line"></span><br><span class="line">  <span class="attr">milvus-standalone:</span></span><br><span class="line">    <span class="attr">image:</span> <span class="string">milvusdb/milvus:latest</span></span><br><span class="line">    <span class="attr">command:</span> [<span class="string">&quot;milvus&quot;</span>, <span class="string">&quot;run&quot;</span>, <span class="string">&quot;standalone&quot;</span>]</span><br><span class="line">    <span class="attr">environment:</span></span><br><span class="line">      <span class="attr">ETCD_ENDPOINTS:</span> <span class="string">etcd:2379</span></span><br><span class="line">      <span class="attr">MINIO_ADDRESS:</span> <span class="string">minio:9000</span></span><br><span class="line">    <span class="attr">volumes:</span></span><br><span class="line">      <span class="bullet">-</span> <span class="string">$&#123;DOCKER_VOLUME_DIRECTORY:-.&#125;/volumes/milvus:/var/lib/milvus</span></span><br><span class="line">    <span class="attr">ports:</span></span><br><span class="line">      <span class="bullet">-</span> <span class="string">&quot;19530:19530&quot;</span></span><br><span class="line">      <span class="bullet">-</span> <span class="string">&quot;9091:9091&quot;</span></span><br><span class="line">    <span class="attr">depends_on:</span></span><br><span class="line">      <span class="bullet">-</span> <span class="string">&quot;etcd&quot;</span></span><br><span class="line">      <span class="bullet">-</span> <span class="string">&quot;minio&quot;</span></span><br><span class="line"></span><br><span class="line"><span class="attr">networks:</span></span><br><span class="line">  <span class="attr">default:</span></span><br><span class="line">    <span class="attr">name:</span> <span class="string">milvus</span></span><br></pre></td></tr></table></figure>
+
+<h3 id="2-集群版（生产环境）"><a href="#2-集群版（生产环境）" class="headerlink" title="2. 集群版（生产环境）"></a>2. 集群版（生产环境）</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 使用 Milvus Operator (Kubernetes)</span></span><br><span class="line">helm repo add milvus https://zilliztech.github.io/milvus-helm/</span><br><span class="line">helm repo update</span><br><span class="line"></span><br><span class="line">helm install my-release milvus/milvus \</span><br><span class="line">  --<span class="built_in">set</span> cluster.enabled=<span class="literal">true</span> \</span><br><span class="line">  --<span class="built_in">set</span> etcd.replicaCount=3 \</span><br><span class="line">  --<span class="built_in">set</span> minio.mode=distributed \</span><br><span class="line">  --<span class="built_in">set</span> queryNode.replicas=3 \</span><br><span class="line">  --<span class="built_in">set</span> dataNode.replicas=2</span><br></pre></td></tr></table></figure>
+
+<h3 id="3-云服务"><a href="#3-云服务" class="headerlink" title="3. 云服务"></a>3. 云服务</h3><ul>
+<li><strong>Zilliz Cloud</strong>：Milvus 官方托管服务（全球多区域）</li>
+<li><strong>AWS Marketplace</strong>：一键部署 Milvus 集群</li>
+<li><strong>阿里云&#x2F;腾讯云</strong>：国内云厂商支持</li>
+</ul>
+<h2 id="与其他向量数据库对比"><a href="#与其他向量数据库对比" class="headerlink" title="与其他向量数据库对比"></a>与其他向量数据库对比</h2><table>
+<thead>
+<tr>
+<th>特性</th>
+<th>Milvus</th>
+<th>Pinecone</th>
+<th>Weaviate</th>
+<th>Qdrant</th>
+<th>Chroma</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><strong>开源</strong></td>
+<td>✅ Apache 2.0</td>
+<td>❌ 闭源</td>
+<td>✅ BSD-3</td>
+<td>✅ Apache 2.0</td>
+<td>✅ Apache 2.0</td>
+</tr>
+<tr>
+<td><strong>部署方式</strong></td>
+<td>自托管&#x2F;云</td>
+<td>仅云</td>
+<td>自托管&#x2F;云</td>
+<td>自托管&#x2F;云</td>
+<td>自托管</td>
+</tr>
+<tr>
+<td><strong>分布式</strong></td>
+<td>✅ 原生支持</td>
+<td>✅</td>
+<td>✅</td>
+<td>✅</td>
+<td>❌</td>
+</tr>
+<tr>
+<td><strong>混合查询</strong></td>
+<td>✅</td>
+<td>✅</td>
+<td>✅</td>
+<td>✅</td>
+<td>有限</td>
+</tr>
+<tr>
+<td><strong>多向量</strong></td>
+<td>✅ 2.4+</td>
+<td>❌</td>
+<td>✅</td>
+<td>✅</td>
+<td>❌</td>
+</tr>
+<tr>
+<td><strong>动态 Schema</strong></td>
+<td>✅</td>
+<td>✅</td>
+<td>✅</td>
+<td>❌</td>
+<td>✅</td>
+</tr>
+<tr>
+<td><strong>GPU 加速</strong></td>
+<td>✅</td>
+<td>✅</td>
+<td>❌</td>
+<td>✅</td>
+<td>❌</td>
+</tr>
+<tr>
+<td><strong>社区规模</strong></td>
+<td>🌟🌟🌟🌟🌟</td>
+<td>🌟🌟🌟</td>
+<td>🌟🌟🌟🌟</td>
+<td>🌟🌟🌟🌟</td>
+<td>🌟🌟🌟</td>
+</tr>
+</tbody></table>
+<p><strong>选型建议：</strong></p>
+<ul>
+<li><strong>企业级&#x2F;大规模</strong>：Milvus、Pinecone</li>
+<li><strong>快速原型&#x2F;小规模</strong>：Chroma、Qdrant</li>
+<li><strong>需要图能力</strong>：Weaviate</li>
+<li><strong>成本敏感&#x2F;自托管</strong>：Milvus、Qdrant</li>
+</ul>
+<h2 id="最佳实践"><a href="#最佳实践" class="headerlink" title="最佳实践"></a>最佳实践</h2><h3 id="1-向量维度选择"><a href="#1-向量维度选择" class="headerlink" title="1. 向量维度选择"></a>1. 向量维度选择</h3><figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 常见嵌入模型维度</span></span><br><span class="line"><span class="comment"># BGE-Large: 1024</span></span><br><span class="line"><span class="comment"># BGE-Base: 768</span></span><br><span class="line"><span class="comment"># text-embedding-3-small: 1536</span></span><br><span class="line"><span class="comment"># text-embedding-3-large: 3072</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># 维度越高，表达能力越强，但：</span></span><br><span class="line"><span class="comment"># - 存储占用越大</span></span><br><span class="line"><span class="comment"># - 查询速度越慢</span></span><br><span class="line"><span class="comment"># - 可能过拟合</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># 建议：根据任务选择，不要盲目追求高维度</span></span><br></pre></td></tr></table></figure>
+
+<h3 id="2-距离度量选择"><a href="#2-距离度量选择" class="headerlink" title="2. 距离度量选择"></a>2. 距离度量选择</h3><figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># COSINE: 最常用，适合文本/图像语义检索</span></span><br><span class="line">metric_type = <span class="string">&quot;COSINE&quot;</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># L2 (欧氏距离): 适合聚类、物理距离</span></span><br><span class="line">metric_type = <span class="string">&quot;L2&quot;</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># IP (内积): 等同于 COSINE（向量归一化后）</span></span><br><span class="line">metric_type = <span class="string">&quot;IP&quot;</span></span><br></pre></td></tr></table></figure>
+
+<h3 id="3-数据生命周期管理"><a href="#3-数据生命周期管理" class="headerlink" title="3. 数据生命周期管理"></a>3. 数据生命周期管理</h3><figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 定期清理过期数据</span></span><br><span class="line">expr = <span class="string">&quot;publish_date &lt; 1672531200&quot;</span>  <span class="comment"># 2023 年之前的数据</span></span><br><span class="line">collection.delete(expr)</span><br><span class="line"></span><br><span class="line"><span class="comment"># 使用 TTL（Milvus 2.4+）</span></span><br><span class="line">collection.set_properties(&#123;<span class="string">&quot;ttl.seconds&quot;</span>: <span class="number">86400</span> * <span class="number">30</span>&#125;)  <span class="comment"># 30 天自动过期</span></span><br></pre></td></tr></table></figure>
+
+<h3 id="4-监控与告警"><a href="#4-监控与告警" class="headerlink" title="4. 监控与告警"></a>4. 监控与告警</h3><figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 监控关键指标</span></span><br><span class="line"><span class="comment"># - 查询延迟 (P99 &lt; 100ms)</span></span><br><span class="line"><span class="comment"># - 插入吞吐量 (&gt;1000 QPS)</span></span><br><span class="line"><span class="comment"># - 内存使用率 (&lt;80%)</span></span><br><span class="line"><span class="comment"># - 磁盘使用率 (&lt;70%)</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># 使用 Prometheus + Grafana</span></span><br><span class="line"><span class="comment"># Milvus 内置 /metrics 端点</span></span><br></pre></td></tr></table></figure>
+
+<h2 id="常见问题"><a href="#常见问题" class="headerlink" title="常见问题"></a>常见问题</h2><h3 id="Q1-查询速度慢怎么办？"><a href="#Q1-查询速度慢怎么办？" class="headerlink" title="Q1: 查询速度慢怎么办？"></a>Q1: 查询速度慢怎么办？</h3><p><strong>排查步骤：</strong></p>
+<ol>
+<li>检查是否已创建索引</li>
+<li>检查集合是否已加载到内存 (<code>collection.load()</code>)</li>
+<li>调整索引参数（增大 <code>ef</code>、<code>nprobe</code>）</li>
+<li>增加 Query Node 数量</li>
+<li>检查网络延迟</li>
+</ol>
+<h3 id="Q2-内存占用过高？"><a href="#Q2-内存占用过高？" class="headerlink" title="Q2: 内存占用过高？"></a>Q2: 内存占用过高？</h3><p><strong>解决方案：</strong></p>
+<ol>
+<li>使用压缩索引（IVF_SQ8）</li>
+<li>减少加载的分区数量</li>
+<li>使用 DiskANN 索引（磁盘存储）</li>
+<li>增加节点，分散负载</li>
+</ol>
+<h3 id="Q3-如何保证数据一致性？"><a href="#Q3-如何保证数据一致性？" class="headerlink" title="Q3: 如何保证数据一致性？"></a>Q3: 如何保证数据一致性？</h3><p><strong>建议：</strong></p>
+<ol>
+<li>关键业务使用 <code>Strong</code> 一致性</li>
+<li>写入后调用 <code>flush()</code> 确保持久化</li>
+<li>使用事务（Milvus 2.4+ 支持）</li>
+<li>定期备份数据</li>
+</ol>
+<h3 id="Q4-支持哪些嵌入模型？"><a href="#Q4-支持哪些嵌入模型？" class="headerlink" title="Q4: 支持哪些嵌入模型？"></a>Q4: 支持哪些嵌入模型？</h3><p><strong>Milvus 本身不限制嵌入模型</strong>，常用选择：</p>
+<ul>
+<li><strong>中文</strong>：BGE-Large-ZH、Text2Vec</li>
+<li><strong>英文</strong>：text-embedding-3、BGE-Large</li>
+<li><strong>多语言</strong>：m3e、multilingual-e5</li>
+<li><strong>图像</strong>：CLIP、ViT</li>
+<li><strong>自定义</strong>：任何生成固定维度向量的模型</li>
+</ul>
+<h2 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h2><p>Milvus 作为一款成熟的开源向量数据库，具备以下核心优势：</p>
+<p>✅ <strong>高性能</strong>：支持亿级向量毫秒级检索<br>✅ <strong>可扩展</strong>：存算分离，弹性伸缩<br>✅ <strong>易用性</strong>：丰富的 SDK 和工具链<br>✅ <strong>生态完善</strong>：与 LangChain、LlamaIndex 等框架深度集成<br>✅ <strong>社区活跃</strong>：GitHub 25k+ stars，全球用户  </p>
+<p><strong>适用场景：</strong></p>
+<ul>
+<li>RAG（检索增强生成）</li>
+<li>语义搜索</li>
+<li>推荐系统</li>
+<li>图像&#x2F;视频检索</li>
+<li>异常检测</li>
+<li>去重系统</li>
+</ul>
+<p><strong>学习资源：</strong></p>
+<ul>
+<li>官方文档：<a target="_blank" rel="noopener" href="https://milvus.io/docs">https://milvus.io/docs</a></li>
+<li>GitHub: <a target="_blank" rel="noopener" href="https://github.com/milvus-io/milvus">https://github.com/milvus-io/milvus</a></li>
+<li>社区论坛：<a target="_blank" rel="noopener" href="https://discord.gg/milvus">https://discord.gg/milvus</a></li>
+<li>中文文档：<a target="_blank" rel="noopener" href="https://milvus.io/cn/docs">https://milvus.io/cn/docs</a></li>
+</ul>
+<hr>
+<p><em>如有问题或建议，欢迎在评论区留言讨论！</em></p>
+
+      
+    </div>
+
+    
+
+    
+    
+    
+
+    
+
+    
+      <div>
+        <div style="padding: 10px 0; margin: 20px auto; width: 90%; text-align: center;">
+  <div>感谢你的阅读，如果文章对你有帮助，可以请作者喝杯茶!</div>
+  <button id="rewardButton" disable="enable" onclick="var qr = document.getElementById('QR'); if (qr.style.display === 'none') {qr.style.display='block';} else {qr.style.display='none'}">
+    <span>打赏</span>
+  </button>
+  <div id="QR" style="display: none;">
+
+    
+      <div id="wechat" style="display: inline-block">
+        <img id="wechat_qr" src="/images/wechatpay.jpg" alt="Noah Sun 微信支付"/>
+        <p>微信支付</p>
+      </div>
+    
+
+    
+      <div id="alipay" style="display: inline-block">
+        <img id="alipay_qr" src="/images/alipay.jpg" alt="Noah Sun 支付宝"/>
+        <p>支付宝</p>
+      </div>
+    
+
+    
+
+  </div>
+</div>
+
+      </div>
+    
+
+    
+      <div>
+        <ul class="post-copyright">
+  <li class="post-copyright-author">
+    <strong>本文作者： </strong>Noah Sun</li>
+  <li class="post-copyright-link">
+    <strong>本文链接：</strong>
+    <a href="http://blog.noahsun.top/2026/03/18/milvus-vector-database-deep-dive/" title="Milvus 向量数据库深度解析：从原理到实战">http://blog.noahsun.top/2026/03/18/milvus-vector-database-deep-dive/</a>
+  </li>
+  <li class="post-copyright-license">
+    <strong>版权声明： </strong>本博客所有文章除特别声明外，均采用 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" rel="external nofollow" target="_blank">CC BY-NC-SA 4.0</a> 许可协议。转载请注明出处！</li>
+</ul>
+
+      </div>
+    
+
+    <footer class="post-footer">
+      
+        <div class="post-tags">
+          
+            <a href="/tags/Milvus/" rel="tag"># Milvus</a>
+          
+            <a href="/tags/%E5%90%91%E9%87%8F%E6%95%B0%E6%8D%AE%E5%BA%93/" rel="tag"># 向量数据库</a>
+          
+            <a href="/tags/AI-%E5%9F%BA%E7%A1%80%E8%AE%BE%E6%96%BD/" rel="tag"># AI 基础设施</a>
+          
+            <a href="/tags/%E7%9B%B8%E4%BC%BC%E5%BA%A6%E6%90%9C%E7%B4%A2/" rel="tag"># 相似度搜索</a>
+          
+        </div>
+      
+
+      
+      
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2026/03/04/mcp-transport-implementation/" rel="next" title="MCP协议深度解析：Transport层实现全攻略">
+                <i class="fa fa-chevron-left"></i> MCP协议深度解析：Transport层实现全攻略
+              </a>
+            
+          </div>
+
+          <span class="post-nav-divider"></span>
+
+          <div class="post-nav-prev post-nav-item">
+            
+              <a href="/2026/03/19/llm-fine-tuning-deep-dive/" rel="prev" title="深入理解大模型微调：从理论到实战的完整指南">
+                深入理解大模型微调：从理论到实战的完整指南 <i class="fa fa-chevron-right"></i>
+              </a>
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+  </div>
+
+
+          </div>
+          
+
+  
+    <div class="comments" id="comments">
+      <div id="disqus_thread">
+        <noscript>
+          Please enable JavaScript to view the
+          <a target="_blank" rel="noopener" href="https://disqus.com/?ref_noscript">comments powered by Disqus.</a>
+        </noscript>
+      </div>
+    </div>
+
+  
+
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap">
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview-wrap">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <section class="site-overview-wrap sidebar-panel">
+        <div class="site-overview">
+          <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+            
+              <img class="site-author-image" itemprop="image"
+                src="/images/avatar.jpg"
+                alt="Noah Sun" />
+            
+              <p class="site-author-name" itemprop="name">Noah Sun</p>
+              <p class="site-description motion-element" itemprop="description">Noah Sun's Blog.</p>
+          </div>
+
+          
+            <nav class="site-state motion-element">
+              
+                <div class="site-state-item site-state-posts">
+                
+                  <a href="/archives/%20%7C%7C%20archive">
+                
+                    <span class="site-state-item-count">31</span>
+                    <span class="site-state-item-name">日志</span>
+                  </a>
+                </div>
+              
+
+              
+                
+                
+                <div class="site-state-item site-state-categories">
+                  <a href="/categories/index.html">
+                    
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                    <span class="site-state-item-count">7</span>
+                    <span class="site-state-item-name">分类</span>
+                  </a>
+                </div>
+              
+
+              
+                
+                
+                <div class="site-state-item site-state-tags">
+                  <a href="/tags/index.html">
+                    
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                    <span class="site-state-item-count">65</span>
+                    <span class="site-state-item-name">标签</span>
+                  </a>
+                </div>
+              
+            </nav>
+          
+
+          
+
+          
+            <div class="links-of-author motion-element">
+              
+                <span class="links-of-author-item">
+                  <a href="https://github.com/rukesun/" target="_blank" title="GitHub"><i class="fa fa-fw fa-github"></i>GitHub</a>
+                  
+                </span>
+              
+                <span class="links-of-author-item">
+                  <a href="https://www.facebook.com/Noah.D.Sun" target="_blank" title="Facebook"><i class="fa fa-fw fa-facebook"></i>Facebook</a>
+                  
+                </span>
+              
+            </div>
+          
+
+          
+          
+
+          
+          
+
+          
+            
+          
+          
+
+        </div>
+      </section>
+
+      
+      <!--noindex-->
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+
+            
+              
+            
+
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%89%8D%E8%A8%80"><span class="nav-number">1.</span> <span class="nav-text">前言</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%BB%80%E4%B9%88%E6%98%AF%E5%90%91%E9%87%8F%E6%95%B0%E6%8D%AE%E5%BA%93%EF%BC%9F"><span class="nav-number">2.</span> <span class="nav-text">什么是向量数据库？</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E4%BC%A0%E7%BB%9F%E6%95%B0%E6%8D%AE%E5%BA%93-vs-%E5%90%91%E9%87%8F%E6%95%B0%E6%8D%AE%E5%BA%93"><span class="nav-number">2.1.</span> <span class="nav-text">传统数据库 vs 向量数据库</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%90%91%E9%87%8F%E6%A3%80%E7%B4%A2%E7%9A%84%E6%9C%AC%E8%B4%A8"><span class="nav-number">2.2.</span> <span class="nav-text">向量检索的本质</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Milvus-%E6%9E%B6%E6%9E%84%E6%B7%B1%E5%BA%A6%E8%A7%A3%E6%9E%90"><span class="nav-number">3.</span> <span class="nav-text">Milvus 架构深度解析</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%95%B4%E4%BD%93%E6%9E%B6%E6%9E%84"><span class="nav-number">3.1.</span> <span class="nav-text">整体架构</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%A0%B8%E5%BF%83%E7%BB%84%E4%BB%B6%E8%AF%A6%E8%A7%A3"><span class="nav-number">3.2.</span> <span class="nav-text">核心组件详解</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#1-Proxy%EF%BC%88%E4%BB%A3%E7%90%86%E5%B1%82%EF%BC%89"><span class="nav-number">3.2.1.</span> <span class="nav-text">1. Proxy（代理层）</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#2-Data-Node%EF%BC%88%E6%95%B0%E6%8D%AE%E8%8A%82%E7%82%B9%EF%BC%89"><span class="nav-number">3.2.2.</span> <span class="nav-text">2. Data Node（数据节点）</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#3-Query-Node%EF%BC%88%E6%9F%A5%E8%AF%A2%E8%8A%82%E7%82%B9%EF%BC%89"><span class="nav-number">3.2.3.</span> <span class="nav-text">3. Query Node（查询节点）</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#4-Index-Node%EF%BC%88%E7%B4%A2%E5%BC%95%E8%8A%82%E7%82%B9%EF%BC%89"><span class="nav-number">3.2.4.</span> <span class="nav-text">4. Index Node（索引节点）</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#5-%E5%AD%98%E5%82%A8%E5%B1%82"><span class="nav-number">3.2.5.</span> <span class="nav-text">5. 存储层</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%AD%98%E7%AE%97%E5%88%86%E7%A6%BB%E7%9A%84%E4%BC%98%E5%8A%BF"><span class="nav-number">3.3.</span> <span class="nav-text">存算分离的优势</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%A0%B8%E5%BF%83%E7%89%B9%E6%80%A7"><span class="nav-number">4.</span> <span class="nav-text">核心特性</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#1-%E9%AB%98%E6%80%A7%E8%83%BD%E5%90%91%E9%87%8F%E6%A3%80%E7%B4%A2"><span class="nav-number">4.1.</span> <span class="nav-text">1. 高性能向量检索</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#2-%E6%B7%B7%E5%90%88%E6%9F%A5%E8%AF%A2%EF%BC%88Hybrid-Search%EF%BC%89"><span class="nav-number">4.2.</span> <span class="nav-text">2. 混合查询（Hybrid Search）</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#3-%E5%A4%9A%E5%90%91%E9%87%8F%E6%94%AF%E6%8C%81%EF%BC%88Multi-Vector%EF%BC%89"><span class="nav-number">4.3.</span> <span class="nav-text">3. 多向量支持（Multi-Vector）</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#4-%E5%8A%A8%E6%80%81-Schema%EF%BC%88Dynamic-Field%EF%BC%89"><span class="nav-number">4.4.</span> <span class="nav-text">4. 动态 Schema（Dynamic Field）</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#5-%E5%88%86%E5%8C%BA%EF%BC%88Partition%EF%BC%89"><span class="nav-number">4.5.</span> <span class="nav-text">5. 分区（Partition）</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#6-%E6%95%B0%E6%8D%AE%E4%B8%80%E8%87%B4%E6%80%A7%E7%BA%A7%E5%88%AB"><span class="nav-number">4.6.</span> <span class="nav-text">6. 数据一致性级别</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%AE%9E%E6%88%98%EF%BC%9A%E6%9E%84%E5%BB%BA-RAG-%E5%BA%94%E7%94%A8"><span class="nav-number">5.</span> <span class="nav-text">实战：构建 RAG 应用</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%9C%BA%E6%99%AF%E6%8F%8F%E8%BF%B0"><span class="nav-number">5.1.</span> <span class="nav-text">场景描述</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%AE%8C%E6%95%B4%E4%BB%A3%E7%A0%81%E7%A4%BA%E4%BE%8B"><span class="nav-number">5.2.</span> <span class="nav-text">完整代码示例</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#1-%E7%8E%AF%E5%A2%83%E5%87%86%E5%A4%87"><span class="nav-number">5.2.1.</span> <span class="nav-text">1. 环境准备</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#2-%E5%88%9B%E5%BB%BA%E9%9B%86%E5%90%88"><span class="nav-number">5.2.2.</span> <span class="nav-text">2. 创建集合</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#3-%E6%96%87%E6%A1%A3%E5%A4%84%E7%90%86%E4%B8%8E%E6%8F%92%E5%85%A5"><span class="nav-number">5.2.3.</span> <span class="nav-text">3. 文档处理与插入</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#4-%E6%A3%80%E7%B4%A2%E4%B8%8E%E9%97%AE%E7%AD%94"><span class="nav-number">5.2.4.</span> <span class="nav-text">4. 检索与问答</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%80%A7%E8%83%BD%E4%BC%98%E5%8C%96%E5%BB%BA%E8%AE%AE"><span class="nav-number">5.3.</span> <span class="nav-text">性能优化建议</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#1-%E6%89%B9%E9%87%8F%E6%8F%92%E5%85%A5"><span class="nav-number">5.3.1.</span> <span class="nav-text">1. 批量插入</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#2-%E5%BC%82%E6%AD%A5%E6%8F%92%E5%85%A5"><span class="nav-number">5.3.2.</span> <span class="nav-text">2. 异步插入</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#3-%E7%B4%A2%E5%BC%95%E5%8F%82%E6%95%B0%E8%B0%83%E4%BC%98"><span class="nav-number">5.3.3.</span> <span class="nav-text">3. 索引参数调优</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#4-%E4%BD%BF%E7%94%A8-GPU-%E5%8A%A0%E9%80%9F"><span class="nav-number">5.3.4.</span> <span class="nav-text">4. 使用 GPU 加速</span></a></li></ol></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E9%83%A8%E7%BD%B2%E6%96%B9%E6%A1%88"><span class="nav-number">6.</span> <span class="nav-text">部署方案</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#1-%E5%8D%95%E6%9C%BA%E7%89%88%EF%BC%88%E5%BC%80%E5%8F%91-%E6%B5%8B%E8%AF%95%EF%BC%89"><span class="nav-number">6.1.</span> <span class="nav-text">1. 单机版（开发&#x2F;测试）</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#2-%E9%9B%86%E7%BE%A4%E7%89%88%EF%BC%88%E7%94%9F%E4%BA%A7%E7%8E%AF%E5%A2%83%EF%BC%89"><span class="nav-number">6.2.</span> <span class="nav-text">2. 集群版（生产环境）</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#3-%E4%BA%91%E6%9C%8D%E5%8A%A1"><span class="nav-number">6.3.</span> <span class="nav-text">3. 云服务</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%B8%8E%E5%85%B6%E4%BB%96%E5%90%91%E9%87%8F%E6%95%B0%E6%8D%AE%E5%BA%93%E5%AF%B9%E6%AF%94"><span class="nav-number">7.</span> <span class="nav-text">与其他向量数据库对比</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%9C%80%E4%BD%B3%E5%AE%9E%E8%B7%B5"><span class="nav-number">8.</span> <span class="nav-text">最佳实践</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#1-%E5%90%91%E9%87%8F%E7%BB%B4%E5%BA%A6%E9%80%89%E6%8B%A9"><span class="nav-number">8.1.</span> <span class="nav-text">1. 向量维度选择</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#2-%E8%B7%9D%E7%A6%BB%E5%BA%A6%E9%87%8F%E9%80%89%E6%8B%A9"><span class="nav-number">8.2.</span> <span class="nav-text">2. 距离度量选择</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#3-%E6%95%B0%E6%8D%AE%E7%94%9F%E5%91%BD%E5%91%A8%E6%9C%9F%E7%AE%A1%E7%90%86"><span class="nav-number">8.3.</span> <span class="nav-text">3. 数据生命周期管理</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#4-%E7%9B%91%E6%8E%A7%E4%B8%8E%E5%91%8A%E8%AD%A6"><span class="nav-number">8.4.</span> <span class="nav-text">4. 监控与告警</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%B8%B8%E8%A7%81%E9%97%AE%E9%A2%98"><span class="nav-number">9.</span> <span class="nav-text">常见问题</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#Q1-%E6%9F%A5%E8%AF%A2%E9%80%9F%E5%BA%A6%E6%85%A2%E6%80%8E%E4%B9%88%E5%8A%9E%EF%BC%9F"><span class="nav-number">9.1.</span> <span class="nav-text">Q1: 查询速度慢怎么办？</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Q2-%E5%86%85%E5%AD%98%E5%8D%A0%E7%94%A8%E8%BF%87%E9%AB%98%EF%BC%9F"><span class="nav-number">9.2.</span> <span class="nav-text">Q2: 内存占用过高？</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Q3-%E5%A6%82%E4%BD%95%E4%BF%9D%E8%AF%81%E6%95%B0%E6%8D%AE%E4%B8%80%E8%87%B4%E6%80%A7%EF%BC%9F"><span class="nav-number">9.3.</span> <span class="nav-text">Q3: 如何保证数据一致性？</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Q4-%E6%94%AF%E6%8C%81%E5%93%AA%E4%BA%9B%E5%B5%8C%E5%85%A5%E6%A8%A1%E5%9E%8B%EF%BC%9F"><span class="nav-number">9.4.</span> <span class="nav-text">Q4: 支持哪些嵌入模型？</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%80%BB%E7%BB%93"><span class="nav-number">10.</span> <span class="nav-text">总结</span></a></li></ol></div>
+            
+
+          </div>
+        </section>
+      <!--/noindex-->
+      
+
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright"> &copy; <span itemprop="copyrightYear">2026</span>
+  <span class="with-love" id="animate">
+    <i class="fa fa-user"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">Noah Sun</span>
+
+  
+
+  
+</div>
+
+
+
+
+  <div class="powered-by">由 <a class="theme-link" target="_blank" href="https://hexo.io">Hexo</a> 强力驱动 v6.3.0</div>
+
+
+
+  <span class="post-meta-divider">|</span>
+
+
+
+  <div class="theme-info">主题 – <a class="theme-link" target="_blank" href="https://theme-next.org">NexT.Pisces</a> v6.4.2</div>
+
+
+
+
+        
+
+
+
+
+
+
+
+
+        
+      </div>
+    </footer>
+
+    
+      <div class="back-to-top">
+        <i class="fa fa-arrow-up"></i>
+        
+      </div>
+    
+
+    
+	
+    
+
+    
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+    <script type="text/javascript" src="//cdn.jsdelivr.net/jquery/2.1.3/jquery.min.js"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/velocity-animate@1.2.1/velocity.min.js"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="//cdnjs.cloudflare.com/ajax/libs/velocity/1.2.1/velocity.ui.min.js"></script>
+  
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/utils.js?v=6.4.2"></script>
+
+  <script type="text/javascript" src="/js/src/motion.js?v=6.4.2"></script>
+
+
+
+  
+  
+
+
+  <script type="text/javascript" src="/js/src/affix.js?v=6.4.2"></script>
+
+  <script type="text/javascript" src="/js/src/schemes/pisces.js?v=6.4.2"></script>
+
+
+
+  
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=6.4.2"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=6.4.2"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/bootstrap.js?v=6.4.2"></script>
+
+
+
+  
+
+  
+    <script id="dsq-count-scr" src="https://noahsun.disqus.com/count.js" async></script>
+  
+
+  
+    <script type="text/javascript">
+      var disqus_config = function () {
+        this.page.url = 'http://blog.noahsun.top/2026/03/18/milvus-vector-database-deep-dive/';
+        this.page.identifier = '2026/03/18/milvus-vector-database-deep-dive/';
+        this.page.title = 'Milvus 向量数据库深度解析：从原理到实战';
+        };
+      function loadComments () {
+        var d = document, s = d.createElement('script');
+        s.src = 'https://noahsun.disqus.com/embed.js';
+        s.setAttribute('data-timestamp', '' + +new Date());
+        (d.head || d.body).appendChild(s);
+      }
+      
+        loadComments();
+      
+    </script>
+  
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  <script type="text/javascript">
+    // Popup Window;
+    var isfetched = false;
+    var isXml = true;
+    // Search DB path;
+    var search_path = "search.xml";
+    if (search_path.length === 0) {
+      search_path = "search.xml";
+    } else if (/json$/i.test(search_path)) {
+      isXml = false;
+    }
+    var path = "/" + search_path;
+    // monitor main search box;
+
+    var onPopupClose = function (e) {
+      $('.popup').hide();
+      $('#local-search-input').val('');
+      $('.search-result-list').remove();
+      $('#no-result').remove();
+      $(".local-search-pop-overlay").remove();
+      $('body').css('overflow', '');
+    }
+
+    function proceedsearch() {
+      $("body")
+        .append('<div class="search-popup-overlay local-search-pop-overlay"></div>')
+        .css('overflow', 'hidden');
+      $('.search-popup-overlay').click(onPopupClose);
+      $('.popup').toggle();
+      var $localSearchInput = $('#local-search-input');
+      $localSearchInput.attr("autocapitalize", "none");
+      $localSearchInput.attr("autocorrect", "off");
+      $localSearchInput.focus();
+    }
+
+    // search function;
+    var searchFunc = function(path, search_id, content_id) {
+      'use strict';
+
+      // start loading animation
+      $("body")
+        .append('<div class="search-popup-overlay local-search-pop-overlay">' +
+          '<div id="search-loading-icon">' +
+          '<i class="fa fa-spinner fa-pulse fa-5x fa-fw"></i>' +
+          '</div>' +
+          '</div>')
+        .css('overflow', 'hidden');
+      $("#search-loading-icon").css('margin', '20% auto 0 auto').css('text-align', 'center');
+
+      
+
+      $.ajax({
+        url: path,
+        dataType: isXml ? "xml" : "json",
+        async: true,
+        success: function(res) {
+          // get the contents from search data
+          isfetched = true;
+          $('.popup').detach().appendTo('.header-inner');
+          var datas = isXml ? $("entry", res).map(function() {
+            return {
+              title: $("title", this).text(),
+              content: $("content",this).text(),
+              url: $("url" , this).text()
+            };
+          }).get() : res;
+          var input = document.getElementById(search_id);
+          var resultContent = document.getElementById(content_id);
+          var inputEventFunction = function() {
+            var searchText = input.value.trim().toLowerCase();
+            var keywords = searchText.split(/[\s\-]+/);
+            if (keywords.length > 1) {
+              keywords.push(searchText);
+            }
+            var resultItems = [];
+            if (searchText.length > 0) {
+              // perform local searching
+              datas.forEach(function(data) {
+                var isMatch = false;
+                var hitCount = 0;
+                var searchTextCount = 0;
+                var title = data.title.trim();
+                var titleInLowerCase = title.toLowerCase();
+                var content = data.content.trim().replace(/<[^>]+>/g,"");
+                
+                var contentInLowerCase = content.toLowerCase();
+                var articleUrl = decodeURIComponent(data.url);
+                var indexOfTitle = [];
+                var indexOfContent = [];
+                // only match articles with not empty titles
+                if(title != '') {
+                  keywords.forEach(function(keyword) {
+                    function getIndexByWord(word, text, caseSensitive) {
+                      var wordLen = word.length;
+                      if (wordLen === 0) {
+                        return [];
+                      }
+                      var startPosition = 0, position = [], index = [];
+                      if (!caseSensitive) {
+                        text = text.toLowerCase();
+                        word = word.toLowerCase();
+                      }
+                      while ((position = text.indexOf(word, startPosition)) > -1) {
+                        index.push({position: position, word: word});
+                        startPosition = position + wordLen;
+                      }
+                      return index;
+                    }
+
+                    indexOfTitle = indexOfTitle.concat(getIndexByWord(keyword, titleInLowerCase, false));
+                    indexOfContent = indexOfContent.concat(getIndexByWord(keyword, contentInLowerCase, false));
+                  });
+                  if (indexOfTitle.length > 0 || indexOfContent.length > 0) {
+                    isMatch = true;
+                    hitCount = indexOfTitle.length + indexOfContent.length;
+                  }
+                }
+
+                // show search results
+
+                if (isMatch) {
+                  // sort index by position of keyword
+
+                  [indexOfTitle, indexOfContent].forEach(function (index) {
+                    index.sort(function (itemLeft, itemRight) {
+                      if (itemRight.position !== itemLeft.position) {
+                        return itemRight.position - itemLeft.position;
+                      } else {
+                        return itemLeft.word.length - itemRight.word.length;
+                      }
+                    });
+                  });
+
+                  // merge hits into slices
+
+                  function mergeIntoSlice(text, start, end, index) {
+                    var item = index[index.length - 1];
+                    var position = item.position;
+                    var word = item.word;
+                    var hits = [];
+                    var searchTextCountInSlice = 0;
+                    while (position + word.length <= end && index.length != 0) {
+                      if (word === searchText) {
+                        searchTextCountInSlice++;
+                      }
+                      hits.push({position: position, length: word.length});
+                      var wordEnd = position + word.length;
+
+                      // move to next position of hit
+
+                      index.pop();
+                      while (index.length != 0) {
+                        item = index[index.length - 1];
+                        position = item.position;
+                        word = item.word;
+                        if (wordEnd > position) {
+                          index.pop();
+                        } else {
+                          break;
+                        }
+                      }
+                    }
+                    searchTextCount += searchTextCountInSlice;
+                    return {
+                      hits: hits,
+                      start: start,
+                      end: end,
+                      searchTextCount: searchTextCountInSlice
+                    };
+                  }
+
+                  var slicesOfTitle = [];
+                  if (indexOfTitle.length != 0) {
+                    slicesOfTitle.push(mergeIntoSlice(title, 0, title.length, indexOfTitle));
+                  }
+
+                  var slicesOfContent = [];
+                  while (indexOfContent.length != 0) {
+                    var item = indexOfContent[indexOfContent.length - 1];
+                    var position = item.position;
+                    var word = item.word;
+                    // cut out 100 characters
+                    var start = position - 20;
+                    var end = position + 80;
+                    if(start < 0){
+                      start = 0;
+                    }
+                    if (end < position + word.length) {
+                      end = position + word.length;
+                    }
+                    if(end > content.length){
+                      end = content.length;
+                    }
+                    slicesOfContent.push(mergeIntoSlice(content, start, end, indexOfContent));
+                  }
+
+                  // sort slices in content by search text's count and hits' count
+
+                  slicesOfContent.sort(function (sliceLeft, sliceRight) {
+                    if (sliceLeft.searchTextCount !== sliceRight.searchTextCount) {
+                      return sliceRight.searchTextCount - sliceLeft.searchTextCount;
+                    } else if (sliceLeft.hits.length !== sliceRight.hits.length) {
+                      return sliceRight.hits.length - sliceLeft.hits.length;
+                    } else {
+                      return sliceLeft.start - sliceRight.start;
+                    }
+                  });
+
+                  // select top N slices in content
+
+                  var upperBound = parseInt('1');
+                  if (upperBound >= 0) {
+                    slicesOfContent = slicesOfContent.slice(0, upperBound);
+                  }
+
+                  // highlight title and content
+
+                  function highlightKeyword(text, slice) {
+                    var result = '';
+                    var prevEnd = slice.start;
+                    slice.hits.forEach(function (hit) {
+                      result += text.substring(prevEnd, hit.position);
+                      var end = hit.position + hit.length;
+                      result += '<b class="search-keyword">' + text.substring(hit.position, end) + '</b>';
+                      prevEnd = end;
+                    });
+                    result += text.substring(prevEnd, slice.end);
+                    return result;
+                  }
+
+                  var resultItem = '';
+
+                  if (slicesOfTitle.length != 0) {
+                    resultItem += "<li><a href='" + articleUrl + "' class='search-result-title'>" + highlightKeyword(title, slicesOfTitle[0]) + "</a>";
+                  } else {
+                    resultItem += "<li><a href='" + articleUrl + "' class='search-result-title'>" + title + "</a>";
+                  }
+
+                  slicesOfContent.forEach(function (slice) {
+                    resultItem += "<a href='" + articleUrl + "'>" +
+                      "<p class=\"search-result\">" + highlightKeyword(content, slice) +
+                      "...</p>" + "</a>";
+                  });
+
+                  resultItem += "</li>";
+                  resultItems.push({
+                    item: resultItem,
+                    searchTextCount: searchTextCount,
+                    hitCount: hitCount,
+                    id: resultItems.length
+                  });
+                }
+              })
+            };
+            if (keywords.length === 1 && keywords[0] === "") {
+              resultContent.innerHTML = '<div id="no-result"><i class="fa fa-search fa-5x" /></div>'
+            } else if (resultItems.length === 0) {
+              resultContent.innerHTML = '<div id="no-result"><i class="fa fa-frown-o fa-5x" /></div>'
+            } else {
+              resultItems.sort(function (resultLeft, resultRight) {
+                if (resultLeft.searchTextCount !== resultRight.searchTextCount) {
+                  return resultRight.searchTextCount - resultLeft.searchTextCount;
+                } else if (resultLeft.hitCount !== resultRight.hitCount) {
+                  return resultRight.hitCount - resultLeft.hitCount;
+                } else {
+                  return resultRight.id - resultLeft.id;
+                }
+              });
+              var searchResultList = '<ul class=\"search-result-list\">';
+              resultItems.forEach(function (result) {
+                searchResultList += result.item;
+              })
+              searchResultList += "</ul>";
+              resultContent.innerHTML = searchResultList;
+            }
+          }
+
+          if ('auto' === 'auto') {
+            input.addEventListener('input', inputEventFunction);
+          } else {
+            $('.search-icon').click(inputEventFunction);
+            input.addEventListener('keypress', function (event) {
+              if (event.keyCode === 13) {
+                inputEventFunction();
+              }
+            });
+          }
+
+          // remove loading animation
+          $(".local-search-pop-overlay").remove();
+          $('body').css('overflow', '');
+
+          proceedsearch();
+        }
+      });
+    }
+
+    // handle and trigger popup window;
+    $('.popup-trigger').click(function(e) {
+      e.stopPropagation();
+      if (isfetched === false) {
+        searchFunc(path, 'local-search-input', 'local-search-result');
+      } else {
+        proceedsearch();
+      };
+    });
+
+    $('.popup-btn-close').click(onPopupClose);
+    $('.popup').click(function(e){
+      e.stopPropagation();
+    });
+    $(document).on('keyup', function (event) {
+      var shouldDismissSearchPopup = event.which === 27 &&
+        $('.search-popup').is(':visible');
+      if (shouldDismissSearchPopup) {
+        onPopupClose();
+      }
+    });
+  </script>
+
+
+
+
+
+  
+
+  
+  <script>
+    
+    function addCount(Counter) {
+      var $visitors = $(".leancloud_visitors");
+      var url = $visitors.attr('id').trim();
+      var title = $visitors.attr('data-flag-title').trim();
+
+      Counter('get', '/classes/Counter', { where: JSON.stringify({ url }) })
+        .done(function ({ results }) {
+          if (results.length > 0) {
+            var counter = results[0];
+            
+            Counter('put', `/classes/Counter/${counter.objectId}`, JSON.stringify({ time: { "__op":"Increment", "amount":1 } }))
+            
+            .done(function () {
+                  var $element = $(document.getElementById(url));
+                  $element.find('.leancloud-visitors-count').text(counter.time + 1);
+            })
+            
+            .fail(function ({ responseJSON }) {
+                console.log('Failed to save Visitor num, with error message: ' + responseJSON.error);
+            })
+          } else {
+            
+              Counter('post', '/classes/Counter', JSON.stringify({ title: title, url: url, time: 1}))
+                .done(function () {
+                  var $element = $(document.getElementById(url));
+                  $element.find('.leancloud-visitors-count').text(1);
+                })
+                .fail(function () {
+                  console.log('Failed to create');
+                });
+            
+          }
+        })
+      .fail(function ({ responseJSON }) {
+        console.log('LeanCloud Counter Error:' + responseJSON.code + " " + responseJSON.error);
+      });
+    }
+    
+
+    $(function() {
+      $.get('https://app-router.leancloud.cn/2/route?appId=' + "Cz56UW3FvEkwHB689nG2jLGm-gzGzoHsz")
+        .done(function ({ api_server }) {
+          var Counter = function (method, url, data) {
+            return $.ajax({
+              method: method,
+              url: `https://${api_server}/1.1${url}`,
+              headers: {
+                'X-LC-Id': "Cz56UW3FvEkwHB689nG2jLGm-gzGzoHsz",
+                'X-LC-Key': "zuFQDzA0SxPUkEfqOisL54YJ",
+                'Content-Type': 'application/json',
+              },
+              data: data,
+            });
+          };
+          
+          addCount(Counter);
+          
+        })
+    });
+  </script>
+
+
+
+  
+
+  
+
+  
+
+  
+
+  
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+</body>
+</html>
